@@ -11,3 +11,12 @@ def test_unplayed_matches_are_skipped(tmp_path):
     p = tmp_path / "f.json"
     p.write_text('{"matches":[{"team1":"A","team2":"B","group":"Group A"}]}')
     assert results.played_results(str(p)) == {}
+
+
+def test_parse_picks_csv():
+    from scorito.eval import picks as picks_mod
+    p = picks_mod.load_picks("tests/fixtures/eval/picks.csv")
+    assert p["scorelines"][("Mexico", "South Africa")] == (1, 0)
+    assert p["standings"]["A"] == ["Mexico", "South Korea", "Czech Republic", "South Africa"]
+    assert p["champion"] == "Spain"
+    assert p["topscorers"] == [dict(name="Harry Kane", team="England", position="ATT")]

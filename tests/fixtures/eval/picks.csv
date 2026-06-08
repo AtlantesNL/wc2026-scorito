@@ -1,0 +1,8 @@
+type,group,item,detail,value
+match,A,Mexico vs South Africa,1-0,28.2
+standing,A,1. Mexico,,
+standing,A,2. South Korea,,
+standing,A,3. Czech Republic,,
+standing,A,4. South Africa,,
+champion,,Spain,p_win=0.16,40.0
+topscorer,,"Harry Kane (England, ATT)",PEN,30.7
