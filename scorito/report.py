@@ -45,6 +45,9 @@ def _render_markdown(result: RunResult) -> str:
     L.append("# Scorito WC2026 — Recommended Group-Phase Picks\n")
     L.append(f"_Pool size:_ {result.pool_size} · _Risk:_ {result.risk} · "
              f"_Goal model:_ {'market odds + Elo' if result.used_odds else 'Elo only'}\n")
+    boldness = 1.0 - result.meta.get("scoreline_toto_weight", 1.0)
+    L.append(f"_Scoreline tilt:_ {boldness:.0%} bold "
+             f"(0% = pure expected value; grows with risk and pool size)\n")
     L.append("> ⚠️ Confirm the exact **deadline** in-app (11 June 2026, evening CET). "
              "Topscorer scoring confirmed: 6 picks; 8/16/32/32 pts per goal "
              "(Aanvaller/Middenvelder/Verdediger/Keeper).\n")

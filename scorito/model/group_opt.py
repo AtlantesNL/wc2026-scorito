@@ -49,12 +49,16 @@ def predicted_standing(scorelines, matches, teams):
 def score_combo(scorelines, matches, teams, probs):
     """Joint objective for one combination of scorelines.
 
-    Returns ``(match_pts, stand_pts, total, predicted_order)``.
+    Returns ``(match_pts, stand_pts, total, objective, predicted_order)`` where
+    ``total`` is the TRUE expected points (for reporting) and ``objective`` is the
+    risk-tilted score the optimizer maximizes (uses each scoreline's ``sel``).
+    With pure-EV scorelines (``sel == ev``) the two are identical.
     """
-    match_pts = sum(s.ev for s in scorelines)
+    match_pts = sum(s.ev for s in scorelines)    # true EV (reported)
+    match_sel = sum(s.sel for s in scorelines)   # risk-tilted (optimized)
     order = predicted_standing(scorelines, matches, teams)
     stand_pts = sum(config.PTS_POSITION * float(probs[order[p]][p]) for p in range(len(teams)))
-    return match_pts, stand_pts, match_pts + stand_pts, order
+    return match_pts, stand_pts, match_pts + stand_pts, match_sel + stand_pts, order
 
 
 def standings_only_ordering(probs):
@@ -71,19 +75,20 @@ def standings_only_ordering(probs):
 
 
 def optimize_group(teams, matches, grids, k=config.TOPK_SCORELINES,
-                   sims=config.MC_SIMS, seed=0, probs=None, group=""):
+                   sims=config.MC_SIMS, seed=0, probs=None, group="", toto_weight=1.0):
     if probs is None:
         probs = position_probs(teams, matches, grids, sims=sims, seed=seed)
-    cand = [topk_scorelines(grids[m], k) for m in matches]
+    cand = [topk_scorelines(grids[m], k, toto_weight) for m in matches]
     naive = [c[0] for c in cand]
-    _, _, naive_total, _ = score_combo(naive, matches, teams, probs)
+    _, _, naive_total, _, _ = score_combo(naive, matches, teams, probs)
 
     best = None
     for combo in itertools.product(*cand):
         combo = list(combo)
-        mp, sp, total, order = score_combo(combo, matches, teams, probs)
-        if best is None or total > best["total"]:
-            best = dict(scorelines=combo, order=order, match_pts=mp, stand_pts=sp, total=total)
+        mp, sp, total, objective, order = score_combo(combo, matches, teams, probs)
+        if best is None or objective > best["objective"]:
+            best = dict(scorelines=combo, order=order, match_pts=mp,
+                        stand_pts=sp, total=total, objective=objective)
 
     return GroupResult(
         group=group, teams=list(teams), matches=list(matches),

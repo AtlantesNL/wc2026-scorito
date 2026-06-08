@@ -42,6 +42,8 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
         odds_map = odds.parse_odds(raw)
         used_odds = True
 
+    toto_weight = config.scoreline_toto_weight(risk, pool_size)
+
     group_results = {}
     team_lambda = defaultdict(list)
     for g, teams in gteams.items():
@@ -53,7 +55,8 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
             grids[(m.team1, m.team2)] = build_grid(l1, l2)
             team_lambda[m.team1].append(l1)
             team_lambda[m.team2].append(l2)
-        group_results[g] = optimize_group(teams, gmatches, grids, k=k, sims=sims, seed=seed, group=g)
+        group_results[g] = optimize_group(teams, gmatches, grids, k=k, sims=sims,
+                                          seed=seed, group=g, toto_weight=toto_weight)
 
     means = {t: sum(v) / len(v) for t, v in team_lambda.items()}
     avg = sum(means.values()) / len(means)
@@ -73,6 +76,7 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
         champion=recommend_champion(pool_size, risk),
         topscorers=pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk, candidates=kept),
         pool_size=pool_size, risk=risk, used_odds=used_odds,
+        meta={"scoreline_toto_weight": toto_weight},
     )
     write_report(result, out_dir)
     return result

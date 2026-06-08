@@ -35,3 +35,17 @@ HOST_ELO_BONUS = 100.0  # standard eloratings.net home-advantage value
 
 # Topscorer slots reserved for high-multiplier defenders as differentiation picks.
 TOPSCORER_DEF_RESERVE = {"max_ev": 0, "balanced": 2, "aggressive": 3}
+
+# Scoreline risk: how much to down-weight the "toto" points (30, which the whole
+# field banks on obvious games) in favour of nailing exact scores (45, the
+# differentiator). Boldness scales with pool size — differentiating individual
+# scorelines is low-leverage in small pools (variance averages out over 72 games),
+# so it only meaningfully kicks in for large pools.
+SCORELINE_BOLDNESS = {"max_ev": 0.0, "balanced": 0.3, "aggressive": 0.8}
+
+
+def scoreline_toto_weight(risk: str, pool_size: int) -> float:
+    """Multiplier on the toto term: 1.0 = pure EV, lower = chase exact scores."""
+    boldness = SCORELINE_BOLDNESS.get(risk, 0.0)
+    pool_factor = max(0.0, min(1.0, (pool_size - 10) / 200.0))
+    return 1.0 - min(0.9, boldness * pool_factor)

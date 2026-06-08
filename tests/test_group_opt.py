@@ -30,11 +30,12 @@ def test_score_combo_math_hand_computed():
         "C": np.array([0, 0, 1.0, 0]),
         "D": np.array([0, 0, 0, 1.0]),
     }
-    mp, sp, total, order = score_combo(combo, MATCHES, TEAMS, probs)
+    mp, sp, total, objective, order = score_combo(combo, MATCHES, TEAMS, probs)
     assert order == ["A", "B", "C", "D"]
     assert abs(mp - 60.0) < 1e-9          # 6 matches * 10 EV
     assert abs(sp - 100.0) < 1e-9         # 4 positions * 25 * prob 1.0
     assert abs(total - 160.0) < 1e-9
+    assert abs(objective - 160.0) < 1e-9  # sel defaults to ev -> objective == true total
 
 
 def test_predicted_standing_orders_by_results():

@@ -24,7 +24,12 @@ class Match:
 class Scoreline:
     home: int
     away: int
-    ev: float = 0.0
+    ev: float = 0.0           # true expected Scorito points (for reporting)
+    sel: float | None = None  # selection score used by the optimizer (risk-tilted); defaults to ev
+
+    def __post_init__(self):
+        if self.sel is None:
+            self.sel = self.ev
 
     def toto(self) -> str:
         if self.home > self.away:

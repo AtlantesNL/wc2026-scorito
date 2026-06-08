@@ -18,6 +18,20 @@ def test_topscorer_points_confirmed():
     assert m["DEF"] / m["ATT"] == 4 and m["MID"] / m["ATT"] == 2
 
 
+def test_scoreline_toto_weight():
+    w = config.scoreline_toto_weight
+    # max_ev is always pure EV regardless of pool size
+    assert w("max_ev", 40) == 1.0 and w("max_ev", 1000) == 1.0
+    # tiny pool -> no tilt even for aggressive
+    assert w("aggressive", 10) == 1.0
+    # bigger pool -> stronger tilt (lower weight); capped, never absurd
+    small, big = w("aggressive", 20), w("aggressive", 500)
+    assert 0.9 < small <= 1.0
+    assert 0.1 <= big < small
+    # aggressive tilts more than balanced at the same (large) pool
+    assert w("aggressive", 500) < w("balanced", 500) < 1.0
+
+
 def test_types_construct():
     t = Team(name="Spain", code="ESP", group="H", elo=2100.0, confederation="UEFA")
     mt = Match(team1="Spain", team2="Uruguay", group="H", matchday=1, date="2026-06-15")
