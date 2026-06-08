@@ -26,9 +26,10 @@ def goals_from_odds(odds, total_line=None):
     return max(_FLOOR, lam1), max(_FLOOR, lam2)
 
 
-def goals_from_elo(elo_home, elo_away, total=config.NEUTRAL_AVG_TOTAL):
-    """Neutral-venue expected goals from an Elo gap."""
-    sup = (elo_home - elo_away) / config.ELO_GOAL_DIVISOR
+def goals_from_elo(elo_home, elo_away, total=config.NEUTRAL_AVG_TOTAL,
+                   divisor=config.ELO_GOAL_DIVISOR):
+    """Neutral-venue expected goals from an Elo gap (``divisor`` overridable for calibration)."""
+    sup = (elo_home - elo_away) / divisor
     lam1 = max(_FLOOR, (total + sup) / 2.0)
     lam2 = max(_FLOOR, (total - sup) / 2.0)
     return lam1, lam2
