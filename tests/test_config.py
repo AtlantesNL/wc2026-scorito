@@ -1,0 +1,23 @@
+from scorito import config
+from scorito.types import Team, Match, Scoreline
+
+
+def test_scoring_constants():
+    assert config.PTS_EXACT == 45
+    assert config.PTS_TOTO == 30
+    assert config.PTS_POSITION == 25
+    assert config.CHAMPION_BONUS == 250
+    assert config.TOPSCORER_SLOTS == 6
+
+
+def test_topscorer_multiplier_ratio():
+    m = config.TOPSCORER_MULT
+    assert m["DEF"] == m["GK"] == 4 and m["MID"] == 2 and m["ATT"] == 1
+
+
+def test_types_construct():
+    t = Team(name="Spain", code="ESP", group="H", elo=2100.0, confederation="UEFA")
+    mt = Match(team1="Spain", team2="Uruguay", group="H", matchday=1, date="2026-06-15")
+    s = Scoreline(home=1, away=0, ev=22.6)
+    assert t.elo == 2100.0 and mt.group == "H" and s.toto() == "H"
+    assert Scoreline(0, 0).toto() == "D" and Scoreline(0, 2).toto() == "A"
