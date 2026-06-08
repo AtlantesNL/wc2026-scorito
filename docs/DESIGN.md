@@ -99,16 +99,21 @@ standings component.
 
 ## 7. Topscorers
 
-Editable **candidate table** (seed: Van Dijk, Saliba + other penalty/set-piece
-defenders & wing-backs on deep-running teams; Mbappé, Kane, Yamal, Vinícius,
-Haaland, Cunha as the attacker floor). Fields: `name, team, position, pen_taker,
-g90, start_prob`.
+Editable **candidate table** (`scorito/data/topscorer_candidates.py`) of ~29 names
+cast across all 48 teams. Fields: `name, team, position, pen_taker, pen_share, g90,
+start_prob`, where `g90` is the player's **non-penalty** goals/90 (sourced from
+2025-26 club xG — penalties are added separately) and `pen_share` is his fraction of
+the team's penalties.
 
-`EV_t = (g90·3·start_prob + pen_bonus) · team_attack_factor · multiplier(position)`
+`EV_t = (g90·3·start_prob + PEN_BONUS·pen_share) · team_attack_factor · multiplier(position)`
 
-where `team_attack_factor` comes from the team's expected goals across its 3
-group games. Pick top 6 by EV (expected to skew toward defenders given the 4×
-multiplier); show EV + rationale; user can edit before submitting.
+where `team_attack_factor` comes from the team's expected goals across its 3 group
+games. Pick top 6 by EV. **NB (June-2026 research, see
+`docs/topscorer-research-2026-06-08.md`):** the edge is **high-volume forwards plus
+goal-scoring 16× MIDFIELDERS** (Bruno, Bellingham, Wirtz, Valverde) — *not*
+penalty-taking defenders: no full-back/centre-back was confirmed as a first-choice
+penalty taker, so the 32× defender slots (`TOPSCORER_DEF_RESERVE`) are a low-ownership
+differentiation play, not core EV. Show EV + rationale; user edits before submitting.
 
 ## 8. Outputs
 
