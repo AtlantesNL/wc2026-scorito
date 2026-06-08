@@ -26,3 +26,11 @@ def test_expected_goals_prefers_odds_then_elo():
     le = expected_goals(m, odds_map={}, elo={"A": 2000, "B": 1500})
     assert lo[0] > lo[1]  # odds path: A favored
     assert le[0] > le[1]  # elo path: A stronger
+
+
+def test_expected_goals_handles_odds_orientation_swap():
+    # Fixture is (A, B) but the odds feed lists it as (B home, A away).
+    m = Match(team1="A", team2="B", group="X")
+    odds_map = {("B", "A"): {"odds": [6.0, 4.0, 1.5], "total_line": None}}  # A is the favorite
+    lam_a, lam_b = expected_goals(m, odds_map=odds_map, elo={})
+    assert lam_a > lam_b  # orientation correctly flipped back to team1 = A

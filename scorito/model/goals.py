@@ -37,12 +37,18 @@ def goals_from_elo(elo_home, elo_away, total=config.NEUTRAL_AVG_TOTAL):
 def expected_goals(match, odds_map=None, elo=None):
     """Pick the best available signal for one ``Match`` -> ``(lam1, lam2)``.
 
-    ``odds_map``: ``{(team1, team2): {"odds": [h, d, a], "total_line": x|None}}``.
+    ``odds_map``: ``{(home, away): {"odds": [h, d, a], "total_line": x|None}}``.
+    The odds feed may list the fixture in the opposite orientation, so we also try
+    the swapped key (flipping home/away odds) before falling back to Elo.
     ``elo``: ``{team_name: rating}``.
     """
-    key = (match.team1, match.team2)
-    if odds_map and key in odds_map:
-        o = odds_map[key]
-        return goals_from_odds(o["odds"], o.get("total_line"))
+    if odds_map:
+        if (match.team1, match.team2) in odds_map:
+            o = odds_map[(match.team1, match.team2)]
+            return goals_from_odds(o["odds"], o.get("total_line"))
+        if (match.team2, match.team1) in odds_map:
+            o = odds_map[(match.team2, match.team1)]
+            h, d, a = o["odds"]
+            return goals_from_odds([a, d, h], o.get("total_line"))  # swap to team1-home
     elo = elo or {}
     return goals_from_elo(elo.get(match.team1, 1500.0), elo.get(match.team2, 1500.0))
