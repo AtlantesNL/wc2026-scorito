@@ -22,8 +22,8 @@ in `config.py` because two are contested (flagged below).
 | Correct toto (1/X/2) | **30** | per match |
 | Group standing | **25 / correct position** | **auto-derived from your scorelines**, max **100 / group** |
 | Champion bonus | **250** | only if your pick wins the tournament |
-| Topscorer per goal | **DEF/GK : MID : ATT = 4 : 2 : 1** | absolute = 32/16/8 **or** 64/32/16 — **CONFIRM IN-APP** |
-| Topscorer slots (group phase) | **6** (contested: blog says 4) | **CONFIRM IN-APP** |
+| Topscorer per goal | **ATT 8 / MID 16 / DEF 32 / GK 32** | confirmed in-app; ratio DEF/GK:MID:ATT = 4:2:1 |
+| Topscorer slots (group phase) | **6** | confirmed in-app; max 3 group games per player |
 
 Knockout match values (R32→Final, escalating to ~270 exact) are out of scope for
 v1 but recorded in config for later phases.
@@ -155,7 +155,7 @@ over-picked). Large divergence = bug signal.
 
 ## 12. Risks / caveats
 
-- **Topscorer multiplier & slot count (4 vs 6)** — confirm in-app; constants centralized.
+- **Topscorer scoring** — confirmed in-app: 6 picks, ATT 8 / MID 16 / DEF 32 / GK 32 per goal.
 - **Totals odds may be thin** this far out → Elo carries total-goals signal.
 - **Opta/odds common source** → discounted in champion blend.
 - penaltyblog 1.11.0 API verified; numpy fallback interface retained as insurance.

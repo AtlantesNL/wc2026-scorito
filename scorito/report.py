@@ -45,8 +45,9 @@ def _render_markdown(result: RunResult) -> str:
     L.append("# Scorito WC2026 — Recommended Group-Phase Picks\n")
     L.append(f"_Pool size:_ {result.pool_size} · _Risk:_ {result.risk} · "
              f"_Goal model:_ {'market odds + Elo' if result.used_odds else 'Elo only'}\n")
-    L.append("> ⚠️ Confirm in-app before locking: exact **deadline** (11 June 2026, "
-             "evening CET) and the topscorer **multiplier/slot count** (4 vs 6).\n")
+    L.append("> ⚠️ Confirm the exact **deadline** in-app (11 June 2026, evening CET). "
+             "Topscorer scoring confirmed: 6 picks; 8/16/32/32 pts per goal "
+             "(Aanvaller/Middenvelder/Verdediger/Keeper).\n")
     L.append(f"\n**Expected group-phase points (model):** {result.expected_group_points:.0f}\n")
 
     L.append("\n## Group scorelines & standings\n")
@@ -74,8 +75,9 @@ def _render_markdown(result: RunResult) -> str:
              f"differentiation from the field.\n")
 
     L.append("\n## Topscorers (pick 6)\n")
-    L.append("The 4:2:1 defender:mid:attacker multiplier is the edge — note the "
-             "high-value defenders/penalty-takers.\n")
+    L.append("Per goal: ATT 8 / MID 16 / DEF 32 / GK 32 — the 4:2:1 edge means a "
+             "defender's goal is worth four of a striker's. EV below is expected "
+             "group-phase points.\n")
     L.append("| Player | Team | Pos | Pen | EV |")
     L.append("|---|---|---|---|---|")
     for c in result.topscorers:

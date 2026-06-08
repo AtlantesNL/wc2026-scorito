@@ -10,9 +10,12 @@ def test_scoring_constants():
     assert config.TOPSCORER_SLOTS == 6
 
 
-def test_topscorer_multiplier_ratio():
+def test_topscorer_points_confirmed():
     m = config.TOPSCORER_MULT
-    assert m["DEF"] == m["GK"] == 4 and m["MID"] == 2 and m["ATT"] == 1
+    # Confirmed in-app (group phase): ATT 8 / MID 16 / DEF 32 / GK 32
+    assert m["ATT"] == 8 and m["MID"] == 16 and m["DEF"] == 32 and m["GK"] == 32
+    # ratio DEF/GK : MID : ATT = 4 : 2 : 1 drives selection
+    assert m["DEF"] / m["ATT"] == 4 and m["MID"] / m["ATT"] == 2
 
 
 def test_types_construct():

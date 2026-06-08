@@ -1,9 +1,10 @@
 """Seed topscorer candidate pool.
 
 ``g90`` = goals per 90 (recent-form estimate), ``start_prob`` = chance of starting,
-``pen_taker`` = takes his nation's penalties. Position drives the 4:2:1 multiplier
-(GK/DEF = 4, MID = 2, ATT = 1), which is the whole edge: a penalty-taking defender
-or wing-back on a deep-running side can out-score an elite striker.
+``pen_taker`` = takes his nation's penalties. Position drives the per-goal
+multiplier (GK/DEF = 32, MID = 16, ATT = 8; ratio 4:2:1), which is the whole edge:
+a penalty-taking defender or wing-back on a deep-running side can out-score an
+elite striker.
 
 EDIT THIS before locking picks — late squad/injury news beats any static snapshot.
 All teams here are validated against the openfootball 2026 participant list.

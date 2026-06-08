@@ -1,10 +1,8 @@
 """Central configuration: scoring constants and model parameters.
 
-Two scoring values are contested across public sources and must be confirmed on
-Scorito's in-app "Spelregels" page before locking picks (see docs/DESIGN.md §1):
-the absolute topscorer per-goal base (8/16/32 vs 16/32/64) and the group-phase
-topscorer slot count (4 vs 6). The DEF:MID:ATT = 4:2:1 *ratio* is robust either
-way, and only the ratio affects topscorer selection.
+Topscorer scoring confirmed from Scorito's in-app "Spelregels" page (group phase):
+6 picks; per goal Aanvaller 8 / Middenvelder 16 / Verdediger 32 / Keeper 32, with
+each topscorer playing at most 3 group games.
 """
 
 # --- Match scoring (group phase) ---
@@ -16,10 +14,11 @@ MAX_GROUP_POSITION_PTS = 100   # 4 positions x 25
 # --- Tournament-level ---
 CHAMPION_BONUS = 250    # paid only if your pick lifts the trophy
 
-# --- Topscorers ---
-# Relative per-goal multiplier by position (absolute base contested - confirm in-app).
-TOPSCORER_MULT = {"GK": 4, "DEF": 4, "MID": 2, "ATT": 1}
-TOPSCORER_SLOTS = 6     # group phase (blog says 4 - confirm in-app)
+# --- Topscorers (confirmed from Scorito in-app Spelregels, group phase) ---
+# Points per goal by position; each topscorer plays max 3 group games.
+# Ratio DEF/GK : MID : ATT = 4 : 2 : 1 is what drives selection.
+TOPSCORER_MULT = {"GK": 32, "DEF": 32, "MID": 16, "ATT": 8}
+TOPSCORER_SLOTS = 6
 
 # --- Model parameters ---
 DC_RHO = 0.001          # Dixon-Coles low-score correction (rho)

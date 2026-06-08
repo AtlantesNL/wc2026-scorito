@@ -2,9 +2,10 @@
 
 EV = (expected group-phase goals) * team_attack_factor * position_multiplier
 where expected goals ~= g90 * 3 games * start_prob (+ a penalty bonus), and the
-multiplier (GK/DEF=4, MID=2, ATT=1) is what makes penalty-taking defenders so
-valuable. ``team_attack_factor`` (from the goals model) scales by how much the
-player's side is expected to score across its three group games.
+per-goal multiplier (GK/DEF=32, MID=16, ATT=8; ratio 4:2:1) is what makes
+penalty-taking defenders so valuable. ``team_attack_factor`` (from the goals
+model) scales by how much the player's side is expected to score across its
+three group games.
 """
 from scorito import config
 from scorito.data.topscorer_candidates import CANDIDATES
