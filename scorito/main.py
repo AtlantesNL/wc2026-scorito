@@ -2,6 +2,7 @@
 champion + topscorers -> report. The Elo-only path (``--no-odds``) runs offline.
 """
 import argparse
+import json
 import os
 from collections import defaultdict
 
@@ -21,8 +22,8 @@ def _default_fixtures():
     return cached if os.path.exists(cached) else fixtures.WORLDCUP_URL
 
 
-def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, out_dir="out",
-        fixtures_src=None, sims=config.MC_SIMS, k=config.TOPK_SCORELINES, seed=0):
+def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=None,
+        out_dir="out", fixtures_src=None, sims=config.MC_SIMS, k=config.TOPK_SCORELINES, seed=0):
     matches = fixtures.load_fixtures(fixtures_src or _default_fixtures())
     gteams = group_teams(matches)
     all_teams = sorted({t for ts in gteams.values() for t in ts})
@@ -32,9 +33,10 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, out_dir="out
             elo_map[host] += config.HOST_ELO_BONUS
 
     odds_map, used_odds = None, False
-    if not no_odds and odds_key:
-        from scorito.data import odds  # lazy: only needed when an API key is given
-        odds_map = odds.parse_odds(odds.fetch_odds(odds_key))
+    if not no_odds and (odds_key or odds_file):
+        from scorito.data import odds  # lazy: only needed when odds are requested
+        raw = json.load(open(odds_file, encoding="utf-8")) if odds_file else odds.fetch_odds(odds_key)
+        odds_map = odds.parse_odds(raw)
         used_odds = True
 
     group_results = {}
@@ -68,15 +70,16 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="Scorito WC2026 group-phase pick optimizer")
     p.add_argument("--no-odds", action="store_true", help="Elo-only, no API key needed")
     p.add_argument("--odds-key", default=None, help="The Odds API key (enables market odds)")
+    p.add_argument("--odds-file", default=None, help="Load a saved Odds API JSON instead of fetching")
     p.add_argument("--pool-size", type=int, default=40)
     p.add_argument("--risk", choices=["max_ev", "balanced", "aggressive"], default="balanced")
     p.add_argument("--out", default="out")
     p.add_argument("--sims", type=int, default=config.MC_SIMS)
     args = p.parse_args(argv)
 
-    no_odds = args.no_odds or not args.odds_key
+    no_odds = args.no_odds or not (args.odds_key or args.odds_file)
     res = run(no_odds=no_odds, pool_size=args.pool_size, risk=args.risk,
-              odds_key=args.odds_key, out_dir=args.out, sims=args.sims)
+              odds_key=args.odds_key, odds_file=args.odds_file, out_dir=args.out, sims=args.sims)
 
     print(f"Wrote {args.out}/report.md and {args.out}/picks.csv")
     print(f"Goal model: {'market odds + Elo' if res.used_odds else 'Elo only'}")
