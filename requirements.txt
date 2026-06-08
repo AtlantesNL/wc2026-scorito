@@ -1,0 +1,7 @@
+numpy
+scipy
+pandas
+requests
+pyyaml
+pytest
+penaltyblog>=1.11
