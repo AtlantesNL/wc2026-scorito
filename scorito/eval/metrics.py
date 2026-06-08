@@ -32,3 +32,29 @@ def reliability_bins(pairs, nbins: int = 10):
         else:
             out.append((None, None, 0))
     return out
+
+
+def _sign(h, a) -> int:
+    return (h > a) - (h < a)
+
+
+def match_points(pick, actual) -> int:
+    """45 exact, else 30 if the 1/X/2 outcome matches, else 0."""
+    if tuple(pick) == tuple(actual):
+        return config.PTS_EXACT
+    if _sign(*pick) == _sign(*actual):
+        return config.PTS_TOTO
+    return 0
+
+
+def standings_points(predicted_table, actual_table) -> int:
+    """25 per team whose predicted finishing position matches the actual one."""
+    return config.PTS_POSITION * sum(
+        1 for p, a in zip(predicted_table, actual_table) if p == a
+    )
+
+
+def topscorer_points(picks, scorer_goals) -> int:
+    """Sum of goals x position multiplier (ATT 8 / MID 16 / DEF,GK 32) over our picks."""
+    return sum(int(scorer_goals.get(c["name"], 0)) * config.TOPSCORER_MULT[c["position"]]
+               for c in picks)
