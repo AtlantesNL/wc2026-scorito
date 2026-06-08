@@ -83,8 +83,8 @@ def _render_markdown(result: RunResult) -> str:
     for c in result.topscorers:
         L.append(f"| {c['name']} | {c['team']} | {c['position']} | "
                  f"{'✓' if c.get('pen_taker') else ''} | {c['ev']:.2f} |")
-    L.append("\n_Topscorer g90/start estimates are editable in "
-             "`scorito/data/topscorer_candidates.py` — adjust for late squad news._\n")
+    L.append("\n_Picks are auto-validated against the confirmed 2026 squads; g90/start "
+             "estimates are editable in `scorito/data/topscorer_candidates.py`._\n")
     return "\n".join(L)
 
 

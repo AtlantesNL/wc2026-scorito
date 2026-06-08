@@ -4,11 +4,14 @@ champion + topscorers -> report. The Elo-only path (``--no-odds``) runs offline.
 import argparse
 import json
 import os
+import warnings
 from collections import defaultdict
 
 from scorito import config
 from scorito.data import elo, fixtures
+from scorito.data import squads as squads_data
 from scorito.data.fixtures import group_teams
+from scorito.data.topscorer_candidates import CANDIDATES
 from scorito.model.champion import recommend_champion
 from scorito.model.goals import expected_goals
 from scorito.model.grid import build_grid
@@ -56,10 +59,19 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
     avg = sum(means.values()) / len(means)
     team_factors = {t: means[t] / avg for t in means}
 
+    # Drop topscorer candidates not in their team's confirmed 2026 squad.
+    squads = squads_data.load_squads()
+    kept, dropped = squads_data.validate_candidates(CANDIDATES, squads)
+    if dropped:
+        warnings.warn(
+            "Topscorer candidates dropped (not in confirmed squad): "
+            + ", ".join(f"{c['name']} ({c['team']})" for c in dropped)
+        )
+
     result = RunResult(
         groups=group_results,
         champion=recommend_champion(pool_size, risk),
-        topscorers=pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk),
+        topscorers=pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk, candidates=kept),
         pool_size=pool_size, risk=risk, used_odds=used_odds,
     )
     write_report(result, out_dir)
