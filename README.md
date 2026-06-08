@@ -25,6 +25,27 @@ uv pip install --python .venv/bin/python -r requirements.txt
 
 Outputs `out/report.md` (human) and `out/picks.csv` (for fast transcription).
 
+## Validation
+
+Measure prediction quality and grade live picks (`scorito/eval/`, free data only):
+
+```bash
+# Live scorecard: realized Scorito points for your picks vs baselines (always-1-0,
+# chalk champion, market top-6) as group results arrive. Auto-reads the openfootball
+# feed; drop data/wc2026_scorers.json as {"Player": goals} to enable topscorer grading.
+.venv/bin/python -m scorito.eval scorecard
+
+# Calibrate DC_RHO / NEUTRAL_AVG_TOTAL / ELO_GOAL_DIVISOR on past tournaments via a
+# self-computed Elo over the martj42 international-results CSV, with honest
+# leave-one-tournament-out CV. Add --write to update config.py.
+mkdir -p data/cache/history && curl -sL \
+  https://raw.githubusercontent.com/martj42/international_results/master/results.csv \
+  -o data/cache/history/intl_results.csv          # one-time download
+.venv/bin/python -m scorito.eval calibrate --tournaments wc2018,wc2022,euro2024
+```
+
+Design: [`docs/superpowers/specs/2026-06-08-validation-harness-design.md`](docs/superpowers/specs/2026-06-08-validation-harness-design.md).
+
 ## Status
 
 v1 = group phase. Re-run per phase as the knockout bracket is revealed.
