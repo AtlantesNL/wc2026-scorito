@@ -1,0 +1,6 @@
+{"name": "T", "matches": [
+  {"round": "Matchday 1", "date": "2026-06-11", "team1": "Mexico", "team2": "South Africa",
+   "group": "Group A", "score": {"ft": [2, 0]}},
+  {"round": "Matchday 1", "date": "2026-06-11", "team1": "South Korea", "team2": "Czech Republic",
+   "group": "Group A", "score": {"ft": [1, 1]}}
+]}
