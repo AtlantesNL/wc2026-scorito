@@ -2,3 +2,5 @@ date,home_team,away_team,home_score,away_score,tournament,city,country,neutral
 2017-06-01,A,B,2,1,Friendly,X,X,FALSE
 2018-06-14,A,B,1,0,FIFA World Cup,Moscow,Russia,TRUE
 2018-06-15,C,D,0,0,FIFA World Cup,Sochi,Russia,TRUE
+2018-07-01,E,F,NA,NA,FIFA World Cup,X,Russia,TRUE
+2018-07-02,G,H,,,FIFA World Cup,X,Russia,TRUE

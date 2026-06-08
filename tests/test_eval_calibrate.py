@@ -32,3 +32,11 @@ def test_sweep_picks_lower_logloss():
     best = calibrate.sweep({"toy": _toy_matches()}, grids)
     assert best["divisor"] in (150.0, 400.0)
     assert "cv_logloss" in best
+
+
+def test_load_intl_skips_unplayed_na_and_empty_scores():
+    # martj42 CSV uses "NA" (and sometimes empty) for unplayed matches -> must be skipped
+    ds = datasets.load_tournament(
+        "tests/fixtures/eval/intl_results.csv",
+        tournament="FIFA World Cup", years={2018})
+    assert len(ds["eval_matches"]) == 2  # only the 2 played 2018 WC matches

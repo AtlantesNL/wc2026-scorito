@@ -22,10 +22,11 @@ TOURNAMENTS = {
 def _rows(path):
     with open(path, encoding="utf-8") as f:
         for r in csv.DictReader(f):
-            if not r["home_score"]:
-                continue
+            hs, ascore = (r["home_score"] or "").strip(), (r["away_score"] or "").strip()
+            if not (hs.isdigit() and ascore.isdigit()):
+                continue  # unplayed / abandoned (the CSV uses "NA" or empty)
             yield dict(date=r["date"], home=r["home_team"], away=r["away_team"],
-                       hg=int(r["home_score"]), ag=int(r["away_score"]),
+                       hg=int(hs), ag=int(ascore),
                        tournament=r["tournament"],
                        neutral=str(r["neutral"]).strip().upper() == "TRUE")
 
