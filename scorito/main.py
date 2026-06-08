@@ -1,0 +1,89 @@
+"""CLI + orchestration: fixtures -> Elo/odds -> grids -> group optimizer ->
+champion + topscorers -> report. The Elo-only path (``--no-odds``) runs offline.
+"""
+import argparse
+import os
+from collections import defaultdict
+
+from scorito import config
+from scorito.data import elo, fixtures
+from scorito.data.fixtures import group_teams
+from scorito.model.champion import recommend_champion
+from scorito.model.goals import expected_goals
+from scorito.model.grid import build_grid
+from scorito.model.group_opt import optimize_group
+from scorito.model.topscorers import pick_topscorers
+from scorito.report import RunResult, write_report
+
+
+def _default_fixtures():
+    cached = "data/cache/worldcup2026.json"
+    return cached if os.path.exists(cached) else fixtures.WORLDCUP_URL
+
+
+def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, out_dir="out",
+        fixtures_src=None, sims=config.MC_SIMS, k=config.TOPK_SCORELINES, seed=0):
+    matches = fixtures.load_fixtures(fixtures_src or _default_fixtures())
+    gteams = group_teams(matches)
+    all_teams = sorted({t for ts in gteams.values() for t in ts})
+    elo_map = elo.get_elo(all_teams)
+    for host in config.HOSTS:  # home advantage for hosts (Elo path; odds already price it in)
+        if host in elo_map:
+            elo_map[host] += config.HOST_ELO_BONUS
+
+    odds_map, used_odds = None, False
+    if not no_odds and odds_key:
+        from scorito.data import odds  # lazy: only needed when an API key is given
+        odds_map = odds.parse_odds(odds.fetch_odds(odds_key))
+        used_odds = True
+
+    group_results = {}
+    team_lambda = defaultdict(list)
+    for g, teams in gteams.items():
+        gm = [m for m in matches if m.group == g]
+        gmatches = [(m.team1, m.team2) for m in gm]
+        grids = {}
+        for m in gm:
+            l1, l2 = expected_goals(m, odds_map, elo_map)
+            grids[(m.team1, m.team2)] = build_grid(l1, l2)
+            team_lambda[m.team1].append(l1)
+            team_lambda[m.team2].append(l2)
+        group_results[g] = optimize_group(teams, gmatches, grids, k=k, sims=sims, seed=seed, group=g)
+
+    means = {t: sum(v) / len(v) for t, v in team_lambda.items()}
+    avg = sum(means.values()) / len(means)
+    team_factors = {t: means[t] / avg for t in means}
+
+    result = RunResult(
+        groups=group_results,
+        champion=recommend_champion(pool_size, risk),
+        topscorers=pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk),
+        pool_size=pool_size, risk=risk, used_odds=used_odds,
+    )
+    write_report(result, out_dir)
+    return result
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(description="Scorito WC2026 group-phase pick optimizer")
+    p.add_argument("--no-odds", action="store_true", help="Elo-only, no API key needed")
+    p.add_argument("--odds-key", default=None, help="The Odds API key (enables market odds)")
+    p.add_argument("--pool-size", type=int, default=40)
+    p.add_argument("--risk", choices=["max_ev", "balanced", "aggressive"], default="balanced")
+    p.add_argument("--out", default="out")
+    p.add_argument("--sims", type=int, default=config.MC_SIMS)
+    args = p.parse_args(argv)
+
+    no_odds = args.no_odds or not args.odds_key
+    res = run(no_odds=no_odds, pool_size=args.pool_size, risk=args.risk,
+              odds_key=args.odds_key, out_dir=args.out, sims=args.sims)
+
+    print(f"Wrote {args.out}/report.md and {args.out}/picks.csv")
+    print(f"Goal model: {'market odds + Elo' if res.used_odds else 'Elo only'}")
+    print(f"Expected group-phase points (model): {res.expected_group_points:.0f}")
+    print(f"Champion: {res.champion[0].team} (alt: {res.champion[1].team})")
+    print("Topscorers:", ", ".join(c["name"] for c in res.topscorers))
+
+
+if __name__ == "__main__":
+    main()

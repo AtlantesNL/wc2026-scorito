@@ -20,3 +20,12 @@ def test_pick_returns_n_slots_sorted():
     assert len(picks) == 6
     evs = [p["ev"] for p in picks]
     assert evs == sorted(evs, reverse=True)
+
+
+def test_balanced_reserves_more_defenders_than_max_ev():
+    tf = {}  # all team factors default to 1.0
+    n_def = lambda picks: sum(1 for c in picks if c["position"] in ("DEF", "GK"))
+    bal = pick_topscorers(team_factors=tf, n=6, risk="balanced")
+    mx = pick_topscorers(team_factors=tf, n=6, risk="max_ev")
+    assert n_def(bal) >= 2  # balanced reserves defender differentiation slots
+    assert n_def(bal) >= n_def(mx)

@@ -28,3 +28,11 @@ TOPK_SCORELINES = 6     # candidate scorelines kept per match for the group enum
 MC_SIMS = 20000         # Monte-Carlo simulations per group
 NEUTRAL_AVG_TOTAL = 2.6 # tournament-average total goals (Elo fallback, neutral venue)
 ELO_GOAL_DIVISOR = 250.0  # Elo points per ~1 goal of expected supremacy
+
+# Host advantage (Elo path only; market odds already price it in). Group games for
+# the three hosts are effectively home, so we bump their effective rating.
+HOSTS = {"USA", "Mexico", "Canada"}
+HOST_ELO_BONUS = 100.0  # standard eloratings.net home-advantage value
+
+# Topscorer slots reserved for high-multiplier defenders as differentiation picks.
+TOPSCORER_DEF_RESERVE = {"max_ev": 0, "balanced": 2, "aggressive": 3}
