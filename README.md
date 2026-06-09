@@ -19,10 +19,10 @@ uv pip install --python .venv/bin/python -r requirements.txt
 
 ```bash
 # Elo-only (no API key, runs anywhere):
-.venv/bin/python -m scorito.main --no-odds --pool-size 40 --risk balanced
+.venv/bin/python -m scorito.main --no-odds --pool-size 32 --risk balanced
 
 # With market odds (sharper); get a free key at the-odds-api.com:
-.venv/bin/python -m scorito.main --odds-key "$ODDS_API_KEY" --pool-size 40 --risk balanced
+.venv/bin/python -m scorito.main --odds-key "$ODDS_API_KEY" --pool-size 32 --risk balanced
 ```
 
 Outputs `out/report.md` (human) and `out/picks.csv` (for fast transcription).

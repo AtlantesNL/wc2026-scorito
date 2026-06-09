@@ -28,15 +28,19 @@ def _default_fixtures():
     return cached if os.path.exists(cached) else fixtures.WORLDCUP_URL
 
 
-def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=None,
+def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=None,
         out_dir="out", fixtures_src=None, sims=config.MC_SIMS, k=config.TOPK_SCORELINES, seed=0):
     matches = fixtures.load_fixtures(fixtures_src or _default_fixtures())
     gteams = group_teams(matches)
     all_teams = sorted({t for ts in gteams.values() for t in ts})
-    elo_map = elo.get_elo(all_teams)
-    for host in config.HOSTS:  # home advantage for hosts (Elo path; odds already price it in)
-        if host in elo_map:
-            elo_map[host] += config.HOST_ELO_BONUS
+    elo_map = elo.get_elo(all_teams)  # clean ratings — used for the NEUTRAL knockout advance matrix
+    # Host advantage applies to the hosts' GROUP games only (Elo fallback path); it must NOT leak
+    # into the knockout sim (those venues aren't necessarily a given host's home — that bug
+    # inflated host title odds, e.g. Mexico as a fake "contender").
+    elo_group = dict(elo_map)
+    for host in config.HOSTS:
+        if host in elo_group:
+            elo_group[host] += config.HOST_ELO_BONUS
 
     odds_map, used_odds = None, False
     if not no_odds and (odds_key or odds_file):
@@ -55,7 +59,7 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
         gmatches = [(m.team1, m.team2) for m in gm]
         grids = {}
         for m in gm:
-            l1, l2 = expected_goals(m, odds_map, elo_map)
+            l1, l2 = expected_goals(m, odds_map, elo_group)
             grids[(m.team1, m.team2)] = build_grid(l1, l2)
             team_lambda[m.team1].append(l1)
             team_lambda[m.team2].append(l2)
@@ -120,7 +124,8 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
         champion=champion,
         topscorers=topscorers,
         pool_size=pool_size, risk=risk, used_odds=used_odds,
-        meta={"scoreline_toto_weight": toto_weight, "pool_win_stable": pool_win_stable},
+        meta={"scoreline_toto_weight": toto_weight, "pool_win_stable": pool_win_stable,
+              "pool_win_sims": config.POOL_WIN_SIMS},
         advance=advance,
         pool_win=pool_win,
     )
@@ -133,7 +138,7 @@ def main(argv=None):
     p.add_argument("--no-odds", action="store_true", help="Elo-only, no API key needed")
     p.add_argument("--odds-key", default=None, help="The Odds API key (enables market odds)")
     p.add_argument("--odds-file", default=None, help="Load a saved Odds API JSON instead of fetching")
-    p.add_argument("--pool-size", type=int, default=40)
+    p.add_argument("--pool-size", type=int, default=32)
     p.add_argument("--risk", choices=["max_ev", "balanced", "aggressive"], default="balanced")
     p.add_argument("--out", default="out")
     p.add_argument("--sims", type=int, default=config.MC_SIMS)

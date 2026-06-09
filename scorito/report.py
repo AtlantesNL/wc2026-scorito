@@ -81,10 +81,17 @@ def _render_markdown(result: RunResult) -> str:
     rec = result.champion[0]
     wp = result.pool_win.get(rec.team)
     if wp is not None:
-        flag = "" if result.meta.get("pool_win_stable", True) else \
-            " ⚠️ pick flips across field-chalkiness assumptions (see FIELD_SHARPNESS)"
-        L.append(f"\n**Recommendation: {rec.team}** — maximizes P(finishing 1st) at {wp:.1%} "
-                 f"vs a modelled chalky ~{result.pool_size}-entry field.{flag}\n")
+        sims = result.meta.get("pool_win_sims", 0) or 1
+        top = max(result.pool_win.values())
+        se = (max(top * (1.0 - top), 1e-9) / sims) ** 0.5          # Monte-Carlo std error
+        cluster = sorted((t for t, p in result.pool_win.items() if p >= top - 2 * se),
+                         key=lambda t: -result.pool_win[t])
+        names = ", ".join(f"{t} {result.pool_win[t]:.1%}" for t in cluster[:5])
+        L.append(f"\n**Champion — pick from the leverage cluster** (statistically tied within "
+                 f"~2 Monte-Carlo std-errors, ±{se:.1%}): {names}. Default: **{rec.team}**. These "
+                 f"all out-leverage the over-owned favourites; choose the one you most believe "
+                 f"will lift the trophy — and avoid host nations (USA/Mexico/Canada), which "
+                 f"amateurs over-pick.\n")
     else:
         runner = result.champion[1]
         L.append(f"\n**Recommendation: {rec.team}** (pool-adjusted leverage); "
