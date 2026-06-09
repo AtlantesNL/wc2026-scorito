@@ -88,11 +88,16 @@ def _render_markdown(result: RunResult) -> str:
         cluster = sorted((t for t, p in result.pool_win.items() if p >= top - 2 * se),
                          key=lambda t: -result.pool_win[t])
         names = ", ".join(f"{t} {result.pool_win[t]:.1%}" for t in cluster[:5])
-        L.append(f"\n**Champion — pick from the leverage cluster** (statistically tied within "
-                 f"~2 Monte-Carlo std-errors, ±{se:.1%}): {names}. Default: **{rec.team}**. These "
-                 f"all out-leverage the over-owned favourites; choose the one you most believe "
-                 f"will lift the trophy — and avoid host nations (USA/Mexico/Canada), which "
-                 f"amateurs over-pick.\n")
+        outright = {r.team: r.p_win for r in result.champion}
+        alts = [t for t in cluster if t != rec.team]
+        dart = min(alts, key=lambda t: outright.get(t, 1.0)) if alts else None  # boldest tied-best pick
+        dart_txt = ("" if dart is None else
+                    f" If your pool is unusually chalk-heavy on the favourites, **{dart}** is the "
+                    f"higher-leverage differentiation dart (lower title odds, less owned).")
+        L.append(f"\n**Champion — robust pick: {rec.team}** ({wp:.1%} pool-win, the highest floor at a "
+                 f"realistic field; within ~2 Monte-Carlo std-errors ±{2 * se:.1%} of the cluster "
+                 f"[{names}]).{dart_txt} Avoid host nations (USA/Mexico/Canada), which amateurs "
+                 f"over-pick.\n")
     else:
         runner = result.champion[1]
         L.append(f"\n**Recommendation: {rec.team}** (pool-adjusted leverage); "
