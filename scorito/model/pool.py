@@ -200,7 +200,7 @@ def _best_with_floor(win_probs, champion_probs, eps=0.005):
 def pool_win_champion(our_entry, gteams, group_matches, grids, elo, bracket, candidates,
                       team_factors, champion_probs, scoreline_choices, topscorer_pool,
                       pool_size, candidate_champions, seed=0,
-                      sims=config.POOL_WIN_SIMS, sharpnesses=(1.5, 2.0, 3.0)):
+                      sims=config.POOL_WIN_SIMS, sharpnesses=(1.0, 1.5, 2.0)):
     """Pick the champion maximizing P(our entry finishes 1st). Returns
     (best_champion, {champion: P(win) at default sharpness}, stable) where ``stable`` is True
     iff the argmax agrees across the ``sharpnesses`` sensitivity sweep. Worlds are sampled once

@@ -96,3 +96,9 @@ def test_greedy_topscorers_no_field_reduces_to_ev():
     points = {"lo": np.array([1.0, 1, 1, 1]), "hi": np.array([2.0, 2, 2, 2])}
     names, pwin = pool.greedy_topscorers(our_fixed, max_rival, points, n_slots=1)
     assert names == ["hi"] and pwin == 1.0
+
+
+def test_pool_win_champion_default_sharpnesses_are_realistic():
+    import inspect
+    sweep = inspect.signature(pool.pool_win_champion).parameters["sharpnesses"].default
+    assert all(s <= 2.0 for s in sweep) and min(sweep) <= 1.0   # plausible amateur dispersions only
