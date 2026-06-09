@@ -33,6 +33,11 @@ POOL_WIN_SIMS = 15000      # tournament "worlds" sampled for the pool-win evalua
 DRAW_AVERSION = 0.4
 SCORELINE_LEVERAGE_GAMMA = {"max_ev": 0.0, "balanced": 0.1, "aggressive": 0.2}
 
+# Anytime-goalscorer (ATGS) market -> goal rates. Flat de-vig (ATGS has no clean complementary leg);
+# eu+uk regions for book consensus (~2 credits/event x 72 group games on The Odds API free tier).
+ATGS_MARGIN = 1.06
+ATGS_REGIONS = "eu,uk"
+
 # --- Topscorers (confirmed from Scorito in-app Spelregels, group phase) ---
 # Points per goal by position; each topscorer plays max 3 group games.
 # Ratio DEF/GK : MID : ATT = 4 : 2 : 1 is what drives selection.

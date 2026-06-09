@@ -30,3 +30,8 @@ def test_scoreline_leverage_constants():
     assert 0 < config.DRAW_AVERSION < 1
     assert config.SCORELINE_LEVERAGE_GAMMA["max_ev"] == 0.0
     assert config.SCORELINE_LEVERAGE_GAMMA["aggressive"] > config.SCORELINE_LEVERAGE_GAMMA["balanced"] > 0
+
+
+def test_atgs_constants():
+    assert config.ATGS_MARGIN > 1.0
+    assert "eu" in config.ATGS_REGIONS
