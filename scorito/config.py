@@ -18,6 +18,10 @@ CHAMPION_BONUS = 250    # paid only if your pick lifts the trophy
 # 0.0 = pure Monte-Carlo, 1.0 = market-anchored.
 CHAMPION_MARKET_WEIGHT = 0.5
 
+# Pool-win (field) model.
+FIELD_SHARPNESS = 2.0      # field chalkiness exponent (1 = pick ~ true prob; higher = chalkier)
+POOL_WIN_SIMS = 5000       # tournament "worlds" sampled for the pool-win evaluator
+
 # --- Topscorers (confirmed from Scorito in-app Spelregels, group phase) ---
 # Points per goal by position; each topscorer plays max 3 group games.
 # Ratio DEF/GK : MID : ATT = 4 : 2 : 1 is what drives selection.
