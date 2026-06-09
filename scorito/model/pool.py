@@ -8,7 +8,7 @@ from scorito.eval.metrics import match_points, standings_points, topscorer_point
 from scorito.model.bracket import ThirdSlot, assign_thirds, qualify_thirds
 from scorito.model.field import generate_field
 from scorito.model.group_sim import _award, _rank_table, _sample_scores
-from scorito.model.topscorers import sample_player_goals
+from scorito.model.topscorers import sample_player_goals, score_candidate
 from scorito.model.tournament import _resolve, advance_matrix
 
 
@@ -149,6 +149,33 @@ def greedy_topscorers(our_fixed, max_rival, points_by_name, n_slots):
                 chosen[i] = best
                 improved = True
     return chosen, pwin(ts_w)
+
+
+def pool_win_topscorers(our_entry, our_champion, candidates, gteams, group_matches, grids, elo,
+                        bracket, team_factors, champion_probs, scoreline_choices, ts_field_pool,
+                        pool_size, n_slots=config.TOPSCORER_SLOTS, seed=0, sims=config.POOL_WIN_SIMS,
+                        bonus=config.CHAMPION_BONUS):
+    """Pick n_slots topscorers maximizing P(our entry finishes 1st), holding scorelines + champion
+    fixed, against a fame-weighted field. Returns (picks: candidate dicts with 'ev', pool_win)."""
+    worlds = sample_worlds(gteams, group_matches, grids, elo, bracket, candidates, team_factors,
+                           sims=sims, seed=seed)
+    field = generate_field(max(0, pool_size - 1), scoreline_choices, champion_probs, ts_field_pool,
+                           config.FIELD_SHARPNESS, np.random.default_rng(seed + 1))
+    base_excl, rival_base, rival_champ, champ_w = score_field(
+        dict(our_entry, topscorers=[]), field, worlds, gteams, group_matches)
+    W = len(worlds)
+    if rival_base.shape[0] == 0:
+        max_rival = np.full(W, -np.inf)
+    else:
+        rc = np.array(rival_champ, dtype=object)[:, None]
+        max_rival = (rival_base + bonus * (rc == champ_w[None, :])).max(axis=0)
+    our_fixed = base_excl + bonus * (champ_w == our_champion)
+    pgoals_arr = {n: np.array([w["pgoals"][n] for w in worlds], dtype=float) for n in worlds[0]["pgoals"]}
+    points = {c["name"]: config.TOPSCORER_MULT[c["position"]] * pgoals_arr[c["name"]] for c in candidates}
+    names, pwin = greedy_topscorers(our_fixed, max_rival, points, n_slots)
+    by_name = {c["name"]: c for c in candidates}
+    picks = [dict(by_name[n], ev=round(score_candidate(by_name[n], team_factors), 3)) for n in names]
+    return picks, pwin
 
 
 def _best_with_floor(win_probs, champion_probs, eps=0.005):
