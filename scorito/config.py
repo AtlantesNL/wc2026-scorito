@@ -22,6 +22,12 @@ CHAMPION_MARKET_WEIGHT = 0.5
 FIELD_SHARPNESS = 2.0      # field chalkiness exponent (1 = pick ~ true prob; higher = chalkier)
 POOL_WIN_SIMS = 15000      # tournament "worlds" sampled for the pool-win evaluator
 
+# Pool-aware scorelines: amateur rivals avoid draws — they pick ~DRAW_AVERSION of the draws the
+# model implies. SCORELINE_LEVERAGE_GAMMA discounts crowded outcomes (per risk); pool size enters
+# via the leverage denominator (own·(N-1)), so small pools stay near-chalk automatically.
+DRAW_AVERSION = 0.4
+SCORELINE_LEVERAGE_GAMMA = {"max_ev": 0.0, "balanced": 0.5, "aggressive": 1.0}
+
 # --- Topscorers (confirmed from Scorito in-app Spelregels, group phase) ---
 # Points per goal by position; each topscorer plays max 3 group games.
 # Ratio DEF/GK : MID : ATT = 4 : 2 : 1 is what drives selection.

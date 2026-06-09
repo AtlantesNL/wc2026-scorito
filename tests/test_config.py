@@ -38,3 +38,9 @@ def test_types_construct():
     s = Scoreline(home=1, away=0, ev=22.6)
     assert t.elo == 2100.0 and mt.group == "H" and s.toto() == "H"
     assert Scoreline(0, 0).toto() == "D" and Scoreline(0, 2).toto() == "A"
+
+
+def test_scoreline_leverage_constants():
+    assert 0 < config.DRAW_AVERSION < 1
+    assert config.SCORELINE_LEVERAGE_GAMMA["max_ev"] == 0.0
+    assert config.SCORELINE_LEVERAGE_GAMMA["aggressive"] > config.SCORELINE_LEVERAGE_GAMMA["balanced"] > 0
