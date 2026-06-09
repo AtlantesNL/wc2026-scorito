@@ -120,6 +120,15 @@ def champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidates,
     return {c: float(np.mean(base_w + bonus * (champ_w == c) > max_rival)) for c in candidates}
 
 
+def _best_with_floor(win_probs, champion_probs, eps=0.005):
+    """Argmax of pool-win probability, breaking near-ties (within ``eps``) toward the higher
+    outright P(win) — among similarly-leveraged champions, take the higher floor (which also
+    lowers our own outcome variance). Avoids chasing Monte-Carlo noise on a flat landscape."""
+    top = max(win_probs.values())
+    near = [t for t in win_probs if win_probs[t] >= top - eps]
+    return max(near, key=lambda t: champion_probs.get(t, 0.0))
+
+
 def pool_win_champion(our_entry, gteams, group_matches, grids, elo, bracket, candidates,
                       team_factors, champion_probs, scoreline_choices, topscorer_pool,
                       pool_size, candidate_champions, seed=0,
@@ -131,20 +140,19 @@ def pool_win_champion(our_entry, gteams, group_matches, grids, elo, bracket, can
     worlds = sample_worlds(gteams, group_matches, grids, elo, bracket, candidates,
                            team_factors, sims=sims, seed=seed)
     n_rivals = max(0, pool_size - 1)
-    argmaxes, default_probs = [], None
+    probs_by_sh = {}
     for sh in sharpnesses:
         field = generate_field(n_rivals, scoreline_choices, champion_probs,
                                topscorer_pool, sh, np.random.default_rng(seed + 1))
         base_w, rival_base, rival_champ, champ_w = score_field(
             our_entry, field, worlds, gteams, group_matches)
-        probs = champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidate_champions)
-        argmaxes.append(max(probs, key=probs.get))
-        if abs(sh - config.FIELD_SHARPNESS) < 1e-9:
-            default_probs = probs
-    if default_probs is None:
-        field = generate_field(n_rivals, scoreline_choices, champion_probs,
-                               topscorer_pool, config.FIELD_SHARPNESS, np.random.default_rng(seed + 1))
-        base_w, rival_base, rival_champ, champ_w = score_field(
-            our_entry, field, worlds, gteams, group_matches)
-        default_probs = champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidate_champions)
-    return max(default_probs, key=default_probs.get), default_probs, len(set(argmaxes)) == 1
+        probs_by_sh[sh] = champion_win_probs(base_w, rival_base, rival_champ, champ_w,
+                                             candidate_champions)
+    default_sh = (config.FIELD_SHARPNESS if config.FIELD_SHARPNESS in probs_by_sh
+                  else sorted(probs_by_sh)[len(probs_by_sh) // 2])
+    default_probs = probs_by_sh[default_sh]
+    top = max(default_probs.values())
+    eps = 2.0 * (top * (1.0 - top) / max(1, sims)) ** 0.5   # ~2 Monte-Carlo standard errors
+    argmaxes = [_best_with_floor(probs_by_sh[sh], champion_probs, eps) for sh in sharpnesses]
+    best = _best_with_floor(default_probs, champion_probs, eps)
+    return best, default_probs, len(set(argmaxes)) == 1

@@ -68,3 +68,12 @@ def test_champion_win_probs_leverage_off_overowned_favourite():
     probs = pool.champion_win_probs(base_w, rival_base, rival_champ, champ_w, ["X", "Y"])
     assert probs["Y"] > probs["X"]          # core thesis: leverage off the crowd
     assert 0 <= probs["X"] <= 1 and 0 <= probs["Y"] <= 1
+
+
+def test_best_with_floor_breaks_near_ties_toward_higher_outright():
+    win = {"Portugal": 0.068, "Argentina": 0.064, "Colombia": 0.058}
+    outright = {"Portugal": 0.060, "Argentina": 0.118, "Colombia": 0.042}
+    # within eps: Portugal & Argentina tie on win-pool -> prefer the higher-floor Argentina
+    assert pool._best_with_floor(win, outright, eps=0.005) == "Argentina"
+    # eps=0 -> strict argmax of win-pool
+    assert pool._best_with_floor(win, outright, eps=0.0) == "Portugal"

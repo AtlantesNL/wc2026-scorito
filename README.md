@@ -1,9 +1,10 @@
 # Scorito World Cup 2026 — Pick Optimizer
 
 Recommends group-phase Scorito picks: 72 match scorelines (jointly optimized with
-the auto-derived group standings), 6 topscorers, and a champion pick (chosen from a
-full-tournament Monte-Carlo of all 48 teams — draw-aware, blended with market title
-odds via `CHAMPION_MARKET_WEIGHT`). Tuned for a ~30–50 person pool, balanced risk.
+the auto-derived group standings), 6 topscorers, and a champion pick chosen to maximize
+**P(finishing 1st in your pool)** — a full-tournament Monte-Carlo (all 48 teams, draw-aware,
+market-blended) scored against a modelled rival field (`FIELD_SHARPNESS`), which fades
+over-owned favourites. Tuned for a ~30–50 person pool, balanced risk.
 
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the full design.
 
