@@ -7,7 +7,11 @@ market-blended) scored against a modelled rival field (`FIELD_SHARPNESS`), which
 over-owned favourites. Scorelines are pool-leverage-adjusted to lean off outcomes a draw-averse
 amateur field over-owns, but calibrated **near-chalk** — the pool-win evaluator finds scoreline
 differentiation is ≈neutral at this pool size
-([finding](docs/scoreline-calibration-2026-06-09.md)). Tuned for a ~30–50 person pool, balanced risk.
+([finding](docs/scoreline-calibration-2026-06-09.md)). Topscorers are **engine-selected** for
+P(finishing 1st) against a fame-biased field (rivals over-own famous attackers, so under-owned
+high-multiplier defenders/keepers separate us) — a small but real edge, safeguarded to never
+underperform the EV pick ([finding](docs/topscorer-ownership-calibration-2026-06-09.md)). Tuned for a
+~30–50 person pool, balanced risk.
 
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the full design.
 
