@@ -45,3 +45,22 @@ def test_simulate_is_seed_deterministic():
     a = tn.simulate(gteams, matches, grids, elo, bracket, sims=500, seed=7)
     b = tn.simulate(gteams, matches, grids, elo, bracket, sims=500, seed=7)
     assert a["win"] == b["win"]
+
+
+def test_simulate_with_real_bracket_covers_all_48():
+    import itertools
+    from scorito.model.bracket import load_bracket
+    brk = load_bracket("data/cache/worldcup2026.json")
+    groups = "ABCDEFGHIJKL"
+    gteams = {g: [f"{g}{i}" for i in range(1, 5)] for g in groups}
+    even = build_grid(1.3, 1.1)
+    group_matches, grids = [], {}
+    for g in groups:
+        for a, b in itertools.combinations(gteams[g], 2):
+            group_matches.append((a, b))
+            grids[(a, b)] = even
+    elo = {f"{g}{i}": 1500.0 for g in groups for i in range(1, 5)}
+    out = tn.simulate(gteams, group_matches, grids, elo, brk, sims=300, seed=3)
+    assert len(out["win"]) == 48
+    assert sum(out["win"].values()) == pytest.approx(1.0, abs=1e-9)
+    assert all(0.0 <= p <= 1.0 for p in out["win"].values())

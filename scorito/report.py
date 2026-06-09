@@ -13,6 +13,7 @@ class RunResult:
     risk: str
     used_odds: bool
     meta: dict = field(default_factory=dict)
+    advance: dict = field(default_factory=dict)   # team -> {"r16","qf","sf","final","win"}
 
     @property
     def expected_group_points(self):
@@ -67,10 +68,13 @@ def _render_markdown(result: RunResult) -> str:
                  f"(standings) = **{gr.total:.0f}** pts_\n")
 
     L.append("\n## Champion (250 pts)\n")
-    L.append("| Team | P(win) | EV | Est. pool share | Leverage |")
-    L.append("|---|---|---|---|---|")
+    L.append("| Team | P(win) | EV | Share | Lev | R16 | QF | SF | Final |")
+    L.append("|---|---|---|---|---|---|---|---|---|")
     for r in result.champion[:5]:
-        L.append(f"| {r.team} | {r.p_win:.1%} | {r.ev_points:.0f} | {r.est_share:.0%} | {r.leverage:.4f} |")
+        a = result.advance.get(r.team, {})
+        L.append(f"| {r.team} | {r.p_win:.1%} | {r.ev_points:.0f} | {r.est_share:.0%} | "
+                 f"{r.leverage:.4f} | {a.get('r16', 0):.0%} | {a.get('qf', 0):.0%} | "
+                 f"{a.get('sf', 0):.0%} | {a.get('final', 0):.0%} |")
     rec = result.champion[0]
     runner = result.champion[1]
     L.append(f"\n**Recommendation: {rec.team}** (best pool-adjusted leverage). "

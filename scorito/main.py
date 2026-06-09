@@ -12,6 +12,9 @@ from scorito.data import elo, fixtures
 from scorito.data import squads as squads_data
 from scorito.data.fixtures import group_teams
 from scorito.data.topscorer_candidates import CANDIDATES
+from scorito.data.priors import blend_champion_probs, blended_probs
+from scorito.model import bracket as bracket_mod
+from scorito.model import tournament
 from scorito.model.champion import recommend_champion
 from scorito.model.goals import expected_goals
 from scorito.model.grid import build_grid
@@ -46,6 +49,7 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
 
     group_results = {}
     team_lambda = defaultdict(list)
+    all_grids = {}
     for g, teams in gteams.items():
         gm = [m for m in matches if m.group == g]
         gmatches = [(m.team1, m.team2) for m in gm]
@@ -55,12 +59,27 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
             grids[(m.team1, m.team2)] = build_grid(l1, l2)
             team_lambda[m.team1].append(l1)
             team_lambda[m.team2].append(l2)
+        all_grids.update(grids)
         group_results[g] = optimize_group(teams, gmatches, grids, k=k, sims=sims,
                                           seed=seed, group=g, toto_weight=toto_weight)
 
     means = {t: sum(v) / len(v) for t, v in team_lambda.items()}
     avg = sum(means.values()) / len(means)
     team_factors = {t: means[t] / avg for t in means}
+
+    # Champion P(win): full-tournament Monte-Carlo when the complete 12-group bracket is
+    # present (blended with the market/Opta prior); otherwise (e.g. a partial-fixture test
+    # run) fall back to the static prior.
+    advance = {}
+    if len(gteams) == 12:
+        brk = bracket_mod.load_bracket(fixtures_src or _default_fixtures())
+        group_match_keys = [(m.team1, m.team2) for m in matches]
+        sim = tournament.simulate(gteams, group_match_keys, all_grids, elo_map, brk,
+                                  sims=sims, seed=seed)
+        pwin = blend_champion_probs(sim["win"], blended_probs())
+        advance = sim["advance"]
+    else:
+        pwin = blended_probs()
 
     # Drop topscorer candidates not in their team's confirmed 2026 squad.
     squads = squads_data.load_squads()
@@ -73,10 +92,11 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
 
     result = RunResult(
         groups=group_results,
-        champion=recommend_champion(pool_size, risk),
+        champion=recommend_champion(pwin, pool_size, risk),
         topscorers=pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk, candidates=kept),
         pool_size=pool_size, risk=risk, used_odds=used_odds,
         meta={"scoreline_toto_weight": toto_weight},
+        advance=advance,
     )
     write_report(result, out_dir)
     return result

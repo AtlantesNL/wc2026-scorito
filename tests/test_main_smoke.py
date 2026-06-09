@@ -16,3 +16,4 @@ def test_elo_only_pipeline_runs(monkeypatch, tmp_path):
     assert len(res.groups) == 1  # sample fixture has only Group A
     assert len(res.topscorers) == 6
     assert not res.used_odds
+    assert res.advance == {}  # 1-group sample -> champion MC guarded off, falls back to prior
