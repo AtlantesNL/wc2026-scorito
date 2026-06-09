@@ -13,7 +13,6 @@ pick is, with the penalty growing in pool size and risk appetite.
 from dataclasses import dataclass
 
 from scorito import config
-from scorito.data.priors import blended_probs
 
 GAMMA = {"max_ev": 0.0, "balanced": 0.5, "aggressive": 1.0}
 
@@ -39,9 +38,10 @@ def leverage_score(p_win: float, share: float, pool_size: int, risk: str) -> flo
     return p_win / (1.0 + share * (pool_size - 1)) ** g
 
 
-def recommend_champion(pool_size: int, risk: str = "balanced"):
-    """Return ChampionRecs sorted by pool-adjusted leverage (best first)."""
-    pwin = blended_probs()
+def recommend_champion(pwin, pool_size: int, risk: str = "balanced"):
+    """Return ChampionRecs sorted by pool-adjusted leverage (best first).
+
+    ``pwin``: ``{team: P(win)}`` (e.g. the blended simulation+market probabilities)."""
     shares = est_shares(pwin)
     recs = [
         ChampionRec(
