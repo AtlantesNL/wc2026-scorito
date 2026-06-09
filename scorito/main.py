@@ -14,6 +14,7 @@ from scorito.data.fixtures import group_teams
 from scorito.data.topscorer_candidates import CANDIDATES
 from scorito.data.priors import blend_champion_probs, blended_probs
 from scorito.model import bracket as bracket_mod
+from scorito.model import field
 from scorito.model import tournament
 from scorito.model.champion import recommend_champion
 from scorito.model.goals import expected_goals
@@ -49,8 +50,6 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         odds_map = odds.parse_odds(raw)
         used_odds = True
 
-    toto_weight = config.scoreline_toto_weight(risk, pool_size)
-
     group_results = {}
     team_lambda = defaultdict(list)
     all_grids = {}
@@ -64,8 +63,11 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
             team_lambda[m.team1].append(l1)
             team_lambda[m.team2].append(l2)
         all_grids.update(grids)
-        group_results[g] = optimize_group(teams, gmatches, grids, k=k, sims=sims,
-                                          seed=seed, group=g, toto_weight=toto_weight)
+        own_by_match = {key: field.scoreline_ownership(grids[key], config.DRAW_AVERSION,
+                                                       config.FIELD_SHARPNESS) for key in grids}
+        group_results[g] = optimize_group(teams, gmatches, grids, k=k, sims=sims, seed=seed,
+                                          group=g, own_by_match=own_by_match, n_rivals=pool_size - 1,
+                                          gamma=config.SCORELINE_LEVERAGE_GAMMA.get(risk, 0.0))
 
     means = {t: sum(v) / len(v) for t, v in team_lambda.items()}
     avg = sum(means.values()) / len(means)
@@ -124,8 +126,7 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         champion=champion,
         topscorers=topscorers,
         pool_size=pool_size, risk=risk, used_odds=used_odds,
-        meta={"scoreline_toto_weight": toto_weight, "pool_win_stable": pool_win_stable,
-              "pool_win_sims": config.POOL_WIN_SIMS},
+        meta={"pool_win_stable": pool_win_stable, "pool_win_sims": config.POOL_WIN_SIMS},
         advance=advance,
         pool_win=pool_win,
     )

@@ -38,13 +38,15 @@ def _tilt_grid():
     return ScoreGrid(m, p_home=0.50, p_draw=0.35, p_away=0.15)
 
 
-def test_toto_weight_tilts_toward_exact_score():
-    g = _tilt_grid()
-    safe = topk_scorelines(g, k=1, toto_weight=1.0)[0]   # pure EV
-    bold = topk_scorelines(g, k=1, toto_weight=0.0)[0]   # ignore the shared toto
-    assert (safe.home, safe.away) == (1, 0)              # EV banks the broad home toto
-    assert (bold.home, bold.away) == (1, 1)              # bold chases the modal exact score
-    # ev always reports TRUE expected points; sel carries the tilt
-    assert abs(bold.ev - score_ev(g, 1, 1, 1.0)) < 1e-9
-    assert abs(bold.sel - score_ev(g, 1, 1, 0.0)) < 1e-9
+def test_leverage_tilts_toward_underowned_draw():
+    g = _tilt_grid()                                  # 1-0 broad toto; 1-1 modal exact
+    safe = topk_scorelines(g, k=1)[0]                 # no field -> raw EV
+    assert (safe.home, safe.away) == (1, 0)
+    # draw-averse field: the draw outcome is under-owned -> high leverage
+    own_exact = {(1, 0): 0.4, (2, 0): 0.3, (1, 1): 0.05, (0, 1): 0.1}
+    own_toto = {"home": 0.7, "draw": 0.05, "away": 0.1}
+    bold = topk_scorelines(g, k=1, own_exact=own_exact, own_toto=own_toto,
+                           n_rivals=30, gamma=0.5)[0]
+    assert (bold.home, bold.away) == (1, 1)           # leverage chases the under-owned draw
+    assert abs(bold.ev - score_ev(g, 1, 1, 1.0)) < 1e-9   # ev still = true EV
     assert bold.ev != bold.sel

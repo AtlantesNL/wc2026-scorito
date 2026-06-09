@@ -75,10 +75,13 @@ def standings_only_ordering(probs):
 
 
 def optimize_group(teams, matches, grids, k=config.TOPK_SCORELINES,
-                   sims=config.MC_SIMS, seed=0, probs=None, group="", toto_weight=1.0):
+                   sims=config.MC_SIMS, seed=0, probs=None, group="",
+                   own_by_match=None, n_rivals=0, gamma=0.0):
     if probs is None:
         probs = position_probs(teams, matches, grids, sims=sims, seed=seed)
-    cand = [topk_scorelines(grids[m], k, toto_weight) for m in matches]
+    obm = own_by_match or {}
+    cand = [topk_scorelines(grids[m], k, *obm.get(m, (None, None)), n_rivals, gamma)
+            for m in matches]
     naive = [c[0] for c in cand]
     _, _, naive_total, _, _ = score_combo(naive, matches, teams, probs)
 
