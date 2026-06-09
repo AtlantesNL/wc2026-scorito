@@ -49,3 +49,18 @@ def test_scoreline_ownership_downweights_draws_and_sums_to_one():
     assert ot["draw"] < 0.4                                # draws down-weighted below grid share
     oe2, ot2 = fld.scoreline_ownership(g, draw_aversion=1.0, sharpness=1.0)
     assert abs(ot2["draw"] - 0.4) < 1e-9                   # aversion=1 -> raw grid share
+
+
+def test_fame_weighted_field_overowns_attackers():
+    from scorito.model.topscorers import fame_score
+    cp = {"X": 1.0}
+    sc = {("A", "B"): [((1, 0), 1.0)]}
+    tf = {"T": 1.0}
+    att = dict(name="Att", team="T", position="ATT", g90=0.5, start_prob=1.0)
+    dfn = dict(name="Def", team="T", position="DEF", g90=0.125, start_prob=1.0)  # equal EV to Att
+    fillers = [dict(name=f"F{i}", team="T", position="ATT", g90=0.1, start_prob=1.0) for i in range(8)]
+    cands = [att, dfn] + fillers
+    ts_pool = [(c, fame_score(c, tf)) for c in cands]
+    entries = fld.generate_field(500, sc, cp, ts_pool, sharpness=2.0, rng=np.random.default_rng(0))
+    own = lambda nm: sum(1 for e in entries if any(t["name"] == nm for t in e["topscorers"]))
+    assert own("Att") > own("Def")     # equal Scorito EV, but fame over-owns the attacker

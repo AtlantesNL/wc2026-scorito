@@ -102,6 +102,9 @@ def _render_markdown(result: RunResult) -> str:
     L.append("Per goal: ATT 8 / MID 16 / DEF 32 / GK 32 — the 4:2:1 edge means a "
              "defender's goal is worth four of a striker's. EV below is expected "
              "group-phase points.\n")
+    if result.meta.get("ts_pool_win") is not None:
+        L.append(f"_Engine-selected to maximize P(finishing 1st)_ vs a fame-biased field "
+                 f"(over-owns famous attackers); entry pool-win {result.meta['ts_pool_win']:.1%}.\n")
     L.append("| Player | Team | Pos | Pen | EV |")
     L.append("|---|---|---|---|---|")
     for c in result.topscorers:

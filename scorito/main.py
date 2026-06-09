@@ -76,7 +76,7 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
     # Champion P(win): full-tournament Monte-Carlo when the complete 12-group bracket is
     # present (blended with the market/Opta prior); otherwise (e.g. a partial-fixture test
     # run) fall back to the static prior.
-    advance, pool_win, pool_win_stable = {}, {}, True
+    advance, pool_win, pool_win_stable, ts_pool_win = {}, {}, True, None
     group_match_keys = [(m.team1, m.team2) for m in matches]
     if len(gteams) == 12:
         brk = bracket_mod.load_bracket(fixtures_src or _default_fixtures())
@@ -103,7 +103,7 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
     if len(gteams) == 12:
         from scorito.model import pool
         from scorito.model.match_ev import topk_scorelines
-        from scorito.model.topscorers import score_candidate
+        from scorito.model.topscorers import fame_score, score_candidate
         our_entry = {
             "scorelines": {(a, b): (s.home, s.away)
                            for gr in group_results.values()
@@ -114,19 +114,24 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         scoreline_choices = {key: [((s.home, s.away), all_grids[key].exact(s.home, s.away))
                                    for s in topk_scorelines(all_grids[key], k=config.TOPK_SCORELINES)]
                              for key in all_grids}
-        ts_pool = [(c, score_candidate(c, team_factors)) for c in kept]
+        ts_field_pool = [(c, fame_score(c, team_factors)) for c in kept]
         contenders = sorted({t for t, p in pwin.items() if p >= 0.02} | {champion[0].team})
         best, pool_win, pool_win_stable = pool.pool_win_champion(
             our_entry, gteams, group_match_keys, all_grids, elo_map, brk, kept,
-            team_factors, pwin, scoreline_choices, ts_pool, pool_size, contenders, seed=seed)
+            team_factors, pwin, scoreline_choices, ts_field_pool, pool_size, contenders, seed=seed)
         champion = sorted(champion, key=lambda r: (r.team != best, -pool_win.get(r.team, 0.0)))
+        if risk != "max_ev":
+            topscorers, ts_pool_win = pool.pool_win_topscorers(
+                dict(our_entry, champion=best), best, kept, gteams, group_match_keys, all_grids,
+                elo_map, brk, team_factors, pwin, scoreline_choices, ts_field_pool, pool_size, seed=seed)
 
     result = RunResult(
         groups=group_results,
         champion=champion,
         topscorers=topscorers,
         pool_size=pool_size, risk=risk, used_odds=used_odds,
-        meta={"pool_win_stable": pool_win_stable, "pool_win_sims": config.POOL_WIN_SIMS},
+        meta={"pool_win_stable": pool_win_stable, "pool_win_sims": config.POOL_WIN_SIMS,
+              "ts_pool_win": ts_pool_win},
         advance=advance,
         pool_win=pool_win,
     )
