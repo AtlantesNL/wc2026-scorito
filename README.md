@@ -4,7 +4,10 @@ Recommends group-phase Scorito picks: 72 match scorelines (jointly optimized wit
 the auto-derived group standings), 6 topscorers, and a champion pick chosen to maximize
 **P(finishing 1st in your pool)** — a full-tournament Monte-Carlo (all 48 teams, draw-aware,
 market-blended) scored against a modelled rival field (`FIELD_SHARPNESS`), which fades
-over-owned favourites. Tuned for a ~30–50 person pool, balanced risk.
+over-owned favourites. Scorelines are pool-leverage-adjusted to lean off outcomes a draw-averse
+amateur field over-owns, but calibrated **near-chalk** — the pool-win evaluator finds scoreline
+differentiation is ≈neutral at this pool size
+([finding](docs/scoreline-calibration-2026-06-09.md)). Tuned for a ~30–50 person pool, balanced risk.
 
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the full design.
 

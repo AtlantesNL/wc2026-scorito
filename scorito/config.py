@@ -24,9 +24,14 @@ POOL_WIN_SIMS = 15000      # tournament "worlds" sampled for the pool-win evalua
 
 # Pool-aware scorelines: amateur rivals avoid draws — they pick ~DRAW_AVERSION of the draws the
 # model implies. SCORELINE_LEVERAGE_GAMMA discounts crowded outcomes (per risk); pool size enters
-# via the leverage denominator (own·(N-1)), so small pools stay near-chalk automatically.
+# via the leverage denominator (own·(N-1)).
+# CALIBRATED against the pool-win evaluator (docs/scoreline-calibration-2026-06-09.md): at a ~32-person
+# pool, scoreline draw-differentiation is ≈neutral — the EV lost when the match is NOT a draw cancels
+# the separation gained when it is. Aggressive draw-picking (gamma>=0.3) actively tanks pool-win, so
+# these are tuned LOW: balanced grabs only the 2-3 highest-conviction under-owned draws (a near-free,
+# documented-bias hedge); aggressive (0.2 ~ 8 draws) is the empirical peak against a draw-averse field.
 DRAW_AVERSION = 0.4
-SCORELINE_LEVERAGE_GAMMA = {"max_ev": 0.0, "balanced": 0.5, "aggressive": 1.0}
+SCORELINE_LEVERAGE_GAMMA = {"max_ev": 0.0, "balanced": 0.1, "aggressive": 0.2}
 
 # --- Topscorers (confirmed from Scorito in-app Spelregels, group phase) ---
 # Points per goal by position; each topscorer plays max 3 group games.
