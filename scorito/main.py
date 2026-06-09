@@ -78,6 +78,7 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
     group_results = {}
     team_lambda = defaultdict(list)
     all_grids = {}
+    match_lams = {}
     for g, teams in gteams.items():
         gm = [m for m in matches if m.group == g]
         gmatches = [(m.team1, m.team2) for m in gm]
@@ -87,6 +88,7 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
             grids[(m.team1, m.team2)] = build_grid(l1, l2)
             team_lambda[m.team1].append(l1)
             team_lambda[m.team2].append(l2)
+            match_lams[(m.team1, m.team2)] = (l1, l2)
         all_grids.update(grids)
         own_by_match = {key: field.scoreline_ownership(grids[key], config.DRAW_AVERSION,
                                                        config.FIELD_SHARPNESS) for key in grids}
@@ -122,7 +124,8 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         )
 
     if atgs_map:
-        kept = build_expected_goals(kept, matches, atgs_map, team_factors)
+        kept = build_expected_goals(kept, matches, atgs_map, team_factors,
+                                    match_lams=match_lams, avg_lam=avg)
     topscorers = pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk, candidates=kept)
     champion = recommend_champion(pwin, pool_size, risk)
 
