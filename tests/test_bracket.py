@@ -27,3 +27,20 @@ def test_load_bracket_real_fixture():
     assert len(thirds) == 8                   # eight third-place slots in R32
     final = [m for m in b if m.round == "Final"][0]
     assert isinstance(final.team1, bk.WinnerOf) and isinstance(final.team2, bk.WinnerOf)
+
+
+def test_qualify_thirds_takes_best_eight_by_pts_gd_gf():
+    thirds = [dict(team=f"T{i}", group="ABCDEFGHIJKL"[i],
+                   pts=i, gd=0, gf=0) for i in range(12)]
+    q = bk.qualify_thirds(thirds)
+    assert len(q) == 8
+    assert {t["team"] for t in q} == {f"T{i}" for i in range(4, 12)}  # top 8 by pts
+
+
+def test_assign_thirds_respects_allowed_groups():
+    qualified = [dict(team="TA", group="A", pts=5, gd=1, gf=2),
+                 dict(team="TC", group="C", pts=4, gd=0, gf=1)]
+    slots = [frozenset("AB"), frozenset("CD")]
+    assigned = bk.assign_thirds(qualified, slots)
+    assert assigned[0]["group"] == "A"   # slot 0 ({A,B}) -> the group-A team
+    assert assigned[1]["group"] == "C"   # slot 1 ({C,D}) -> the group-C team

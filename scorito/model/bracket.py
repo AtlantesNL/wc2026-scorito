@@ -78,3 +78,37 @@ def load_bracket(fixtures_src):
                            team1=_parse_ref(m["team1"]), team2=_parse_ref(m["team2"])))
     out.sort(key=lambda x: x.num)
     return out
+
+
+import warnings  # noqa: E402
+
+import numpy as np  # noqa: E402
+from scipy.optimize import linear_sum_assignment  # noqa: E402
+
+_BIG = 1e6
+
+
+def qualify_thirds(thirds):
+    """The best 8 of the 12 third-placed teams by (pts, gd, gf). ``thirds`` is a list of
+    dicts with keys team, group, pts, gd, gf."""
+    return sorted(thirds, key=lambda d: (d["pts"], d["gd"], d["gf"]), reverse=True)[:8]
+
+
+def assign_thirds(qualified, slot_allowed):
+    """Assign the qualified thirds to the third-place slots respecting each slot's allowed
+    groups. ``slot_allowed`` is a list of allowed-group sets (same length as qualified).
+    Returns ``{slot_index: third_dict}``. Min-cost bipartite matching; warns and falls back
+    if no constraint-respecting assignment exists (never expected for valid FIFA sets)."""
+    n = len(qualified)
+    cost = np.full((n, n), _BIG)
+    for i, q in enumerate(qualified):
+        for j, allowed in enumerate(slot_allowed):
+            if q["group"] in allowed:
+                cost[i, j] = 0.0
+    rows, cols = linear_sum_assignment(cost)
+    assigned = {}
+    for i, j in zip(rows, cols):
+        assigned[int(j)] = qualified[i]
+        if cost[i, j] >= _BIG:
+            warnings.warn("third-place slot assignment violated a group constraint")
+    return assigned
