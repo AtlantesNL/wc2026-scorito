@@ -29,7 +29,9 @@ def test_blend_half_and_half_sums_to_one():
 
 def test_market_anchors_include_argentina_and_lower_its_prior():
     from scorito.data.priors import MARKET, OPTA, blended_probs
-    assert {"Spain", "France", "England", "Argentina", "Brazil"} <= set(MARKET)
+    assert {"Spain", "France", "England", "Portugal", "Argentina", "Brazil",
+            "Germany", "Netherlands"} <= set(MARKET)
     b = blended_probs()
     assert b["Argentina"] < OPTA["Argentina"]      # the ~8% market anchor pulls Argentina down
-    assert b["Germany"] == OPTA["Germany"]         # uncovered team still uses Opta unchanged
+    assert b["Portugal"] > OPTA["Portugal"]        # the 10% anchor lifts Portugal (Opta under-rated it)
+    assert b["Mexico"] == OPTA["Mexico"]           # uncovered team still uses Opta unchanged

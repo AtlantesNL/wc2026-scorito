@@ -23,14 +23,17 @@ OPTA = {
     "Canada": 0.0052,
 }
 
-# Prediction-market title probabilities (Polymarket, ~June 2026). Spain/France co-favourites; Argentina
-# and Brazil trail the European favourites. Averaged with Opta in blended_probs (NOT renormalized).
+# Prediction-market title probabilities (Polymarket — https://polymarket.com/event/world-cup-winner,
+# ~June 2026). Full top-8; averaged with Opta in blended_probs (NOT renormalized).
 MARKET = {
-    "Spain": 0.16,
     "France": 0.16,
+    "Spain": 0.16,
     "England": 0.11,
+    "Portugal": 0.10,
     "Argentina": 0.08,
     "Brazil": 0.08,
+    "Germany": 0.05,
+    "Netherlands": 0.04,
 }
 
 
