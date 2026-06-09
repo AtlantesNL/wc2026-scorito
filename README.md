@@ -2,9 +2,10 @@
 
 Recommends group-phase Scorito picks: 72 match scorelines (jointly optimized with
 the auto-derived group standings), 6 topscorers, and a champion pick chosen to maximize
-**P(finishing 1st in your pool)** — a full-tournament Monte-Carlo (all 48 teams, draw-aware,
-market-blended) scored against a modelled rival field (`FIELD_SHARPNESS`), which fades
-over-owned favourites. Scorelines are pool-leverage-adjusted to lean off outcomes a draw-averse
+**P(finishing 1st in your pool)** — a full-tournament Monte-Carlo (all 48 teams, draw-aware), blended
+with a **live de-vigged multi-bookmaker title-odds consensus** (54 teams; Opta cross-check;
+[finding](docs/reliable-title-prior-2026-06-09.md)), scored against a modelled rival field
+(`FIELD_SHARPNESS`) that fades over-owned favourites. Scorelines are pool-leverage-adjusted to lean off outcomes a draw-averse
 amateur field over-owns, but calibrated **near-chalk** — the pool-win evaluator finds scoreline
 differentiation is ≈neutral at this pool size
 ([finding](docs/scoreline-calibration-2026-06-09.md)). Topscorers are **engine-selected** for
@@ -30,7 +31,8 @@ uv pip install --python .venv/bin/python -r requirements.txt
 # Elo-only (no API key, runs anywhere):
 .venv/bin/python -m scorito.main --no-odds --pool-size 32 --risk balanced
 
-# With market odds (sharper); get a free key at the-odds-api.com:
+# With market odds (sharper); get a free key at the-odds-api.com. A keyed run also auto-fetches the live
+# WC-winner outright for the champion prior (replay offline with --winner-file data/cache/winner_raw.json):
 .venv/bin/python -m scorito.main --odds-key "$ODDS_API_KEY" --pool-size 32 --risk balanced
 
 # Sharpest: also pull anytime-goalscorer odds for market goal rates (caches data/cache/atgs_raw.json;
