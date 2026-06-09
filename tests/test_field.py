@@ -37,3 +37,15 @@ def test_field_is_seed_deterministic():
     a = fld.generate_field(50, sc, cp, ts, 2.0, np.random.default_rng(7))
     b = fld.generate_field(50, sc, cp, ts, 2.0, np.random.default_rng(7))
     assert [e["champion"] for e in a] == [e["champion"] for e in b]
+
+
+def test_scoreline_ownership_downweights_draws_and_sums_to_one():
+    from scorito.model.grid import ScoreGrid
+    m = np.zeros((3, 3)); m[1, 0] = 0.4; m[1, 1] = 0.3; m[0, 0] = 0.1; m[2, 1] = 0.2
+    g = ScoreGrid(m, p_home=0.6, p_draw=0.4, p_away=0.0)   # draws (1-1,0-0) = 0.4 of the grid
+    oe, ot = fld.scoreline_ownership(g, draw_aversion=0.4, sharpness=1.0)
+    assert abs(sum(oe.values()) - 1.0) < 1e-9
+    assert abs(ot["home"] + ot["draw"] + ot["away"] - 1.0) < 1e-9
+    assert ot["draw"] < 0.4                                # draws down-weighted below grid share
+    oe2, ot2 = fld.scoreline_ownership(g, draw_aversion=1.0, sharpness=1.0)
+    assert abs(ot2["draw"] - 0.4) < 1e-9                   # aversion=1 -> raw grid share
