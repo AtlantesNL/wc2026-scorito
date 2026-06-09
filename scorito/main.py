@@ -123,7 +123,8 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         if risk != "max_ev":
             topscorers, ts_pool_win = pool.pool_win_topscorers(
                 dict(our_entry, champion=best), best, kept, gteams, group_match_keys, all_grids,
-                elo_map, brk, team_factors, pwin, scoreline_choices, ts_field_pool, pool_size, seed=seed)
+                elo_map, brk, team_factors, pwin, scoreline_choices, ts_field_pool, pool_size,
+                seed=seed, baseline_names=[c["name"] for c in topscorers])
 
     result = RunResult(
         groups=group_results,

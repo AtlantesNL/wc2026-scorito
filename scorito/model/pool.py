@@ -154,9 +154,11 @@ def greedy_topscorers(our_fixed, max_rival, points_by_name, n_slots):
 def pool_win_topscorers(our_entry, our_champion, candidates, gteams, group_matches, grids, elo,
                         bracket, team_factors, champion_probs, scoreline_choices, ts_field_pool,
                         pool_size, n_slots=config.TOPSCORER_SLOTS, seed=0, sims=config.POOL_WIN_SIMS,
-                        bonus=config.CHAMPION_BONUS):
+                        bonus=config.CHAMPION_BONUS, baseline_names=None):
     """Pick n_slots topscorers maximizing P(our entry finishes 1st), holding scorelines + champion
-    fixed, against a fame-weighted field. Returns (picks: candidate dicts with 'ev', pool_win)."""
+    fixed, against a fame-weighted field. Returns (picks: candidate dicts with 'ev', pool_win).
+    ``baseline_names`` (e.g. the EV+reserve pick) is evaluated too and kept if the greedy search
+    can't strictly beat it — so the engine never ships worse picks than the baseline."""
     worlds = sample_worlds(gteams, group_matches, grids, elo, bracket, candidates, team_factors,
                            sims=sims, seed=seed)
     field = generate_field(max(0, pool_size - 1), scoreline_choices, champion_probs, ts_field_pool,
@@ -173,6 +175,14 @@ def pool_win_topscorers(our_entry, our_champion, candidates, gteams, group_match
     pgoals_arr = {n: np.array([w["pgoals"][n] for w in worlds], dtype=float) for n in worlds[0]["pgoals"]}
     points = {c["name"]: config.TOPSCORER_MULT[c["position"]] * pgoals_arr[c["name"]] for c in candidates}
     names, pwin = greedy_topscorers(our_fixed, max_rival, points, n_slots)
+    if baseline_names is not None:
+        bw = np.zeros(W)
+        for n in baseline_names:
+            if n in points:
+                bw = bw + points[n]
+        bp = float(np.mean(our_fixed + bw > max_rival))
+        if bp > pwin:                       # greedy stuck below the baseline -> keep the baseline
+            names, pwin = list(baseline_names), bp
     by_name = {c["name"]: c for c in candidates}
     picks = [dict(by_name[n], ev=round(score_candidate(by_name[n], team_factors), 3)) for n in names]
     return picks, pwin
