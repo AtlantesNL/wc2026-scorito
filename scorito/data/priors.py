@@ -37,11 +37,17 @@ MARKET = {
 }
 
 
-def blended_probs() -> dict[str, float]:
-    """Genuine title probabilities: average Opta+market where both exist."""
+def blended_probs(market: dict | None = None) -> dict[str, float]:
+    """Genuine title probabilities: average Opta + market (the live de-vigged consensus when given,
+    else the hand-typed MARKET fallback). Market-only teams (in the consensus but not Opta) are
+    included at their market prob, so ~30 teams get a real anchor instead of the MC's estimate."""
+    mkt = market if market else MARKET
     out = {}
     for team, p in OPTA.items():
-        out[team] = 0.5 * p + 0.5 * MARKET[team] if team in MARKET else p
+        out[team] = 0.5 * p + 0.5 * mkt[team] if team in mkt else p
+    for team, mp in mkt.items():
+        if team not in out:
+            out[team] = mp
     return out
 
 

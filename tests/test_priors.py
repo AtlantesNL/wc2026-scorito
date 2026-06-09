@@ -35,3 +35,13 @@ def test_market_anchors_include_argentina_and_lower_its_prior():
     assert b["Argentina"] < OPTA["Argentina"]      # the ~8% market anchor pulls Argentina down
     assert b["Portugal"] > OPTA["Portugal"]        # the 10% anchor lifts Portugal (Opta under-rated it)
     assert b["Mexico"] == OPTA["Mexico"]           # uncovered team still uses Opta unchanged
+
+
+def test_blended_probs_uses_live_market_and_includes_market_only_teams():
+    from scorito.data.priors import blended_probs, OPTA
+    live = {"Spain": 0.16, "Morocco": 0.03}        # Spain is in Opta; Morocco is market-only
+    b = blended_probs(market=live)
+    assert b["Spain"] == pytest.approx(0.5 * OPTA["Spain"] + 0.5 * 0.16)
+    assert b["Morocco"] == pytest.approx(0.03)      # market-only team included at its market prob
+    assert b["Argentina"] == OPTA["Argentina"]      # not in the live market -> Opta only
+    assert blended_probs()["England"] == pytest.approx(0.5 * OPTA["England"] + 0.5 * 0.11)  # no-arg fallback unchanged
