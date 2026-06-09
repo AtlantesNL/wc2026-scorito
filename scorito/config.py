@@ -14,6 +14,10 @@ MAX_GROUP_POSITION_PTS = 100   # 4 positions x 25
 # --- Tournament-level ---
 CHAMPION_BONUS = 250    # paid only if your pick lifts the trophy
 
+# Champion P(win): blend weight for the market/Opta prior vs the simulation backbone.
+# 0.0 = pure Monte-Carlo, 1.0 = market-anchored.
+CHAMPION_MARKET_WEIGHT = 0.5
+
 # --- Topscorers (confirmed from Scorito in-app Spelregels, group phase) ---
 # Points per goal by position; each topscorer plays max 3 group games.
 # Ratio DEF/GK : MID : ATT = 4 : 2 : 1 is what drives selection.
