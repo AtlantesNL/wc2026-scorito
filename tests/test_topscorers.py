@@ -29,3 +29,16 @@ def test_balanced_reserves_more_defenders_than_max_ev():
     mx = pick_topscorers(team_factors=tf, n=6, risk="max_ev")
     assert n_def(bal) >= 2  # balanced reserves defender differentiation slots
     assert n_def(bal) >= n_def(mx)
+
+
+def test_sample_player_goals_mean_scales_with_rate_and_factor():
+    import numpy as np
+    from scorito.model.topscorers import sample_player_goals
+    cands = [dict(name="Striker", team="X", position="ATT", g90=0.6, start_prob=1.0, pen_taker=False),
+             dict(name="Defender", team="X", position="DEF", g90=0.05, start_prob=1.0, pen_taker=False)]
+    rng = np.random.default_rng(0)
+    goals = sample_player_goals(cands, {"X": 1.0}, sims=20000, rng=rng)
+    # lambda = g90*3*start (+0); striker ~1.8, defender ~0.15 over the 3 group games
+    assert 1.6 < goals["Striker"].mean() < 2.0
+    assert 0.05 < goals["Defender"].mean() < 0.25
+    assert goals["Striker"].shape == (20000,)

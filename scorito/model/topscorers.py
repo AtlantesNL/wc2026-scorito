@@ -11,6 +11,8 @@ how much the player's side is expected to score across its three group games.
 defaults to 1.0 for a flagged first-choice ``pen_taker`` and 0.0 otherwise, so a
 co-/second-choice taker can be modelled at e.g. 0.5 rather than all-or-nothing.
 """
+import numpy as np
+
 from scorito import config
 from scorito.data.topscorer_candidates import CANDIDATES
 
@@ -48,3 +50,16 @@ def pick_topscorers(team_factors, n: int = config.TOPSCORER_SLOTS, risk: str = "
             used.add(c["name"])
     picks.sort(key=lambda x: x[0], reverse=True)
     return [dict(c, ev=round(ev, 3), differentiation=diff) for ev, c, diff in picks[:n]]
+
+
+def sample_player_goals(candidates, team_factors, sims, rng):
+    """Per-world group-stage goals for each candidate ~ Poisson(lambda), with
+    lambda = (g90*3*start_prob + PEN_BONUS*pen_share) * team_factor — consistent with the
+    topscorer EV model. Returns {name: np.ndarray(sims)}."""
+    out = {}
+    for c in candidates:
+        pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
+        exp = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
+        lam = max(0.0, exp * team_factors.get(c["team"], 1.0))
+        out[c["name"]] = rng.poisson(lam, size=sims)
+    return out
