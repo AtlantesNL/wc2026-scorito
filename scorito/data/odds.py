@@ -70,8 +70,12 @@ EVENTS_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/event
 EVENT_ODDS_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/events/{eid}/odds"
 
 # Our-candidate-name -> the name The Odds API lists, for the few that don't normalize-match.
-# Populate during the real run once the feed's spellings are known.
-ATGS_PLAYER_ALIASES = {}
+# The feed uses full legal names for some players (verified against the 2026-06-09 cached feed).
+ATGS_PLAYER_ALIASES = {
+    "Erling Haaland": "Erling Braut Haaland",
+    "Raphinha": "Raphael Dias Belloli",
+    "Pedri": "Pedro Gonzalez Lopez",
+}
 
 
 def _norm(name: str) -> str:
