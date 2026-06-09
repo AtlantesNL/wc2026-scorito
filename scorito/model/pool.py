@@ -120,6 +120,37 @@ def champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidates,
     return {c: float(np.mean(base_w + bonus * (champ_w == c) > max_rival)) for c in candidates}
 
 
+def greedy_topscorers(our_fixed, max_rival, points_by_name, n_slots):
+    """Select n_slots names maximizing P(our_fixed + sum_picked > max_rival), tie-broken by expected
+    points (so a fieldless max_rival=-inf reduces to EV-greedy). Greedy forward-select, then a
+    coordinate-ascent swap pass that fires only on strict pool-win gains. our_fixed[W], max_rival[W]
+    numpy; points_by_name {name: ndarray(W)} = multiplier*goals. Returns (picked_names, pool_win)."""
+    names = list(points_by_name)
+
+    def pwin(w):
+        return float(np.mean(our_fixed + w > max_rival))
+
+    chosen, ts_w = [], np.zeros_like(our_fixed, dtype=float)
+    for _ in range(min(n_slots, len(names))):
+        best = max((n for n in names if n not in chosen),
+                   key=lambda n: (pwin(ts_w + points_by_name[n]), float(points_by_name[n].sum())))
+        chosen.append(best)
+        ts_w = ts_w + points_by_name[best]
+    improved = True
+    while improved:
+        improved = False
+        for i in range(len(chosen)):
+            base = ts_w - points_by_name[chosen[i]]
+            options = [n for n in names if n == chosen[i] or n not in chosen]
+            best = max(options, key=lambda n: (pwin(base + points_by_name[n]),
+                                               float(points_by_name[n].sum())))
+            if best != chosen[i] and pwin(base + points_by_name[best]) > pwin(ts_w) + 1e-12:
+                ts_w = base + points_by_name[best]
+                chosen[i] = best
+                improved = True
+    return chosen, pwin(ts_w)
+
+
 def _best_with_floor(win_probs, champion_probs, eps=0.005):
     """Argmax of pool-win probability, breaking near-ties (within ``eps``) toward the higher
     outright P(win) — among similarly-leveraged champions, take the higher floor (which also

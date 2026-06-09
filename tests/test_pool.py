@@ -77,3 +77,22 @@ def test_best_with_floor_breaks_near_ties_toward_higher_outright():
     assert pool._best_with_floor(win, outright, eps=0.005) == "Argentina"
     # eps=0 -> strict argmax of win-pool
     assert pool._best_with_floor(win, outright, eps=0.0) == "Portugal"
+
+
+def test_greedy_topscorers_picks_underowned_high_variance():
+    our_fixed = np.array([8.0, 8, 8, 8])
+    max_rival = np.array([10.0, 10, 10, 10])
+    points = {
+        "striker": np.array([1.0, 1, 1, 1]),   # always +1 -> 9 < 10, never wins (commoditized)
+        "defender": np.array([0.0, 0, 0, 5]),   # spikes in world 4 -> 13 > 10 there
+    }
+    names, pwin = pool.greedy_topscorers(our_fixed, max_rival, points, n_slots=1)
+    assert names == ["defender"] and abs(pwin - 0.25) < 1e-9
+
+
+def test_greedy_topscorers_no_field_reduces_to_ev():
+    our_fixed = np.zeros(4)
+    max_rival = np.full(4, -np.inf)            # no rivals -> every pick wins; tie-break by EV
+    points = {"lo": np.array([1.0, 1, 1, 1]), "hi": np.array([2.0, 2, 2, 2])}
+    names, pwin = pool.greedy_topscorers(our_fixed, max_rival, points, n_slots=1)
+    assert names == ["hi"] and pwin == 1.0
