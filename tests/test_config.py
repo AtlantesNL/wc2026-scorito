@@ -35,3 +35,7 @@ def test_scoreline_leverage_constants():
 def test_atgs_constants():
     assert config.ATGS_MARGIN > 1.0
     assert "eu" in config.ATGS_REGIONS
+
+
+def test_field_sharpness_realistic():
+    assert 1.0 <= config.FIELD_SHARPNESS < 2.0   # amateur dispersion, not syndicate-chalk (2.0+)

@@ -19,7 +19,9 @@ CHAMPION_BONUS = 250    # paid only if your pick lifts the trophy
 CHAMPION_MARKET_WEIGHT = 0.5
 
 # Pool-win (field) model.
-FIELD_SHARPNESS = 2.0      # field chalkiness exponent (1 = pick ~ true prob; higher = chalkier)
+FIELD_SHARPNESS = 1.5      # field chalkiness exponent (1 = rivals pick ~ true prob; higher = chalkier).
+                           # 1.5 = realistic amateur dispersion (chase news-favourites somewhat, disperse
+                           # on feelings/home bias) — NOT a syndicate field (2.0+ over-leverages longshots).
 POOL_WIN_SIMS = 15000      # tournament "worlds" sampled for the pool-win evaluator
 
 # Pool-aware scorelines: amateur rivals avoid draws — they pick ~DRAW_AVERSION of the draws the
