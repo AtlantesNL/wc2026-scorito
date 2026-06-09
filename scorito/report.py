@@ -14,6 +14,7 @@ class RunResult:
     used_odds: bool
     meta: dict = field(default_factory=dict)
     advance: dict = field(default_factory=dict)   # team -> {"r16","qf","sf","final","win"}
+    pool_win: dict = field(default_factory=dict)  # team -> P(our entry finishes 1st in the pool)
 
     @property
     def expected_group_points(self):
@@ -68,18 +69,26 @@ def _render_markdown(result: RunResult) -> str:
                  f"(standings) = **{gr.total:.0f}** pts_\n")
 
     L.append("\n## Champion (250 pts)\n")
-    L.append("| Team | P(win) | EV | Share | Lev | R16 | QF | SF | Final |")
-    L.append("|---|---|---|---|---|---|---|---|---|")
+    L.append("| Team | P(win) | Win-pool | EV | Share | Lev | R16 | QF | SF | Final |")
+    L.append("|---|---|---|---|---|---|---|---|---|---|")
     for r in result.champion[:5]:
         a = result.advance.get(r.team, {})
-        L.append(f"| {r.team} | {r.p_win:.1%} | {r.ev_points:.0f} | {r.est_share:.0%} | "
+        wp = result.pool_win.get(r.team)
+        wp_s = f"{wp:.1%}" if wp is not None else "–"
+        L.append(f"| {r.team} | {r.p_win:.1%} | {wp_s} | {r.ev_points:.0f} | {r.est_share:.0%} | "
                  f"{r.leverage:.4f} | {a.get('r16', 0):.0%} | {a.get('qf', 0):.0%} | "
                  f"{a.get('sf', 0):.0%} | {a.get('final', 0):.0%} |")
     rec = result.champion[0]
-    runner = result.champion[1]
-    L.append(f"\n**Recommendation: {rec.team}** (best pool-adjusted leverage). "
-             f"{runner.team} is essentially tied — pick {runner.team} if you want more "
-             f"differentiation from the field.\n")
+    wp = result.pool_win.get(rec.team)
+    if wp is not None:
+        flag = "" if result.meta.get("pool_win_stable", True) else \
+            " ⚠️ pick flips across field-chalkiness assumptions (see FIELD_SHARPNESS)"
+        L.append(f"\n**Recommendation: {rec.team}** — maximizes P(finishing 1st) at {wp:.1%} "
+                 f"vs a modelled chalky ~{result.pool_size}-entry field.{flag}\n")
+    else:
+        runner = result.champion[1]
+        L.append(f"\n**Recommendation: {rec.team}** (pool-adjusted leverage); "
+                 f"{runner.team} close.\n")
 
     L.append("\n## Topscorers (pick 6)\n")
     L.append("Per goal: ATT 8 / MID 16 / DEF 32 / GK 32 — the 4:2:1 edge means a "

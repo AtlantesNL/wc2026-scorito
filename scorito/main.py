@@ -70,10 +70,10 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
     # Champion P(win): full-tournament Monte-Carlo when the complete 12-group bracket is
     # present (blended with the market/Opta prior); otherwise (e.g. a partial-fixture test
     # run) fall back to the static prior.
-    advance = {}
+    advance, pool_win, pool_win_stable = {}, {}, True
+    group_match_keys = [(m.team1, m.team2) for m in matches]
     if len(gteams) == 12:
         brk = bracket_mod.load_bracket(fixtures_src or _default_fixtures())
-        group_match_keys = [(m.team1, m.team2) for m in matches]
         sim = tournament.simulate(gteams, group_match_keys, all_grids, elo_map, brk,
                                   sims=sims, seed=seed)
         pwin = blend_champion_probs(sim["win"], blended_probs())
@@ -90,13 +90,39 @@ def run(no_odds=True, pool_size=40, risk="balanced", odds_key=None, odds_file=No
             + ", ".join(f"{c['name']} ({c['team']})" for c in dropped)
         )
 
+    topscorers = pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk, candidates=kept)
+    champion = recommend_champion(pwin, pool_size, risk)
+
+    # Pool-win: pick the champion that maximizes P(finishing 1st) vs a modelled chalky field.
+    if len(gteams) == 12:
+        from scorito.model import pool
+        from scorito.model.match_ev import topk_scorelines
+        from scorito.model.topscorers import score_candidate
+        our_entry = {
+            "scorelines": {(a, b): (s.home, s.away)
+                           for gr in group_results.values()
+                           for (a, b), s in zip(gr.matches, gr.scorelines)},
+            "champion": champion[0].team,
+            "topscorers": topscorers,
+        }
+        scoreline_choices = {key: [((s.home, s.away), all_grids[key].exact(s.home, s.away))
+                                   for s in topk_scorelines(all_grids[key], k=config.TOPK_SCORELINES)]
+                             for key in all_grids}
+        ts_pool = [(c, score_candidate(c, team_factors)) for c in kept]
+        contenders = sorted({t for t, p in pwin.items() if p >= 0.02} | {champion[0].team})
+        best, pool_win, pool_win_stable = pool.pool_win_champion(
+            our_entry, gteams, group_match_keys, all_grids, elo_map, brk, kept,
+            team_factors, pwin, scoreline_choices, ts_pool, pool_size, contenders, seed=seed)
+        champion = sorted(champion, key=lambda r: (r.team != best, -pool_win.get(r.team, 0.0)))
+
     result = RunResult(
         groups=group_results,
-        champion=recommend_champion(pwin, pool_size, risk),
-        topscorers=pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk, candidates=kept),
+        champion=champion,
+        topscorers=topscorers,
         pool_size=pool_size, risk=risk, used_odds=used_odds,
-        meta={"scoreline_toto_weight": toto_weight},
+        meta={"scoreline_toto_weight": toto_weight, "pool_win_stable": pool_win_stable},
         advance=advance,
+        pool_win=pool_win,
     )
     write_report(result, out_dir)
     return result

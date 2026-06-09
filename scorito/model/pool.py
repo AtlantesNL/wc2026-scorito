@@ -6,6 +6,7 @@ import numpy as np
 from scorito import config
 from scorito.eval.metrics import match_points, standings_points, topscorer_points
 from scorito.model.bracket import ThirdSlot, assign_thirds, qualify_thirds
+from scorito.model.field import generate_field
 from scorito.model.group_sim import _award, _rank_table, _sample_scores
 from scorito.model.topscorers import sample_player_goals
 from scorito.model.tournament import _resolve, advance_matrix
@@ -117,3 +118,33 @@ def champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidates,
     rival_total = rival_base + bonus * (rc == champ_w[None, :])
     max_rival = rival_total.max(axis=0)
     return {c: float(np.mean(base_w + bonus * (champ_w == c) > max_rival)) for c in candidates}
+
+
+def pool_win_champion(our_entry, gteams, group_matches, grids, elo, bracket, candidates,
+                      team_factors, champion_probs, scoreline_choices, topscorer_pool,
+                      pool_size, candidate_champions, seed=0,
+                      sims=config.POOL_WIN_SIMS, sharpnesses=(1.5, 2.0, 3.0)):
+    """Pick the champion maximizing P(our entry finishes 1st). Returns
+    (best_champion, {champion: P(win) at default sharpness}, stable) where ``stable`` is True
+    iff the argmax agrees across the ``sharpnesses`` sensitivity sweep. Worlds are sampled once
+    and reused across sharpnesses; only the modelled field changes."""
+    worlds = sample_worlds(gteams, group_matches, grids, elo, bracket, candidates,
+                           team_factors, sims=sims, seed=seed)
+    n_rivals = max(0, pool_size - 1)
+    argmaxes, default_probs = [], None
+    for sh in sharpnesses:
+        field = generate_field(n_rivals, scoreline_choices, champion_probs,
+                               topscorer_pool, sh, np.random.default_rng(seed + 1))
+        base_w, rival_base, rival_champ, champ_w = score_field(
+            our_entry, field, worlds, gteams, group_matches)
+        probs = champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidate_champions)
+        argmaxes.append(max(probs, key=probs.get))
+        if abs(sh - config.FIELD_SHARPNESS) < 1e-9:
+            default_probs = probs
+    if default_probs is None:
+        field = generate_field(n_rivals, scoreline_choices, champion_probs,
+                               topscorer_pool, config.FIELD_SHARPNESS, np.random.default_rng(seed + 1))
+        base_w, rival_base, rival_champ, champ_w = score_field(
+            our_entry, field, worlds, gteams, group_matches)
+        default_probs = champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidate_champions)
+    return max(default_probs, key=default_probs.get), default_probs, len(set(argmaxes)) == 1
