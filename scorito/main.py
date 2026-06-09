@@ -20,7 +20,7 @@ from scorito.model.champion import recommend_champion
 from scorito.model.goals import expected_goals
 from scorito.model.grid import build_grid
 from scorito.model.group_opt import optimize_group
-from scorito.model.topscorers import pick_topscorers
+from scorito.model.topscorers import build_expected_goals, pick_topscorers
 from scorito.report import RunResult, write_report
 
 
@@ -30,6 +30,7 @@ def _default_fixtures():
 
 
 def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=None,
+        atgs=False, atgs_file=None,
         out_dir="out", fixtures_src=None, sims=config.MC_SIMS, k=config.TOPK_SCORELINES, seed=0):
     matches = fixtures.load_fixtures(fixtures_src or _default_fixtures())
     gteams = group_teams(matches)
@@ -49,6 +50,18 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         raw = json.load(open(odds_file, encoding="utf-8")) if odds_file else odds.fetch_odds(odds_key)
         odds_map = odds.parse_odds(raw)
         used_odds = True
+
+    atgs_map = {}
+    if atgs_file or (atgs and odds_key):
+        from scorito.data import odds as odds_mod
+        if atgs_file:
+            atgs_raw = json.load(open(atgs_file, encoding="utf-8"))
+        else:
+            atgs_raw = odds_mod.fetch_atgs(odds_key)
+            os.makedirs("data/cache", exist_ok=True)
+            with open("data/cache/atgs_raw.json", "w", encoding="utf-8") as f:
+                json.dump(atgs_raw, f)
+        atgs_map = odds_mod.parse_atgs(atgs_raw)
 
     group_results = {}
     team_lambda = defaultdict(list)
@@ -96,6 +109,8 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
             + ", ".join(f"{c['name']} ({c['team']})" for c in dropped)
         )
 
+    if atgs_map:
+        kept = build_expected_goals(kept, matches, atgs_map, team_factors)
     topscorers = pick_topscorers(team_factors, n=config.TOPSCORER_SLOTS, risk=risk, candidates=kept)
     champion = recommend_champion(pwin, pool_size, risk)
 
@@ -145,6 +160,8 @@ def main(argv=None):
     p.add_argument("--no-odds", action="store_true", help="Elo-only, no API key needed")
     p.add_argument("--odds-key", default=None, help="The Odds API key (enables market odds)")
     p.add_argument("--odds-file", default=None, help="Load a saved Odds API JSON instead of fetching")
+    p.add_argument("--atgs", action="store_true", help="also pull anytime-goalscorer odds (needs --odds-key)")
+    p.add_argument("--atgs-file", default=None, help="load a saved ATGS JSON instead of fetching")
     p.add_argument("--pool-size", type=int, default=32)
     p.add_argument("--risk", choices=["max_ev", "balanced", "aggressive"], default="balanced")
     p.add_argument("--out", default="out")
@@ -153,7 +170,8 @@ def main(argv=None):
 
     no_odds = args.no_odds or not (args.odds_key or args.odds_file)
     res = run(no_odds=no_odds, pool_size=args.pool_size, risk=args.risk,
-              odds_key=args.odds_key, odds_file=args.odds_file, out_dir=args.out, sims=args.sims)
+              odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
+              atgs_file=args.atgs_file, out_dir=args.out, sims=args.sims)
 
     print(f"Wrote {args.out}/report.md and {args.out}/picks.csv")
     print(f"Goal model: {'market odds + Elo' if res.used_odds else 'Elo only'}")

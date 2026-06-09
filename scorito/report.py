@@ -105,11 +105,16 @@ def _render_markdown(result: RunResult) -> str:
     if result.meta.get("ts_pool_win") is not None:
         L.append(f"_Engine-selected to maximize P(finishing 1st)_ vs a fame-biased field "
                  f"(over-owns famous attackers); entry pool-win {result.meta['ts_pool_win']:.1%}.\n")
-    L.append("| Player | Team | Pos | Pen | EV |")
-    L.append("|---|---|---|---|---|")
+    n_mkt = sum(1 for c in result.topscorers if c.get("goals_src") in ("market", "blend"))
+    if n_mkt:
+        L.append(f"_📈 = anytime-goalscorer market rate ({n_mkt}/{len(result.topscorers)}); "
+                 f"✍️ = hand-estimated g90._\n")
+    L.append("| Player | Team | Pos | Pen | Src | EV |")
+    L.append("|---|---|---|---|---|---|")
     for c in result.topscorers:
+        src = "📈" if c.get("goals_src") in ("market", "blend") else "✍️"
         L.append(f"| {c['name']} | {c['team']} | {c['position']} | "
-                 f"{'✓' if c.get('pen_taker') else ''} | {c['ev']:.2f} |")
+                 f"{'✓' if c.get('pen_taker') else ''} | {src} | {c['ev']:.2f} |")
     L.append("\n_Picks are auto-validated against the confirmed 2026 squads; g90/start "
              "estimates are editable in `scorito/data/topscorer_candidates.py`._\n")
     return "\n".join(L)
