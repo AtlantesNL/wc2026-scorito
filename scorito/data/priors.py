@@ -23,10 +23,14 @@ OPTA = {
     "Canada": 0.0052,
 }
 
-# Prediction-market title probabilities where the research gave explicit figures.
+# Prediction-market title probabilities (Polymarket, ~June 2026). Spain/France co-favourites; Argentina
+# and Brazil trail the European favourites. Averaged with Opta in blended_probs (NOT renormalized).
 MARKET = {
-    "France": 0.17,
     "Spain": 0.16,
+    "France": 0.16,
+    "England": 0.11,
+    "Argentina": 0.08,
+    "Brazil": 0.08,
 }
 
 
