@@ -10,8 +10,10 @@ differentiation is ≈neutral at this pool size
 ([finding](docs/scoreline-calibration-2026-06-09.md)). Topscorers are **engine-selected** for
 P(finishing 1st) against a fame-biased field (rivals over-own famous attackers, so under-owned
 high-multiplier defenders/keepers separate us) — a small but real edge, safeguarded to never
-underperform the EV pick ([finding](docs/topscorer-ownership-calibration-2026-06-09.md)). Tuned for a
-~30–50 person pool, balanced risk.
+underperform the EV pick ([finding](docs/topscorer-ownership-calibration-2026-06-09.md)). Their goal
+rates can be sourced from live **anytime-goalscorer market odds** (`--atgs`), blended with the hand
+`g90` fallback ([finding](docs/atgs-market-goal-rates-2026-06-09.md)). Tuned for a ~30–50 person pool,
+balanced risk.
 
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the full design.
 
@@ -30,6 +32,10 @@ uv pip install --python .venv/bin/python -r requirements.txt
 
 # With market odds (sharper); get a free key at the-odds-api.com:
 .venv/bin/python -m scorito.main --odds-key "$ODDS_API_KEY" --pool-size 32 --risk balanced
+
+# Sharpest: also pull anytime-goalscorer odds for market goal rates (caches data/cache/atgs_raw.json;
+# replay later with --atgs-file data/cache/atgs_raw.json — no key/credits):
+.venv/bin/python -m scorito.main --odds-key "$ODDS_API_KEY" --atgs --pool-size 32 --risk balanced
 ```
 
 Outputs `out/report.md` (human) and `out/picks.csv` (for fast transcription).
