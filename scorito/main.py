@@ -30,7 +30,7 @@ def _default_fixtures():
 
 
 def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=None,
-        atgs=False, atgs_file=None,
+        atgs=False, atgs_file=None, winner_file=None,
         out_dir="out", fixtures_src=None, sims=config.MC_SIMS, k=config.TOPK_SCORELINES, seed=0):
     matches = fixtures.load_fixtures(fixtures_src or _default_fixtures())
     gteams = group_teams(matches)
@@ -62,6 +62,18 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
             with open("data/cache/atgs_raw.json", "w", encoding="utf-8") as f:
                 json.dump(atgs_raw, f)
         atgs_map = odds_mod.parse_atgs(atgs_raw)
+
+    winner_map = {}
+    if winner_file or (not no_odds and odds_key):
+        from scorito.data import odds as odds_mod
+        if winner_file:
+            winner_raw = json.load(open(winner_file, encoding="utf-8"))
+        else:
+            winner_raw = odds_mod.fetch_winner_outrights(odds_key)
+            os.makedirs("data/cache", exist_ok=True)
+            with open("data/cache/winner_raw.json", "w", encoding="utf-8") as f:
+                json.dump(winner_raw, f)
+        winner_map = odds_mod.parse_winner_market(winner_raw)
 
     group_results = {}
     team_lambda = defaultdict(list)
@@ -95,10 +107,10 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         brk = bracket_mod.load_bracket(fixtures_src or _default_fixtures())
         sim = tournament.simulate(gteams, group_match_keys, all_grids, elo_map, brk,
                                   sims=sims, seed=seed)
-        pwin = blend_champion_probs(sim["win"], blended_probs())
+        pwin = blend_champion_probs(sim["win"], blended_probs(market=winner_map or None))
         advance = sim["advance"]
     else:
-        pwin = blended_probs()
+        pwin = blended_probs(market=winner_map or None)
 
     # Drop topscorer candidates not in their team's confirmed 2026 squad.
     squads = squads_data.load_squads()
@@ -162,6 +174,7 @@ def main(argv=None):
     p.add_argument("--odds-file", default=None, help="Load a saved Odds API JSON instead of fetching")
     p.add_argument("--atgs", action="store_true", help="also pull anytime-goalscorer odds (needs --odds-key)")
     p.add_argument("--atgs-file", default=None, help="load a saved ATGS JSON instead of fetching")
+    p.add_argument("--winner-file", default=None, help="load a saved WC-winner outright JSON instead of fetching")
     p.add_argument("--pool-size", type=int, default=32)
     p.add_argument("--risk", choices=["max_ev", "balanced", "aggressive"], default="balanced")
     p.add_argument("--out", default="out")
@@ -171,7 +184,7 @@ def main(argv=None):
     no_odds = args.no_odds or not (args.odds_key or args.odds_file)
     res = run(no_odds=no_odds, pool_size=args.pool_size, risk=args.risk,
               odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
-              atgs_file=args.atgs_file, out_dir=args.out, sims=args.sims)
+              atgs_file=args.atgs_file, winner_file=args.winner_file, out_dir=args.out, sims=args.sims)
 
     print(f"Wrote {args.out}/report.md and {args.out}/picks.csv")
     print(f"Goal model: {'market odds + Elo' if res.used_odds else 'Elo only'}")
