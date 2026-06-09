@@ -90,7 +90,8 @@ def _atgs_lambda(price, margin):
     return -math.log(1.0 - p)
 
 
-def build_expected_goals(candidates, matches, atgs_map, team_factors, margin=config.ATGS_MARGIN):
+def build_expected_goals(candidates, matches, atgs_map, team_factors,
+                         match_lams=None, avg_lam=None, margin=config.ATGS_MARGIN):
     """Augment each candidate with ``exp_goals`` (expected group goals) + ``goals_src``: market lambda
     (-ln(1-p), includes pens+opponent -> no team_factor/pen re-applied) where the player is priced for
     that group match, else the hand g90 fallback. Order-agnostic match lookup."""
@@ -108,8 +109,13 @@ def build_expected_goals(candidates, matches, atgs_map, team_factors, margin=con
                 total += _atgs_lambda(price, margin)
                 n_mkt += 1
             else:
-                total += c["g90"] * c["start_prob"] * team_factors.get(c["team"], 1.0) \
-                    + PEN_BONUS * pen_share / n
+                lam = match_lams.get((h, a)) if match_lams else None
+                if lam and avg_lam:                       # opponent-specific team scoring this match
+                    team_lam = lam[0] if c["team"] == h else lam[1]
+                    factor = team_lam / avg_lam
+                else:                                     # backward-compatible: group-average
+                    factor = team_factors.get(c["team"], 1.0)
+                total += c["g90"] * c["start_prob"] * factor + PEN_BONUS * pen_share / n
         src = "market" if cms and n_mkt == len(cms) else ("hand" if n_mkt == 0 else "blend")
         out.append(dict(c, exp_goals=total, goals_src=src))
     return out

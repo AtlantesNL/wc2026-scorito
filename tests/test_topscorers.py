@@ -74,3 +74,18 @@ def test_build_expected_goals_market_blend_and_backcompat():
     # backward compat: a candidate without exp_goals uses the g90 path unchanged
     assert abs(score_candidate(cand, tf) - (0.47 * 3 * 0.9) * 1.0 * 8) < 1e-9
     assert abs(fame_score(out, tf) - out["exp_goals"]) < 1e-9
+
+
+def test_build_expected_goals_opponent_specific_hand_fallback():
+    from types import SimpleNamespace
+    from scorito.model.topscorers import build_expected_goals
+    matches = [SimpleNamespace(team1="DE", team2="Minnow"), SimpleNamespace(team1="DE", team2="Tough")]
+    cand = dict(name="X", team="DE", position="MID", g90=0.2, start_prob=1.0)
+    tf = {"DE": 2.0}                                   # inflated group-average factor
+    lams = {("DE", "Minnow"): (3.0, 0.3), ("DE", "Tough"): (1.0, 1.2)}   # DE scores 3 vs Minnow, 1 vs Tough
+    out = build_expected_goals([cand], matches, {}, tf, match_lams=lams, avg_lam=1.5)[0]
+    expected = 0.2 * 1.0 * (3.0 / 1.5) + 0.2 * 1.0 * (1.0 / 1.5)   # opponent-specific per match
+    assert abs(out["exp_goals"] - expected) < 1e-9
+    # backward-compat: no match_lams -> group-average team_factor (2.0) for every match
+    out2 = build_expected_goals([cand], matches, {}, tf)[0]
+    assert abs(out2["exp_goals"] - 2 * (0.2 * 1.0 * 2.0)) < 1e-9
