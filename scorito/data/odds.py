@@ -126,3 +126,39 @@ def parse_atgs(raw):
         if prices:
             out[key] = {p: statistics.median(v) for p, v in prices.items()}
     return out
+
+
+WINNER_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup_winner/odds"
+
+
+def fetch_winner_outrights(api_key, regions=None):
+    """Live WC-winner outright (futures) odds across books. Returns the raw JSON (cache it; replay
+    via --winner-file). One request x regions (~2 credits)."""
+    r = requests.get(WINNER_URL, params=dict(regions=regions or config.ATGS_REGIONS,
+                     markets="outrights", oddsFormat="decimal", apiKey=api_key), timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+
+def parse_winner_market(raw):
+    """``raw``: outright /odds response. -> ``{team_ofb: consensus_prob}`` (de-vigged, sums to 1).
+    Proportional de-vig per book (robust to the long tail of unlisted minnows), median across books."""
+    per_book = []
+    for ev in raw:
+        for bk in ev.get("bookmakers", []):
+            for mk in bk.get("markets", []):
+                if mk.get("key") != "outrights":
+                    continue
+                prices = {_ofb(o["name"]): o["price"] for o in mk.get("outcomes", [])
+                          if o.get("price", 0) > 1.0}
+                if len(prices) < 8:           # too thin to de-vig reliably
+                    continue
+                inv = {t: 1.0 / p for t, p in prices.items()}
+                s = sum(inv.values()) or 1.0
+                per_book.append({t: v / s for t, v in inv.items()})   # proportional de-vig -> sum 1
+    if not per_book:
+        return {}
+    teams = set().union(*per_book)
+    cons = {t: statistics.median([b[t] for b in per_book if t in b]) for t in teams}
+    tot = sum(cons.values()) or 1.0
+    return {t: p / tot for t, p in cons.items()}   # renormalize the median consensus to sum 1

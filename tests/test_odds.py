@@ -44,3 +44,24 @@ def test_parse_atgs_median_across_books_and_name_field():
     sel = m[("USA", "Paraguay")]
     assert abs(sel["christian pulisic"] - 2.2) < 1e-9     # median(2.0, 2.4)
     assert sel["folarin balogun"] == 3.0                   # "Yes" leg via description; "No" skipped
+
+
+def test_parse_winner_market_devigs_and_consensus():
+    from scorito.data.odds import parse_winner_market
+    raw = [{"bookmakers": [
+        {"key": "b1", "markets": [{"key": "outrights", "outcomes": [
+            {"name": "Spain", "price": 6.0}, {"name": "France", "price": 6.0},
+            {"name": "Brazil", "price": 11.0}, {"name": "United States", "price": 81.0},
+            {"name": "Argentina", "price": 13.0}, {"name": "England", "price": 9.0},
+            {"name": "Germany", "price": 21.0}, {"name": "Netherlands", "price": 26.0}]}]},
+        {"key": "b2", "markets": [{"key": "outrights", "outcomes": [
+            {"name": "Spain", "price": 6.5}, {"name": "France", "price": 5.5},
+            {"name": "Brazil", "price": 10.0}, {"name": "United States", "price": 71.0},
+            {"name": "Argentina", "price": 12.0}, {"name": "England", "price": 9.5},
+            {"name": "Germany", "price": 19.0}, {"name": "Netherlands", "price": 29.0}]}]},
+    ]}]
+    m = parse_winner_market(raw)
+    assert abs(sum(m.values()) - 1.0) < 1e-9          # de-vigged consensus sums to 1
+    assert m["USA"] == min(m.values())                 # "United States" -> USA, the longest shot
+    assert max(m, key=m.get) in ("Spain", "France")    # favourites on top
+    assert m["Spain"] > m["Brazil"] > m["USA"]         # de-vig preserves ordering
