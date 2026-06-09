@@ -4,6 +4,7 @@ grids, the tournament bracket helpers, and eval/metrics."""
 import numpy as np
 
 from scorito import config
+from scorito.eval.metrics import match_points, standings_points, topscorer_points
 from scorito.model.bracket import ThirdSlot, assign_thirds, qualify_thirds
 from scorito.model.group_sim import _award, _rank_table, _sample_scores
 from scorito.model.topscorers import sample_player_goals
@@ -65,3 +66,54 @@ def sample_worlds(gteams, group_matches, grids, elo, bracket, candidates,
         worlds.append(dict(scores=scores, place=place, champion=champion,
                            pgoals={n: int(pgoals[n][s]) for n in pgoals}))
     return worlds
+
+
+def predicted_tables(entry, gteams, grp_matches):
+    """Standings each group implies from this entry's scorelines (Scorito derives the table
+    from your scores)."""
+    tables = {}
+    for g, ts in gteams.items():
+        stats = {t: dict(pts=0, gd=0, gf=0) for t in ts}
+        h2h = {}
+        for (a, b) in grp_matches[g]:
+            ga, gb = entry["scorelines"][(a, b)]
+            h2h[(a, b)] = (ga, gb)
+            _award(stats[a], stats[b], ga, gb)
+        tables[g] = _rank_table(stats, h2h=h2h, rng=None)
+    return tables
+
+
+def _entry_base(entry, pred_tables, world):
+    """Non-champion points for one entry in one world (scorelines + standings + topscorers)."""
+    pts = sum(match_points(entry["scorelines"][k], world["scores"][k]) for k in world["scores"]
+              if k in entry["scorelines"])
+    pts += sum(standings_points(pred_tables[g], world["place"][g]) for g in world["place"])
+    pts += topscorer_points(entry["topscorers"], world["pgoals"])
+    return pts
+
+
+def score_field(our_entry, field, worlds, gteams, group_matches):
+    """Returns (base_w[W], rival_base[N,W], rival_champ[N], champ_w[W])."""
+    grp = _grp_matches(gteams, group_matches)
+    W = len(worlds)
+    our_pred = predicted_tables(our_entry, gteams, grp)
+    base_w = np.array([_entry_base(our_entry, our_pred, w) for w in worlds], dtype=float)
+    rival_base = np.zeros((len(field), W))
+    for r, e in enumerate(field):
+        rp = predicted_tables(e, gteams, grp)
+        rival_base[r] = [_entry_base(e, rp, w) for w in worlds]
+    rival_champ = [e["champion"] for e in field]
+    champ_w = np.array([w["champion"] for w in worlds], dtype=object)
+    return base_w, rival_base, rival_champ, champ_w
+
+
+def champion_win_probs(base_w, rival_base, rival_champ, champ_w, candidates,
+                       bonus=config.CHAMPION_BONUS):
+    """P(our entry finishes strictly 1st) for each candidate champion, holding our other picks
+    fixed. ``base_w`` is our non-champion score per world; the field is fixed."""
+    if rival_base.shape[0] == 0:
+        return {c: 1.0 for c in candidates}
+    rc = np.array(rival_champ, dtype=object)[:, None]
+    rival_total = rival_base + bonus * (rc == champ_w[None, :])
+    max_rival = rival_total.max(axis=0)
+    return {c: float(np.mean(base_w + bonus * (champ_w == c) > max_rival)) for c in candidates}

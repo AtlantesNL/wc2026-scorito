@@ -33,3 +33,38 @@ def test_sample_worlds_shape_and_content():
     assert len(w["scores"]) == 72 and len(w["place"]) == 12
     assert w["champion"] in {f"{g}{i}" for g in gteams for i in range(1, 5)}
     assert w["pgoals"]["A1"] >= 0
+
+
+def test_champion_win_probs_no_field_is_one():
+    probs = pool.champion_win_probs(np.zeros(10), np.zeros((0, 10)),
+                                    [], np.array(["X"] * 10, dtype=object), ["X"])
+    assert probs["X"] == 1.0
+
+
+def test_champion_win_probs_brute_equivalence():
+    rng = np.random.default_rng(0)
+    W, N = 500, 4
+    champ_w = np.array(rng.choice(["X", "Y"], W), dtype=object)
+    base_w = rng.normal(1000, 10, W)
+    rival_base = rng.normal(1000, 10, (N, W))
+    rival_champ = ["X", "Y", "X", "Y"]
+    fast = pool.champion_win_probs(base_w, rival_base, rival_champ, champ_w, ["X", "Y"])
+    wins = 0
+    for w in range(W):
+        ours = base_w[w] + 250 * (champ_w[w] == "Y")
+        rivals = [rival_base[r, w] + 250 * (rival_champ[r] == champ_w[w]) for r in range(N)]
+        wins += ours > max(rivals)
+    assert abs(fast["Y"] - wins / W) < 1e-9
+
+
+def test_champion_win_probs_leverage_off_overowned_favourite():
+    # whole field on favourite X; X champions 60% of worlds, Y 40%; bases ~equal.
+    rng = np.random.default_rng(0)
+    W, N = 4000, 25
+    champ_w = np.where(rng.random(W) < 0.6, "X", "Y").astype(object)
+    base_w = rng.normal(1000, 5, W)
+    rival_base = rng.normal(1000, 5, (N, W))
+    rival_champ = ["X"] * N
+    probs = pool.champion_win_probs(base_w, rival_base, rival_champ, champ_w, ["X", "Y"])
+    assert probs["Y"] > probs["X"]          # core thesis: leverage off the crowd
+    assert 0 <= probs["X"] <= 1 and 0 <= probs["Y"] <= 1
