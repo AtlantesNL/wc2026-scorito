@@ -52,3 +52,25 @@ def test_fame_score_drops_multiplier():
     # equal expected GOALS*4 vs *1 -> equal Scorito EV, but fame (goals only) is 4x for the attacker
     assert abs(score_candidate(att, tf) - score_candidate(dfn, tf)) < 1e-9
     assert abs(fame_score(att, tf) - 4 * fame_score(dfn, tf)) < 1e-9
+
+
+def test_build_expected_goals_market_blend_and_backcompat():
+    import math
+    from types import SimpleNamespace
+    from scorito.model.topscorers import build_expected_goals, score_candidate, fame_score
+    matches = [SimpleNamespace(team1="USA", team2="Paraguay"),
+               SimpleNamespace(team1="USA", team2="Uruguay"),
+               SimpleNamespace(team1="Wales", team2="USA")]
+    tf = {"USA": 1.0}
+    cand = dict(name="Christian Pulisic", team="USA", position="ATT", g90=0.47, start_prob=0.9)
+    # priced in match 1 only -> blend (market match 1 + hand matches 2,3)
+    atgs = {("USA", "Paraguay"): {"christian pulisic": 2.5}}
+    out = build_expected_goals([cand], matches, atgs, tf, margin=1.06)[0]
+    p = (1 / 2.5) / 1.06
+    expected = -math.log(1 - p) + 2 * (0.47 * 0.9 * 1.0)            # 1 market + 2 hand matches
+    assert abs(out["exp_goals"] - expected) < 1e-6
+    assert out["goals_src"] == "blend"
+    assert abs(score_candidate(out, tf) - out["exp_goals"] * 8) < 1e-9   # ATT mult, no team_factor re-applied
+    # backward compat: a candidate without exp_goals uses the g90 path unchanged
+    assert abs(score_candidate(cand, tf) - (0.47 * 3 * 0.9) * 1.0 * 8) < 1e-9
+    assert abs(fame_score(out, tf) - out["exp_goals"]) < 1e-9

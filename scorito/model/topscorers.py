@@ -11,15 +11,20 @@ how much the player's side is expected to score across its three group games.
 defaults to 1.0 for a flagged first-choice ``pen_taker`` and 0.0 otherwise, so a
 co-/second-choice taker can be modelled at e.g. 0.5 rather than all-or-nothing.
 """
+import math
+
 import numpy as np
 
 from scorito import config
+from scorito.data.odds import ATGS_PLAYER_ALIASES, _norm
 from scorito.data.topscorer_candidates import CANDIDATES
 
 PEN_BONUS = 0.20  # extra expected group-phase goals for a side's *sole* penalty taker
 
 
 def score_candidate(c, team_factors) -> float:
+    if "exp_goals" in c:
+        return c["exp_goals"] * config.TOPSCORER_MULT[c["position"]]
     pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
     expected_goals = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
     factor = team_factors.get(c["team"], 1.0)
@@ -30,6 +35,8 @@ def fame_score(c, team_factors) -> float:
     """Rival-ownership weight: expected group-phase goals * team factor, WITHOUT the position
     multiplier — models amateurs chasing famous scorers and ignoring that a DEF/GK goal is worth 4x.
     So attackers get over-owned and high-multiplier defenders/keepers under-owned."""
+    if "exp_goals" in c:
+        return c["exp_goals"]
     pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
     expected_goals = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
     return expected_goals * team_factors.get(c["team"], 1.0)
@@ -67,8 +74,42 @@ def sample_player_goals(candidates, team_factors, sims, rng):
     topscorer EV model. Returns {name: np.ndarray(sims)}."""
     out = {}
     for c in candidates:
-        pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
-        exp = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
-        lam = max(0.0, exp * team_factors.get(c["team"], 1.0))
+        if "exp_goals" in c:
+            lam = max(0.0, c["exp_goals"])
+        else:
+            pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
+            exp = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
+            lam = max(0.0, exp * team_factors.get(c["team"], 1.0))
         out[c["name"]] = rng.poisson(lam, size=sims)
+    return out
+
+
+def _atgs_lambda(price, margin):
+    """ATGS price -> per-match goal rate. p=(1/price)/margin de-vigged; lambda=-ln(1-p)."""
+    p = min(0.99, (1.0 / price) / margin)
+    return -math.log(1.0 - p)
+
+
+def build_expected_goals(candidates, matches, atgs_map, team_factors, margin=config.ATGS_MARGIN):
+    """Augment each candidate with ``exp_goals`` (expected group goals) + ``goals_src``: market lambda
+    (-ln(1-p), includes pens+opponent -> no team_factor/pen re-applied) where the player is priced for
+    that group match, else the hand g90 fallback. Order-agnostic match lookup."""
+    out = []
+    for c in candidates:
+        cms = [(m.team1, m.team2) for m in matches if c["team"] in (m.team1, m.team2)]
+        pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
+        n = max(1, len(cms))
+        key = _norm(ATGS_PLAYER_ALIASES.get(c["name"], c["name"]))
+        total, n_mkt = 0.0, 0
+        for (h, a) in cms:
+            sel = atgs_map.get((h, a)) or atgs_map.get((a, h)) or {}
+            price = sel.get(key)
+            if price and price > 1.0:
+                total += _atgs_lambda(price, margin)
+                n_mkt += 1
+            else:
+                total += c["g90"] * c["start_prob"] * team_factors.get(c["team"], 1.0) \
+                    + PEN_BONUS * pen_share / n
+        src = "market" if cms and n_mkt == len(cms) else ("hand" if n_mkt == 0 else "blend")
+        out.append(dict(c, exp_goals=total, goals_src=src))
     return out
