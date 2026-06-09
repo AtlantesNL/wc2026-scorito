@@ -42,3 +42,13 @@ def test_sample_player_goals_mean_scales_with_rate_and_factor():
     assert 1.6 < goals["Striker"].mean() < 2.0
     assert 0.05 < goals["Defender"].mean() < 0.25
     assert goals["Striker"].shape == (20000,)
+
+
+def test_fame_score_drops_multiplier():
+    from scorito.model.topscorers import fame_score
+    tf = {"T": 1.0}
+    att = dict(name="A", team="T", position="ATT", g90=0.5, start_prob=1.0)
+    dfn = dict(name="D", team="T", position="DEF", g90=0.125, start_prob=1.0)
+    # equal expected GOALS*4 vs *1 -> equal Scorito EV, but fame (goals only) is 4x for the attacker
+    assert abs(score_candidate(att, tf) - score_candidate(dfn, tf)) < 1e-9
+    assert abs(fame_score(att, tf) - 4 * fame_score(dfn, tf)) < 1e-9

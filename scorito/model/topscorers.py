@@ -26,6 +26,15 @@ def score_candidate(c, team_factors) -> float:
     return expected_goals * factor * config.TOPSCORER_MULT[c["position"]]
 
 
+def fame_score(c, team_factors) -> float:
+    """Rival-ownership weight: expected group-phase goals * team factor, WITHOUT the position
+    multiplier — models amateurs chasing famous scorers and ignoring that a DEF/GK goal is worth 4x.
+    So attackers get over-owned and high-multiplier defenders/keepers under-owned."""
+    pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
+    expected_goals = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
+    return expected_goals * team_factors.get(c["team"], 1.0)
+
+
 def pick_topscorers(team_factors, n: int = config.TOPSCORER_SLOTS, risk: str = "balanced",
                     candidates=CANDIDATES):
     """Top-n picks. For balanced/aggressive risk, reserve slots for the best
