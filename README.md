@@ -23,7 +23,15 @@ See [`docs/DESIGN.md`](docs/DESIGN.md) for the full design.
 ```bash
 uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python -r requirements.txt
+
+# Optional one-time fixtures cache. The optimizer fetches these live when the file is absent,
+# but the test suite and the live scorecard (below) read this local path:
+mkdir -p data/cache && curl -sL \
+  https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json \
+  -o data/cache/worldcup2026.json
 ```
+
+Run the tests with `.venv/bin/python -m pytest -q` (107 passing).
 
 ## Usage
 
@@ -31,8 +39,9 @@ uv pip install --python .venv/bin/python -r requirements.txt
 # Elo-only (no API key, runs anywhere):
 .venv/bin/python -m scorito.main --no-odds --pool-size 32 --risk balanced
 
-# With market odds (sharper); get a free key at the-odds-api.com. A keyed run also auto-fetches the live
-# WC-winner outright for the champion prior (replay offline with --winner-file data/cache/winner_raw.json):
+# With market odds (sharper); get a free key at the-odds-api.com. A keyed run caches the live h2h
+# snapshot (data/cache/odds_raw.json) and auto-fetches the WC-winner outright for the champion prior
+# — replay both offline (no key/credits) with --odds-file / --winner-file:
 .venv/bin/python -m scorito.main --odds-key "$ODDS_API_KEY" --pool-size 32 --risk balanced
 
 # Sharpest: also pull anytime-goalscorer odds for market goal rates (caches data/cache/atgs_raw.json;
@@ -42,14 +51,19 @@ uv pip install --python .venv/bin/python -r requirements.txt
 
 Outputs `out/report.md` (human) and `out/picks.csv` (for fast transcription).
 
+`--risk` sets how hard every pick leans off raw expected value toward pool-leverage (differentiating
+from a chalk-picking amateur field): `max_ev` (pure EV — best when your pool pays several places),
+`balanced` (default), `aggressive` (most differentiation — best for winner-take-all).
+
 ## Validation
 
 Measure prediction quality and grade live picks (`scorito/eval/`, free data only):
 
 ```bash
-# Live scorecard: realized Scorito points for your picks vs baselines (always-1-0,
-# chalk champion, market top-6) as group results arrive. Auto-reads the openfootball
-# feed; drop data/wc2026_scorers.json as {"Player": goals} to enable topscorer grading.
+# Live scorecard: realized Scorito points for your picks vs baselines (always-1-0 scorelines,
+# market top-6 topscorers) as group results arrive. Reads data/cache/worldcup2026.json (the
+# openfootball file from Setup — refresh it to pull in live scores); drop data/wc2026_scorers.json
+# as {"Player": goals} to enable topscorer grading.
 .venv/bin/python -m scorito.eval scorecard
 
 # Calibrate DC_RHO / NEUTRAL_AVG_TOTAL / ELO_GOAL_DIVISOR on past tournaments via a
