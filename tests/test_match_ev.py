@@ -16,8 +16,19 @@ def _grid():
 
 def test_score_ev_known_value():
     g = _grid()
-    # 1-0: 45*0.4 + 30*P(H=0.6) = 18 + 18 = 36
-    assert abs(score_ev(g, 1, 0) - 36.0) < 1e-9
+    # XOR rule: predict 1-0 -> 30 for the home toto, upgraded to 45 on the exact 1-0 cell.
+    # EV = 30*P(home=0.6) + (45-30)*P(exact 1-0 = 0.4) = 18 + 6 = 24  (NOT the additive 36).
+    assert abs(score_ev(g, 1, 0) - 24.0) < 1e-9
+
+
+def test_score_ev_is_xor_not_additive():
+    # Locks out the additive double-count bug: Scorito pays max 45/match (an exact hit does
+    # not also bank the 30 toto). EV = 30*P(toto) + 15*P(exact), never 45*P(exact) + 30*P(toto).
+    g = _grid()
+    xor = 30 * g.p_home + (45 - 30) * g.exact(1, 0)        # correct = 24.0
+    additive = 45 * g.exact(1, 0) + 30 * g.p_home          # the old bug = 36.0
+    assert abs(score_ev(g, 1, 0) - xor) < 1e-9
+    assert abs(score_ev(g, 1, 0) - additive) > 1e-6        # must NOT equal the additive value
 
 
 def test_topk_orders_by_ev():

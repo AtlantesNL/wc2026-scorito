@@ -1,7 +1,15 @@
 """Per-match Scorito points for each candidate scoreline.
 
-``ev`` = true expected points: 45·P(exact i-j) + 30·P(correct toto outcome).
-``sel`` = the pool-leverage-adjusted *selection* score: the same exact + toto points, each
+Scorito scores a match XOR, not additively: an exact-score hit pays 45, a correct toto (1/X/2)
+pays 30, and an exact hit does NOT also collect the toto 30 — max 45 per match (confirmed from
+the in-app Spelregels). So the expected points of predicting (i, j) decompose as
+
+    30·P(correct toto outcome)  +  (45−30)·P(exact i-j)
+
+i.e. the exact cell is *upgraded* 30→45, never stacked to 75.
+
+``ev``  = those true expected points.
+``sel`` = the pool-leverage-adjusted *selection* score: the same toto + exact-upgrade terms, each
 discounted by how crowded that outcome is in the field (the per-match analog of the champion
 leverage). The group optimizer ranks/combines on ``sel`` but reports ``ev``.
 """
@@ -18,7 +26,9 @@ def score_ev(grid, i: int, j: int, toto_weight: float = 1.0) -> float:
         p_toto = grid.p_away
     else:
         p_toto = grid.p_draw
-    return config.PTS_EXACT * grid.exact(i, j) + config.PTS_TOTO * toto_weight * p_toto
+    # XOR rule: 30 for the toto class, upgraded to 45 on the exact cell -> only the (45−30)
+    # *extra* is attributed to nailing the score (NOT a full 45 on top of the 30).
+    return (config.PTS_EXACT - config.PTS_TOTO) * grid.exact(i, j) + config.PTS_TOTO * toto_weight * p_toto
 
 
 def _leverage(own: float, n_rivals: int, gamma: float) -> float:
@@ -29,11 +39,12 @@ def _leverage(own: float, n_rivals: int, gamma: float) -> float:
 
 def score_sel(grid, i: int, j: int, own_exact: dict, own_toto: dict,
               n_rivals: int, gamma: float) -> float:
-    """Leverage-adjusted selection score: exact + toto points, each discounted by the field's
-    ownership of that outcome (so under-owned-but-plausible results — e.g. draws — get boosted)."""
+    """Leverage-adjusted selection score: the toto points + the exact-score upgrade (45−30), each
+    discounted by the field's ownership of that outcome (so under-owned-but-plausible results —
+    e.g. draws — get boosted). Mirrors ``score_ev``'s XOR decomposition, not an additive 45+30."""
     o = "home" if i > j else "away" if j > i else "draw"
     p_toto = {"home": grid.p_home, "away": grid.p_away, "draw": grid.p_draw}[o]
-    ex = config.PTS_EXACT * grid.exact(i, j) * _leverage(own_exact.get((i, j), 0.0), n_rivals, gamma)
+    ex = (config.PTS_EXACT - config.PTS_TOTO) * grid.exact(i, j) * _leverage(own_exact.get((i, j), 0.0), n_rivals, gamma)
     to = config.PTS_TOTO * p_toto * _leverage(own_toto.get(o, 0.0), n_rivals, gamma)
     return ex + to
 
