@@ -47,6 +47,20 @@ def _render_markdown(result: RunResult) -> str:
     L.append("# Scorito WC2026 — Recommended Group-Phase Picks\n")
     L.append(f"_Pool size:_ {result.pool_size} · _Risk:_ {result.risk} · "
              f"_Goal model:_ {'market odds + Elo' if result.used_odds else 'Elo only'}\n")
+    prov = []
+    if result.meta.get("generated_at"):
+        prov.append(f"_Generated:_ {result.meta['generated_at']}")
+    if result.meta.get("flags"):
+        prov.append(f"_Run:_ `{result.meta['flags']}`")
+    cov = result.meta.get("odds_coverage")
+    if cov:
+        prov.append(f"_Odds-priced:_ {cov[0]}/{cov[1]}")
+    if result.pool_win:
+        stable = result.meta.get("pool_win_stable", True)
+        prov.append("_Pool-win sweep:_ " + ("stable" if stable
+                    else "⚠️ UNSTABLE (champion argmax flips across field-chalkiness)"))
+    if prov:
+        L.append(" · ".join(prov) + "\n")
     n_draws = sum(1 for gr in result.groups.values() for s in gr.scorelines if s.home == s.away)
     n_sl = sum(len(gr.scorelines) for gr in result.groups.values())
     L.append(f"_Scorelines:_ pool-leverage-adjusted (draw-aware); "
@@ -94,9 +108,14 @@ def _render_markdown(result: RunResult) -> str:
         dart_txt = ("" if dart is None else
                     f" If your pool is unusually chalk-heavy on the favourites, **{dart}** is the "
                     f"higher-leverage differentiation dart (lower title odds, less owned).")
+        stable = result.meta.get("pool_win_stable", True)
+        stab_txt = ("" if stable else
+                    " ⚠️ Not stable across field-chalkiness assumptions (the pool-win argmax flips within "
+                    "the 1.0/1.5/2.0 sweep) — treat the cluster as a near-tie and let your pool's payout "
+                    "structure (win-only vs top-3) pick between the floor and the dart.")
         L.append(f"\n**Champion — robust pick: {rec.team}** ({wp:.1%} pool-win, the highest floor at a "
                  f"realistic field; within ~2 Monte-Carlo std-errors ±{2 * se:.1%} of the cluster "
-                 f"[{names}]).{dart_txt} Avoid host nations (USA/Mexico/Canada), which amateurs "
+                 f"[{names}]).{stab_txt}{dart_txt} Avoid host nations (USA/Mexico/Canada), which amateurs "
                  f"over-pick.\n")
     else:
         runner = result.champion[1]

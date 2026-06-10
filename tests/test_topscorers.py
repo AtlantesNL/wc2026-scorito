@@ -76,6 +76,34 @@ def test_build_expected_goals_market_blend_and_backcompat():
     assert abs(fame_score(out, tf) - out["exp_goals"]) < 1e-9
 
 
+def test_build_expected_goals_atgs_plain_name_fallback():
+    # Candidate is aliased (Haaland -> "Erling Braut Haaland") but tomorrow's feed lists the
+    # PLAIN name -> must still match via the plain-name fallback, not silently use hand g90.
+    from types import SimpleNamespace
+    from scorito.model.topscorers import build_expected_goals
+    matches = [SimpleNamespace(team1="Norway", team2="X")]
+    cand = dict(name="Erling Haaland", team="Norway", position="ATT", g90=0.8, start_prob=1.0)
+    atgs = {("Norway", "X"): {"erling haaland": 1.5}}      # plain name, NOT the alias key
+    out = build_expected_goals([cand], matches, atgs, {"Norway": 1.0}, margin=1.06)[0]
+    assert out["goals_src"] == "market"                    # found via plain-name fallback
+
+
+def test_build_expected_goals_market_scaled_by_appearance():
+    # A low-start (bench-risk) player's market goal rate is scaled by appearance prob, so a
+    # rotation player can't gatecrash the six on an unconditional market rate.
+    import math
+    from types import SimpleNamespace
+    from scorito.model.topscorers import build_expected_goals
+    matches = [SimpleNamespace(team1="X", team2="Y")]
+    cand = dict(name="Benchy", team="X", position="ATT", g90=0.5, start_prob=0.6)
+    atgs = {("X", "Y"): {"benchy": 2.5}}
+    out = build_expected_goals([cand], matches, atgs, {"X": 1.0}, margin=1.06)[0]
+    p = (1 / 2.5) / 1.06
+    appear = min(1.0, 0.6 + 0.15)                           # 0.75
+    assert abs(out["exp_goals"] - (-math.log(1 - p) * appear)) < 1e-9
+    assert out["goals_src"] == "market"
+
+
 def test_build_expected_goals_opponent_specific_hand_fallback():
     from types import SimpleNamespace
     from scorito.model.topscorers import build_expected_goals

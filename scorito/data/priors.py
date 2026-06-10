@@ -53,17 +53,21 @@ def blended_probs(market: dict | None = None) -> dict[str, float]:
 
 def blend_champion_probs(mc, market, weight=None):
     """Blend the simulation's P(win) (``mc``, all teams, the backbone) with the market/Opta
-    prior (``market``, a few teams). The market is extended to all teams by spreading its
-    residual mass over the uncovered teams in proportion to ``mc``; then
-    ``out = weight*market_full + (1-weight)*mc`` (sums to 1)."""
+    prior (``market``, a few teams). The market is extended to a full distribution over the
+    ``mc`` teams (summing to 1) by spreading its residual mass over the uncovered teams in
+    proportion to ``mc``; then ``out = weight*market_full + (1-weight)*mc`` (sums to 1)."""
     from scorito import config
     w = config.CHAMPION_MARKET_WEIGHT if weight is None else weight
     covered = {t: market[t] for t in market if t in mc}
     s = sum(covered.values())
-    market_full = dict(covered)
     uncovered = [t for t in mc if t not in covered]
-    if s >= 1.0:
-        market_full = {t: p / s for t, p in covered.items()}
+    market_full = dict(covered)
+    if s >= 1.0 or not uncovered:
+        # market already covers >=100% of the MC field, OR every MC team is covered but the
+        # listed mass is <1 (the rest sits on non-qualified "ghost" teams) -> renormalize the
+        # covered mass to 1 so the residual isn't silently dropped (the bug this guards against).
+        tot = s or 1.0
+        market_full = {t: p / tot for t, p in covered.items()}
         for t in uncovered:
             market_full[t] = 0.0
     else:

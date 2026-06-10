@@ -2,6 +2,7 @@
 champion + topscorers -> report. The Elo-only path (``--no-odds``) runs offline.
 """
 import argparse
+import datetime
 import json
 import os
 import warnings
@@ -47,10 +48,18 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
     odds_map, used_odds = None, False
     if not no_odds and (odds_key or odds_file):
         from scorito.data import odds  # lazy: only needed when odds are requested
-        raw = json.load(open(odds_file, encoding="utf-8")) if odds_file else odds.fetch_odds(odds_key)
+        if odds_file:
+            raw = json.load(open(odds_file, encoding="utf-8"))
+        else:
+            raw = odds.fetch_odds(odds_key)
+            os.makedirs("data/cache", exist_ok=True)
+            with open("data/cache/odds_raw.json", "w", encoding="utf-8") as f:
+                json.dump(raw, f)   # cache the live h2h snapshot (replay via --odds-file)
         odds_map = odds.parse_odds(raw)
         used_odds = True
 
+    if atgs and not odds_key and not atgs_file:
+        warnings.warn("--atgs ignored: needs --odds-key (live) or --atgs-file (replay).")
     atgs_map = {}
     if atgs_file or (atgs and odds_key):
         from scorito.data import odds as odds_mod
@@ -74,6 +83,9 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
             with open("data/cache/winner_raw.json", "w", encoding="utf-8") as f:
                 json.dump(winner_raw, f)
         winner_map = odds_mod.parse_winner_market(winner_raw)
+    if (winner_file or (not no_odds and odds_key)) and not winner_map:
+        warnings.warn("Winner-outright source requested but parsed empty; the champion title "
+                      "prior fell back to the hand-typed MARKET dict (possibly stale).")
 
     group_results = {}
     team_lambda = defaultdict(list)
@@ -156,13 +168,32 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
                 elo_map, brk, team_factors, pwin, scoreline_choices, ts_field_pool, pool_size,
                 seed=seed, baseline_names=[c["name"] for c in topscorers])
 
+    odds_cov = None
+    if used_odds:
+        priced = {(m.team1, m.team2) for m in matches
+                  if odds_map and ((m.team1, m.team2) in odds_map or (m.team2, m.team1) in odds_map)}
+        fallback = [f"{m.team1} v {m.team2}" for m in matches if (m.team1, m.team2) not in priced]
+        odds_cov = (len(priced), len(matches))
+        if fallback:
+            shown = ", ".join(fallback[:8]) + ("..." if len(fallback) > 8 else "")
+            warnings.warn(f"Odds coverage {len(priced)}/{len(matches)}; {len(fallback)} match(es) "
+                          f"used the Elo fallback: {shown}")
+    generated_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    flag_bits = ["--no-odds" if no_odds else ("--odds-file" if odds_file else "--odds-key")]
+    if atgs_file or (atgs and odds_key):
+        flag_bits.append("--atgs-file" if atgs_file else "--atgs")
+    if winner_file:
+        flag_bits.append("--winner-file")
+    flag_bits += [f"--pool-size {pool_size}", f"--risk {risk}"]
+
     result = RunResult(
         groups=group_results,
         champion=champion,
         topscorers=topscorers,
         pool_size=pool_size, risk=risk, used_odds=used_odds,
         meta={"pool_win_stable": pool_win_stable, "pool_win_sims": config.POOL_WIN_SIMS,
-              "ts_pool_win": ts_pool_win},
+              "ts_pool_win": ts_pool_win, "generated_at": generated_at,
+              "flags": " ".join(flag_bits), "odds_coverage": odds_cov},
         advance=advance,
         pool_win=pool_win,
     )
@@ -191,6 +222,10 @@ def main(argv=None):
 
     print(f"Wrote {args.out}/report.md and {args.out}/picks.csv")
     print(f"Goal model: {'market odds + Elo' if res.used_odds else 'Elo only'}")
+    cov = res.meta.get("odds_coverage")
+    if cov:
+        print(f"Odds coverage: {cov[0]}/{cov[1]} matches market-priced")
+    print(f"Pool-win sweep stable: {res.meta.get('pool_win_stable')}")
     print(f"Expected group-phase points (model): {res.expected_group_points:.0f}")
     print(f"Champion: {res.champion[0].team} (alt: {res.champion[1].team})")
     print("Topscorers:", ", ".join(c["name"] for c in res.topscorers))

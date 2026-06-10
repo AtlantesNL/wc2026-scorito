@@ -7,6 +7,7 @@ to the openfootball spelling used everywhere else.
 """
 import statistics
 import unicodedata
+import warnings
 
 import requests
 
@@ -90,8 +91,9 @@ def fetch_atgs(api_key, regions=None):
     regions = regions or config.ATGS_REGIONS
     ev = requests.get(EVENTS_URL, params=dict(apiKey=api_key), timeout=30)
     ev.raise_for_status()
-    out = []
-    for e in ev.json():
+    events = ev.json()
+    out, failures = [], 0
+    for e in events:
         try:
             r = requests.get(
                 EVENT_ODDS_URL.format(eid=e["id"]),
@@ -102,7 +104,12 @@ def fetch_atgs(api_key, regions=None):
             r.raise_for_status()
             out.append(r.json())
         except requests.RequestException:
-            continue
+            failures += 1
+    if failures:
+        warnings.warn(
+            f"ATGS: {failures}/{len(events)} per-event requests failed (rate-limit/quota/network); "
+            f"those matches fall back to hand g90 and the cached feed is PARTIAL. Re-pull when quota allows."
+        )
     return out
 
 
@@ -142,8 +149,11 @@ def fetch_winner_outrights(api_key, regions=None):
 
 def parse_winner_market(raw):
     """``raw``: outright /odds response. -> ``{team_ofb: consensus_prob}`` (de-vigged, sums to 1).
-    Proportional de-vig per book (robust to the long tail of unlisted minnows), median across books."""
-    per_book = []
+    Proportional de-vig per book (robust to the long tail of unlisted minnows), median across
+    DISTINCT operators. The same exchange listed across regions (e.g. ``betfair_ex_eu`` and
+    ``betfair_ex_uk``, both title "Betfair") is collapsed to one vote first — otherwise a
+    duplicated book silently outvotes the others (median of [Betfair, Betfair, WH] == Betfair)."""
+    by_operator = {}   # operator identity -> list of per-region de-vigged dicts
     for ev in raw:
         for bk in ev.get("bookmakers", []):
             for mk in bk.get("markets", []):
@@ -155,10 +165,16 @@ def parse_winner_market(raw):
                     continue
                 inv = {t: 1.0 / p for t, p in prices.items()}
                 s = sum(inv.values()) or 1.0
-                per_book.append({t: v / s for t, v in inv.items()})   # proportional de-vig -> sum 1
-    if not per_book:
+                operator = bk.get("title") or bk.get("key", "")   # regions of one book share a title
+                by_operator.setdefault(operator, []).append({t: v / s for t, v in inv.items()})
+    if not by_operator:
         return {}
-    teams = set().union(*per_book)
-    cons = {t: statistics.median([b[t] for b in per_book if t in b]) for t in teams}
+    # one vote per operator = mean across its regional listings, then median across operators
+    books = []
+    for dicts in by_operator.values():
+        teams = set().union(*dicts)
+        books.append({t: statistics.mean([d[t] for d in dicts if t in d]) for t in teams})
+    teams = set().union(*books)
+    cons = {t: statistics.median([b[t] for b in books if t in b]) for t in teams}
     tot = sum(cons.values()) or 1.0
     return {t: p / tot for t, p in cons.items()}   # renormalize the median consensus to sum 1

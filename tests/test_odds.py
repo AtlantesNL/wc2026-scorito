@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from scorito.data.odds import parse_odds
 
 SAMPLE = json.loads((Path(__file__).parent / "fixtures" / "odds_sample.json").read_text())
@@ -65,3 +67,22 @@ def test_parse_winner_market_devigs_and_consensus():
     assert m["USA"] == min(m.values())                 # "United States" -> USA, the longest shot
     assert max(m, key=m.get) in ("Spain", "France")    # favourites on top
     assert m["Spain"] > m["Brazil"] > m["USA"]         # de-vig preserves ordering
+
+
+def test_parse_winner_market_dedupes_same_exchange_across_regions():
+    from scorito.data.odds import parse_winner_market
+    # Betfair (loves Spain) listed under two region keys but ONE title; WH (loves France) once.
+    # With dedup it's a 1-Betfair vs 1-WH tie -> Spain == France. Without dedup the doubled
+    # Betfair would tilt the median toward Spain.
+    bf = [{"name": "Spain", "price": 4.0}] + [{"name": t, "price": 8.0} for t in
+          ("France", "Brazil", "England", "Argentina", "Germany", "Portugal", "Netherlands")]
+    wh = [{"name": "France", "price": 4.0}] + [{"name": t, "price": 8.0} for t in
+          ("Spain", "Brazil", "England", "Argentina", "Germany", "Portugal", "Netherlands")]
+    book = lambda k, title, out: {"key": k, "title": title,
+                                  "markets": [{"key": "outrights", "outcomes": out}]}
+    raw = [{"bookmakers": [book("betfair_ex_eu", "Betfair", bf),
+                           book("betfair_ex_uk", "Betfair", bf),
+                           book("williamhill", "William Hill", wh)]}]
+    m = parse_winner_market(raw)
+    assert abs(sum(m.values()) - 1.0) < 1e-9
+    assert m["Spain"] == pytest.approx(m["France"])    # the duplicated Betfair no longer outvotes WH

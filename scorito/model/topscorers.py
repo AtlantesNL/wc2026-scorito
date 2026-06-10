@@ -93,20 +93,25 @@ def _atgs_lambda(price, margin):
 def build_expected_goals(candidates, matches, atgs_map, team_factors,
                          match_lams=None, avg_lam=None, margin=config.ATGS_MARGIN):
     """Augment each candidate with ``exp_goals`` (expected group goals) + ``goals_src``: market lambda
-    (-ln(1-p), includes pens+opponent -> no team_factor/pen re-applied) where the player is priced for
-    that group match, else the hand g90 fallback. Order-agnostic match lookup."""
+    (-ln(1-p), includes pens+opponent -> no team_factor/pen re-applied) scaled by appearance prob,
+    where the player is priced for that group match; else the hand g90 fallback. Order-agnostic match
+    lookup, tried under both the name alias and the plain name."""
     out = []
     for c in candidates:
         cms = [(m.team1, m.team2) for m in matches if c["team"] in (m.team1, m.team2)]
         pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
         n = max(1, len(cms))
-        key = _norm(ATGS_PLAYER_ALIASES.get(c["name"], c["name"]))
+        alias_key = _norm(ATGS_PLAYER_ALIASES.get(c["name"], c["name"]))
+        plain_key = _norm(c["name"])
+        # ATGS prices are conditional on the player appearing (bets void on DNP), so scale by an
+        # appearance prob >= start_prob (a sub can still play); high-start players are unaffected.
+        appear = min(1.0, c["start_prob"] + 0.15)
         total, n_mkt = 0.0, 0
         for (h, a) in cms:
             sel = atgs_map.get((h, a)) or atgs_map.get((a, h)) or {}
-            price = sel.get(key)
+            price = sel.get(alias_key) or sel.get(plain_key)   # alias first, then plain name
             if price and price > 1.0:
-                total += _atgs_lambda(price, margin)
+                total += _atgs_lambda(price, margin) * appear
                 n_mkt += 1
             else:
                 lam = match_lams.get((h, a)) if match_lams else None

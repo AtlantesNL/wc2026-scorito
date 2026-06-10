@@ -27,6 +27,18 @@ def test_blend_half_and_half_sums_to_one():
     assert out["A"] == pytest.approx(0.5 * 0.5 + 0.5 * 0.2)
 
 
+def test_blend_renormalizes_when_market_covers_all_mc_teams():
+    # Live consensus lists every MC team but its covered mass is <1 (non-qualified "ghost"
+    # teams hold the rest). The market component must be renormalized to 1, not leak the
+    # residual (which made blended probs sum to ~0.985 and understate every P(win)).
+    mc = {"A": 0.5, "B": 0.3, "C": 0.2}
+    market = {"A": 0.30, "B": 0.20, "C": 0.10}      # covers all of mc, sums to only 0.60
+    out = blend_champion_probs(mc, market, weight=0.5)
+    assert sum(out.values()) == pytest.approx(1.0)
+    # market renormalized A:0.30/0.60=0.5; blended 50/50 with mc's 0.5 -> 0.5
+    assert out["A"] == pytest.approx(0.5 * 0.5 + 0.5 * 0.5)
+
+
 def test_market_anchors_include_argentina_and_lower_its_prior():
     from scorito.data.priors import MARKET, OPTA, blended_probs
     assert {"Spain", "France", "England", "Portugal", "Argentina", "Brazil",
