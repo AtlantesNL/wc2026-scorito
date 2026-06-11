@@ -113,10 +113,17 @@ def _render_markdown(result: RunResult) -> str:
                     " ⚠️ Not stable across field-chalkiness assumptions (the pool-win argmax flips within "
                     "the 1.0/1.5/2.0 sweep) — treat the cluster as a near-tie and let your pool's payout "
                     "structure (win-only vs top-3) pick between the floor and the dart.")
-        L.append(f"\n**Champion — robust pick: {rec.team}** ({wp:.1%} pool-win, the highest floor at a "
-                 f"realistic field; within ~2 Monte-Carlo std-errors ±{2 * se:.1%} of the cluster "
-                 f"[{names}]).{stab_txt}{dart_txt} Avoid host nations (USA/Mexico/Canada), which amateurs "
-                 f"over-pick.\n")
+        if result.risk == "max_ev":
+            L.append(f"\n**Champion — max-EV pick: {rec.team}** (highest outright {rec.p_win:.1%} → "
+                     f"EV {rec.ev_points:.0f} pts; the right call for placement/top-3 payouts, where "
+                     f"reliable points beat pool-win leverage). The win-only pool-win logic sees a "
+                     f"near-tie cluster [{names}] (±{2 * se:.1%} ≈ 2 Monte-Carlo std-errors) — ignore "
+                     f"it unless your pool pays the winner only.{stab_txt}\n")
+        else:
+            L.append(f"\n**Champion — robust pick: {rec.team}** ({wp:.1%} pool-win, the highest floor at a "
+                     f"realistic field; within ~2 Monte-Carlo std-errors ±{2 * se:.1%} of the cluster "
+                     f"[{names}]).{stab_txt}{dart_txt} Avoid host nations (USA/Mexico/Canada), which amateurs "
+                     f"over-pick.\n")
     else:
         runner = result.champion[1]
         L.append(f"\n**Recommendation: {rec.team}** (pool-adjusted leverage); "

@@ -38,6 +38,15 @@ def leverage_score(p_win: float, share: float, pool_size: int, risk: str) -> flo
     return p_win / (1.0 + share * (pool_size - 1)) ** g
 
 
+def reorder_for_pool_win(recs, best: str, pool_win: dict[str, float], risk: str):
+    """Put the pool-win argmax first for the leverage modes; max_ev keeps the
+    pure-EV order from ``recommend_champion`` (GAMMA 0.0 — the pool-win MC is a
+    noisy near-tie and must not override the EV pick in a placement pool)."""
+    if risk == "max_ev":
+        return recs
+    return sorted(recs, key=lambda r: (r.team != best, -pool_win.get(r.team, 0.0)))
+
+
 def recommend_champion(pwin, pool_size: int, risk: str = "balanced"):
     """Return ChampionRecs sorted by pool-adjusted leverage (best first).
 

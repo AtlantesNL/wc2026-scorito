@@ -17,7 +17,7 @@ from scorito.data.priors import blend_champion_probs, blended_probs
 from scorito.model import bracket as bracket_mod
 from scorito.model import field
 from scorito.model import tournament
-from scorito.model.champion import recommend_champion
+from scorito.model.champion import recommend_champion, reorder_for_pool_win
 from scorito.model.goals import expected_goals
 from scorito.model.grid import build_grid
 from scorito.model.group_opt import optimize_group
@@ -161,7 +161,7 @@ def run(no_odds=True, pool_size=32, risk="balanced", odds_key=None, odds_file=No
         best, pool_win, pool_win_stable = pool.pool_win_champion(
             our_entry, gteams, group_match_keys, all_grids, elo_map, brk, kept,
             team_factors, pwin, scoreline_choices, ts_field_pool, pool_size, contenders, seed=seed)
-        champion = sorted(champion, key=lambda r: (r.team != best, -pool_win.get(r.team, 0.0)))
+        champion = reorder_for_pool_win(champion, best, pool_win, risk)
         if risk != "max_ev":
             topscorers, ts_pool_win = pool.pool_win_topscorers(
                 dict(our_entry, champion=best), best, kept, gteams, group_match_keys, all_grids,
