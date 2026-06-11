@@ -31,7 +31,14 @@ CALIBRATION NOTES (what the sourced data changed vs prior estimates):
      Picks Kane/Wirtz/Mbappé/Haaland/Lautaro all FIT. Adjusted: Yamal 0.90→0.65 (opener doubt),
      Oyarzabal 0.80→0.55 (Jun-9 ankle, pending), Rüdiger 0.88→0.66 (benched vs USA). Hakimi FIT
      (played full CL final; ESPN tracker flag is stale). Non-candidate swaps (Timber→Geertruida,
-     Karl, Wesley, Ekitiké) don't touch the pool. RECHECK Oyarzabal scan + Yamal/Messi minutes 11 Jun.
+     Karl, Wesley, Ekitiké) don't touch the pool.
+     ✅ 11 Jun LOCK-DAY sweep (deep-research workflow + 5 targeted agents, adversarially
+     verified): ALL SIX picks (Kane/Bellingham/Wirtz/Mbappé/Haaland/Lautaro) FIT and starting —
+     Kane+Bellingham started Jun-11 Costa Rica friendly (planned subs), Wirtz consensus starter,
+     Mbappé trained fully in Boston Jun 11 (Jun-7 exit = speculation, Jun-9 = authorized leave),
+     Haaland clean bill (Jun-9), Lautaro 45' vs Iceland. Messi fit (20'+pen Jun 10). Adjusted:
+     Oyarzabal 0.55→0.78 (scare resolved), Rüdiger 0.66→0.40 (fit, demoted to backup CB).
+     No new candidate-relevant withdrawals (Balerdi/Karl/Neymar-opener don't touch the pool).
 
 Auto-validated against squads_2026.json at runtime; confirmed CUT/INJURED & excluded:
 Rodrygo, Estêvão, João Pedro, Hugo Ekitiké, Xavi Simons, Fermín López, Cole Palmer, TAA.
@@ -42,10 +49,10 @@ CANDIDATES = [
     dict(name="Erling Haaland", team="Norway", position="ATT", g90=0.75, start_prob=0.95, pen_taker=True),                # 25/26 .78/.73 Man City; but Group I tempers team factor
     dict(name="Lautaro Martinez", team="Argentina", position="ATT", g90=0.68, start_prob=0.85, pen_taker=False, pen_share=0.15),  # 25/26 .70/.69 Inter, Serie A top scorer
     dict(name="Kylian Mbappe", team="France", position="ATT", g90=0.62, start_prob=0.95, pen_taker=True),                 # 25/26 .66/.58 Real Madrid (8/25 goals were pens)
-    dict(name="Lionel Messi", team="Argentina", position="ATT", g90=0.55, start_prob=0.75, pen_taker=True, pen_share=0.9),# 2025 MLS npg/90 1.08 → MLS+age(39) discount
+    dict(name="Lionel Messi", team="Argentina", position="ATT", g90=0.55, start_prob=0.75, pen_taker=True, pen_share=0.9),# 2025 MLS npg/90 1.08 → MLS+age(39) discount. 11 Jun: hamstring = non-structural fatigue; 20'+pen goal vs Iceland (Jun 10), expected to START Jun 16 → 0.75 stands (load management)
     dict(name="Raphinha", team="Brazil", position="ATT", g90=0.55, start_prob=0.85, pen_taker=True, pen_share=0.8),       # 25/26 .56/.63 Barça (1424', hamstring); Scorito: ATT ✓; Brazil #1 pen
-    dict(name="Mikel Oyarzabal", team="Spain", position="ATT", g90=0.31, start_prob=0.55, pen_taker=True, pen_share=0.85),# 25/26 .36/.26 Sociedad (7/15 goals pens); soft Group H + favourite. 10 Jun: subbed HT vs Peru (Jun 9) ankle knock, scans pending, "at risk of missing the start" → 0.80→0.55 (DOUBT, recheck before lock)
-    dict(name="Lamine Yamal", team="Spain", position="ATT", g90=0.48, start_prob=0.65, pen_taker=False, pen_share=0.1),   # 25/26 .46/.51 Barça; Scorito: ATT ✓. 10 Jun: Apr-22 hamstring tear — FIT for tournament but DOUBTFUL to start opener (Jun 15, ~15' cameo), ramps to a start by game 2 → start_prob 0.90→0.65 (blended minutes)
+    dict(name="Mikel Oyarzabal", team="Spain", position="ATT", g90=0.31, start_prob=0.78, pen_taker=True, pen_share=0.85),# 25/26 .36/.26 Sociedad (7/15 goals pens); soft Group H + favourite. 11 Jun: ankle scare RESOLVED — scored vs Peru (Jun 9), played on after 29' knock, HT sub = routine rotation; no scan story anywhere, ESPN/Covers Jun-11 trackers omit him, "could miss WC" = one speculative site, RFEF leave-camp URLs are 2023/2024 → 0.55→0.78 (expected starter Jun 15)
+    dict(name="Lamine Yamal", team="Spain", position="ATT", g90=0.48, start_prob=0.65, pen_taker=False, pen_share=0.1),   # 25/26 .46/.51 Barça; Scorito: ATT ✓. 11 Jun CONFIRMED: Apr-22 hamstring — available but managed: ~15' cameo opener (Barcelona cap), 45-60' game 2, full by game 3 (De la Fuente Jun 9, ESPN tracker Jun 11) → 0.65 stands (blended minutes)
     dict(name="Cristiano Ronaldo", team="Portugal", position="ATT", g90=0.45, start_prob=0.82, pen_taker=True, pen_share=0.6),  # Saudi npg/90 .76 → league+age(41) discount; soft Group K
     dict(name="Ousmane Dembele", team="France", position="ATT", g90=0.40, start_prob=0.78, pen_taker=False),              # 25/26 .37/.69 PSG (1050', shrunk); Scorito: ATT ✓
     dict(name="Vinicius Junior", team="Brazil", position="ATT", g90=0.36, start_prob=0.88, pen_taker=False),              # 25/26 .34/.38 Real Madrid; Scorito: ATT ✓
@@ -58,7 +65,7 @@ CANDIDATES = [
     dict(name="Cody Gakpo", team="Netherlands", position="ATT", g90=0.27, start_prob=0.82, pen_taker=False, pen_share=0.25),  # 25/26 .32/.23 Liverpool; Scorito pos unchecked (immaterial, EV 7.4)
 
     # --- Goal-scoring / set-piece / penalty MIDFIELDERS (16×) — leverage tier --
-    dict(name="Jude Bellingham", team="England", position="MID", g90=0.32, start_prob=0.92, pen_taker=False),            # 25/26 .36/.28 Real Madrid (1933', post-surgery); Scorito: MID ✓
+    dict(name="Jude Bellingham", team="England", position="MID", g90=0.32, start_prob=0.92, pen_taker=False),            # 25/26 .36/.28 Real Madrid (1933', post-surgery); Scorito: MID ✓. 11 Jun: started final warm-up vs Costa Rica at 10 (8/10); Tuchel "14-15 starters" rotation noise real (Rogers) but opener start near-certain → 0.92 stands
     dict(name="Florian Wirtz", team="Germany", position="MID", g90=0.23, start_prob=0.85, pen_taker=False),              # 25/26 .28/.19 Liverpool; soft Group E; Scorito: MID ✓
     dict(name="Bruno Fernandes", team="Portugal", position="MID", g90=0.18, start_prob=0.95, pen_taker=True, pen_share=0.5),  # 25/26 .22/.15 Man Utd (creator, 21 assists); Scorito: MID ✓; co-pen w/ Ronaldo
     dict(name="Federico Valverde", team="Uruguay", position="MID", g90=0.15, start_prob=0.95, pen_taker=True, pen_share=0.6),  # npg/90 .16 Real Madrid (xG .07 under-rates his screamers); Scorito: MID ✓; URU pens+corners
@@ -70,7 +77,7 @@ CANDIDATES = [
     dict(name="Achraf Hakimi", team="Morocco", position="DEF", g90=0.16, start_prob=0.95, pen_taker=False, pen_share=0.2),  # 25/26 .18/.13 PSG; FIT ✓ (played full 120' CL final ~24 May after Apr hamstring); captain, FK+corner taker
     dict(name="Virgil van Dijk", team="Netherlands", position="DEF", g90=0.14, start_prob=0.95, pen_taker=False),         # 25/26 .13/.16 Liverpool (38 games, aerial corner threat)
     dict(name="Theo Hernandez", team="France", position="DEF", g90=0.12, start_prob=0.80, pen_taker=False),               # Saudi (Al-Hilal) g90 .16 → discount; LB
-    dict(name="Antonio Rudiger", team="Germany", position="DEF", g90=0.07, start_prob=0.66, pen_taker=False),             # 25/26 .085 Real Madrid (1501', small sample); aerial CB, soft Group E. 10 Jun: bench risk — started on bench vs USA (Jun 6), Schlotterbeck/Tah preferred → 0.88→0.66
+    dict(name="Antonio Rudiger", team="Germany", position="DEF", g90=0.07, start_prob=0.40, pen_taker=False),             # 25/26 .085 Real Madrid (1501', small sample); aerial CB, soft Group E. 11 Jun: FIT but DEMOTED — USA bench (Jun 6) was tactical; planned backup behind Tah/Schlotterbeck (Sport1 Jun 3, Bundesliga.com Jun 6 predicted XI) → 0.66→0.40
     dict(name="Joao Cancelo", team="Portugal", position="DEF", g90=0.06, start_prob=0.55, pen_taker=False),               # ~0 league goals 25/26 (Al-Hilal→Barça loan, rotational)
     dict(name="William Saliba", team="France", position="DEF", g90=0.04, start_prob=0.85, pen_taker=False),               # 25/26 .05/.03 Arsenal (barely scores)
 ]
