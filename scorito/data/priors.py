@@ -1,14 +1,17 @@
 """Pre-tournament title probabilities.
 
-Opta supercomputer (theanalyst.com, 25,000 sims, "as of 4 June 2026") plus the
+Opta supercomputer (theanalyst.com, 25,000 sims, "as of 1 June 2026") plus the
 explicit prediction-market numbers the research gave (Polymarket/Kalshi have
 France ahead of Spain). Opta is partly odds-derived, so we don't treat the two
 as fully independent — we average where both exist (the research's recommended
 "robust prior"), otherwise use Opta. Values are genuine probabilities and are NOT
-renormalized: the ~25% mass on the other 37 teams is intentionally left implicit.
+renormalized: the ~14% mass on the other ~33 teams is intentionally left implicit.
 """
 
-# Opta title probabilities (top contenders + hosts)
+# Opta title probabilities — theanalyst.com supercomputer, 25,000 sims, "correct as of
+# 1 June 2026" (Opta's FINAL pre-tournament run). Re-verified 11 Jun 2026: no newer run
+# was published; the France 14.1% / England 11.8% figures still circulating online are the
+# Dec-2025 PRE-DRAW projection, not an update. Top-12 contenders + 3 hosts.
 OPTA = {
     "Spain": 0.161,
     "France": 0.130,
@@ -18,6 +21,10 @@ OPTA = {
     "Brazil": 0.066,
     "Germany": 0.051,
     "Netherlands": 0.036,
+    "Norway": 0.035,
+    "Belgium": 0.024,
+    "Colombia": 0.021,
+    "Morocco": 0.019,
     "USA": 0.0121,
     "Mexico": 0.0099,
     "Canada": 0.0052,
