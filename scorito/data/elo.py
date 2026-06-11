@@ -52,9 +52,18 @@ def normalize_name(name: str) -> str:
     return OPENFOOTBALL_TO_ELO.get(name, name)
 
 
+def _get_utf8(url: str) -> str:
+    """eloratings serves UTF-8 but omits the charset from Content-Type, so
+    ``requests`` defaults to ISO-8859-1 and mojibakes accented names (e.g.
+    ``Curaçao`` -> ``CuraÃ§ao``, which then fails to match). Force UTF-8."""
+    r = requests.get(url, timeout=30)
+    r.encoding = "utf-8"
+    return r.text
+
+
 def _fetch_ratings() -> dict[str, float]:
-    code2name = parse_teams_tsv(requests.get(TEAMS_TSV, timeout=30).text)
-    return parse_world_tsv(requests.get(WORLD_TSV, timeout=30).text, code2name)
+    code2name = parse_teams_tsv(_get_utf8(TEAMS_TSV))
+    return parse_world_tsv(_get_utf8(WORLD_TSV), code2name)
 
 
 def get_elo(teams, cache_path: str = "data/cache/elo.json", refresh: bool = False) -> dict[str, float]:
