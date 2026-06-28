@@ -291,11 +291,15 @@ Morocco · Ivory Coast 0-1 Norway · France 2-0 Sweden · Mexico 1-0 Ecuador · 
 Belgium 1-0 Senegal · USA 2-0 Bosnia · Spain 2-0 Austria · Portugal 1-0 Croatia · Switzerland 1-0
 Algeria · **Australia 0-1 Egypt (Egypt advances — reversal)** · Argentina 2-0 Cape Verde · Colombia 1-0 Ghana.
 
-**Topscorers (4, FINAL):** Messi · Mbappé · Kane · **Oyarzabal**. (Pure max-EV had Wirtz 4th at EV 12.1;
-user chose Oyarzabal — higher floor / diversified / protect-the-lead. Both defensible, EV gap = noise.)
+**Topscorers (4, FINAL — as entered):** Messi · Mbappé · Kane · **Lautaro Martínez**.
+_Evolution this evening (post-lock Q&A): the 4th moved Oyarzabal → Wirtz/Bellingham (raw-EV) → Haaland →
+**Lautaro**, as ad-hoc lenses were replaced with one fixed method (see TOPSCORER SELECTION METHOD below).
+User updated the in-app entry Oyarzabal → Lautaro. Top 3 (Messi/Mbappé/Kane) were never in doubt; the 4th
+was a near-tie cluster (Lautaro 11.8 / Haaland 11.5 / Oyarzabal 10.2) — gaps within model noise._
 
-Model expected points this round ≈ 712. Remaining: user transcribes `out/ko_r32/picks.csv` into Scorito
-before 21:00 CET, confirming tie orientation + late team-news in-app.
+Model expected points this round ≈ 712. **Picks entered before the 21:00 CET lock.** A pre-lock refresh
+(18:30 UTC re-pull of odds + ATGS) confirmed **all 16 scorelines unchanged** (sub-1-pt EV drift only); the
+only post-build change was the 4th topscorer (Oyarzabal → Lautaro, per the method below).
 
 **REVIEW (2026-06-28):** dual review — independent data/math re-derivation + adversarial code review
 (general-purpose agent, all 12 bug classes) — both returned **SAFE, no pick-invalidating bug**. EV math,
@@ -303,13 +307,28 @@ joins (16/16 priced), XOR scoring, multipliers, single-game goals, non-pen form 
 orientation all verified. Note: report "Grp goals" = NON-penalty (Kane 2 = 3 incl. a pen; Lautaro 0 = his
 1 was a pen) — by design, no double-count. Added a regression guard (120 tests green).
 
+**TOPSCORER SELECTION METHOD (decided 2026-06-28 — apply every round):**
+Maximise Σ E[goals]·multiplier over the slots. (1) E[goals] from the de-vigged **anytime-goalscorer
+market** for the player's actual tie — the sharpest single-game signal; it already prices form, role,
+opponent, and team favouritism. (2) × position multiplier (ATT 16 / MID 32 / DEF·GK 64). (3) **Brace
+credit for forwards only, not creators** — the ×2 MID multiplier amplifies the Poisson over-statement of a
+midfielder's multi-goal chance, so apply Poisson multi-goal to ATT and the raw anytime prob to MID/DEF.
+Rank; take top N. **KEY PRINCIPLE: rank by single-game P(score), NOT cumulative tournament goals** — they
+diverge via opponent + scoring share (e.g. Lautaro 52% as sole CF vs Cape Verde **>** Dembélé 41% sharing
+France's goals behind Mbappé, despite 1 vs 4 goals). Do NOT overlay a cumulative-goals/form narrative on
+the market price — that's the hand-judgment error the group-stage retro caught.
+
 **⚠️ R16 PREREQUISITES (fix BEFORE re-running for R16 — harmless for R32, would bite later):**
 1. `knockout.py load_results_nonpen_goals` has **no round filter** — once R32+ results are appended to
    the results file, the "tournament form" blend would ingest knockout goals. Filter to completed rounds
    (or only group stage) when building R16 picks.
 2. `blend_g90` hardcodes `games=3` (knockout.py) — true for all group qualifiers, but games-played
    diverges after R32. Pass actual games-played per team for R16+.
-3. (Minor/optional) `run_knockout` inlines the ET-uplift instead of calling the unit-tested
+3. **The agreed topscorer brace de-bias is NOT in code yet** — `score_candidate`/`build_expected_goals`
+   use raw Poisson, so the engine will again surface multiplier-inflated midfielders (the raw R32 run
+   ranked Wirtz/Bellingham 4th). Either implement position-aware multi-goal credit (ATT = Poisson,
+   MID/DEF = anytime-only) per the method above, or apply it by hand as we did for R32.
+4. (Minor/optional) `run_knockout` inlines the ET-uplift instead of calling the unit-tested
    `et_adjusted_grid` (verified identical now; dedupe to avoid drift). And `INJURED_OUT` / standings /
    `R32_TIES` / `ALIVE_TEAMS` must be refreshed to the R16 bracket + latest injuries.
 
