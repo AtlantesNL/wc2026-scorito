@@ -1,6 +1,6 @@
 # Scorito World Cup 2026 — Pick Optimizer
 
-Recommends group-phase Scorito picks: 72 match scorelines (jointly optimized with
+Recommends Scorito picks for both the group phase and the knockout rounds. **Group phase:** 72 match scorelines (jointly optimized with
 the auto-derived group standings), 6 topscorers, and a champion pick chosen to maximize
 **P(finishing 1st in your pool)** — a full-tournament Monte-Carlo (all 48 teams, draw-aware), blended
 with a **live de-vigged multi-bookmaker title-odds consensus** (54 teams; Opta cross-check;
@@ -55,6 +55,20 @@ Outputs `out/report.md` (human) and `out/picks.csv` (for fast transcription).
 from a chalk-picking amateur field): `max_ev` (pure EV — best when your pool pays several places),
 `balanced` (default), `aggressive` (most differentiation — best for winner-take-all).
 
+## Knockout phase (Round of 32 onward)
+
+After the group stage, generate knockout picks — per-tie **scoreline + advancer** and **4 topscorers**,
+scored with the confirmed knockout rules (exact **90** / toto **60** on the result after extra time, the
+"stand na 120'"; topscorers ATT 16 / MID 32 / DEF·GK 64, goals that round only):
+
+```bash
+.venv/bin/python -m scorito.knockout --odds-key "$ODDS_API_KEY" --atgs
+```
+
+Writes `out/ko_r32/{report.md,picks.csv}`. Posture is `max_ev` (protect a lead); the engine reuses the
+group-phase goal model on the real knockout ties. Re-run each round as the bracket resolves. See
+[`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md) for the full design + the R32 run.
+
 ## Validation
 
 Measure prediction quality and grade live picks (`scorito/eval/`, free data only):
@@ -79,4 +93,6 @@ Design: [`docs/superpowers/specs/2026-06-08-validation-harness-design.md`](docs/
 
 ## Status
 
-v1 = group phase. Re-run per phase as the knockout bracket is revealed.
+Group phase complete. **Knockout mode is live** (`scorito.knockout`) — re-run per round as the bracket
+resolves. Round of 32 done (see [`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md));
+two small generalizations are noted there as prerequisites before re-running for the Round of 16.

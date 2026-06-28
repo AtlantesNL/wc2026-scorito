@@ -9,6 +9,10 @@ pick — tuned for a **~30–50 person pool**, **"balanced"** risk posture.
 Deadline: **11 June 2026** (confirm exact lock time in-app). v1 covers the group
 phase only; the tool is re-run per phase as the knockout bracket is revealed.
 
+> **Update 2026-06-28:** the knockout phase is now implemented (`scorito/knockout.py`,
+> `scorito/data/knockout_fixtures.py`; KO scoring constants in `config.py`). See
+> [`knockout-r32-handoff-2026-06-28.md`](knockout-r32-handoff-2026-06-28.md) for the Round-of-32 design + run.
+
 ---
 
 ## 1. Scoring model (Scorito WK 2026, group phase)
@@ -25,8 +29,10 @@ in `config.py` because two are contested (flagged below).
 | Topscorer per goal | **ATT 8 / MID 16 / DEF 32 / GK 32** | confirmed in-app; ratio DEF/GK:MID:ATT = 4:2:1 |
 | Topscorer slots (group phase) | **6** | confirmed in-app; max 3 group games per player |
 
-Knockout match values (R32→Final, escalating to ~270 exact) are out of scope for
-v1 but recorded in config for later phases.
+Knockout scoring is now implemented (R32 onward): the match XOR is **exact 90 / toto 60** on the
+"stand na 120'" result, and topscorers are **ATT 16 / MID 32 / DEF·GK 64**, **4 picks**, goals that
+round only (`PTS_KO_EXACT/PTS_KO_TOTO`, `KO_TOPSCORER_MULT/SLOTS` in `config.py`). See the knockout
+handoff doc for the per-round design.
 
 ## 2. Data sources
 
