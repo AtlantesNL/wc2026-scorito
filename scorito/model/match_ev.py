@@ -17,18 +17,20 @@ from scorito import config
 from scorito.types import Scoreline
 
 
-def score_ev(grid, i: int, j: int, toto_weight: float = 1.0) -> float:
+def score_ev(grid, i: int, j: int, toto_weight: float = 1.0,
+             pts_exact: float = config.PTS_EXACT, pts_toto: float = config.PTS_TOTO) -> float:
     """True EV (``toto_weight=1.0``). ``toto_weight`` is kept only so existing callers/tests can
-    still read the pure expected points; selection now goes through ``score_sel``."""
+    still read the pure expected points; selection now goes through ``score_sel``.
+    ``pts_exact``/``pts_toto`` default to the group phase (45/30); pass 90/60 for the knockout XOR."""
     if i > j:
         p_toto = grid.p_home
     elif j > i:
         p_toto = grid.p_away
     else:
         p_toto = grid.p_draw
-    # XOR rule: 30 for the toto class, upgraded to 45 on the exact cell -> only the (45−30)
-    # *extra* is attributed to nailing the score (NOT a full 45 on top of the 30).
-    return (config.PTS_EXACT - config.PTS_TOTO) * grid.exact(i, j) + config.PTS_TOTO * toto_weight * p_toto
+    # XOR rule: toto points for the 1/X/2 class, *upgraded* to the exact value on the exact cell ->
+    # only the (exact−toto) *extra* is attributed to nailing the score (NOT exact stacked on toto).
+    return (pts_exact - pts_toto) * grid.exact(i, j) + pts_toto * toto_weight * p_toto
 
 
 def _leverage(own: float, n_rivals: int, gamma: float) -> float:

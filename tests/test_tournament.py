@@ -50,7 +50,7 @@ def test_simulate_is_seed_deterministic():
 def test_simulate_with_real_bracket_covers_all_48():
     import itertools
     from scorito.model.bracket import load_bracket
-    brk = load_bracket("data/cache/worldcup2026.json")
+    brk = load_bracket("data/worldcup2026_fixtures.json")
     groups = "ABCDEFGHIJKL"
     gteams = {g: [f"{g}{i}" for i in range(1, 5)] for g in groups}
     even = build_grid(1.3, 1.1)

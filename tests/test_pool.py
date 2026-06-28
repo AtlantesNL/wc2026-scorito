@@ -19,7 +19,7 @@ def _world_inputs():
             grids[(a, b)] = even
     elo = {f"{g}{i}": 1500.0 for g in groups for i in range(1, 5)}
     cands = [dict(name="A1", team="A1", position="ATT", g90=0.6, start_prob=1.0, pen_taker=False)]
-    bracket = load_bracket("data/cache/worldcup2026.json")
+    bracket = load_bracket("data/worldcup2026_fixtures.json")
     return gteams, group_matches, grids, elo, bracket, cands
 
 

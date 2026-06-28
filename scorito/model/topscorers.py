@@ -22,13 +22,16 @@ from scorito.data.topscorer_candidates import CANDIDATES
 PEN_BONUS = 0.20  # extra expected group-phase goals for a side's *sole* penalty taker
 
 
-def score_candidate(c, team_factors) -> float:
+def score_candidate(c, team_factors, mult=None) -> float:
+    """``mult`` = per-goal multiplier table (defaults to group ``config.TOPSCORER_MULT``;
+    pass ``config.KO_TOPSCORER_MULT`` for the knockout 16/32/64/64)."""
+    mult = mult or config.TOPSCORER_MULT
     if "exp_goals" in c:
-        return c["exp_goals"] * config.TOPSCORER_MULT[c["position"]]
+        return c["exp_goals"] * mult[c["position"]]
     pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
     expected_goals = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
     factor = team_factors.get(c["team"], 1.0)
-    return expected_goals * factor * config.TOPSCORER_MULT[c["position"]]
+    return expected_goals * factor * mult[c["position"]]
 
 
 def fame_score(c, team_factors) -> float:
@@ -91,7 +94,8 @@ def _atgs_lambda(price, margin):
 
 
 def build_expected_goals(candidates, matches, atgs_map, team_factors,
-                         match_lams=None, avg_lam=None, margin=config.ATGS_MARGIN):
+                         match_lams=None, avg_lam=None, margin=config.ATGS_MARGIN,
+                         pen_bonus=PEN_BONUS):
     """Augment each candidate with ``exp_goals`` (expected group goals) + ``goals_src``: market lambda
     (-ln(1-p), includes pens+opponent -> no team_factor/pen re-applied) scaled by appearance prob,
     where the player is priced for that group match; else the hand g90 fallback. Order-agnostic match
@@ -120,7 +124,7 @@ def build_expected_goals(candidates, matches, atgs_map, team_factors,
                     factor = team_lam / avg_lam
                 else:                                     # backward-compatible: group-average
                     factor = team_factors.get(c["team"], 1.0)
-                total += c["g90"] * c["start_prob"] * factor + PEN_BONUS * pen_share / n
+                total += c["g90"] * c["start_prob"] * factor + pen_bonus * pen_share / n
         src = "market" if cms and n_mkt == len(cms) else ("hand" if n_mkt == 0 else "blend")
         out.append(dict(c, exp_goals=total, goals_src=src))
     return out

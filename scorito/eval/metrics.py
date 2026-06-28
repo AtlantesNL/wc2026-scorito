@@ -38,12 +38,14 @@ def _sign(h, a) -> int:
     return (h > a) - (h < a)
 
 
-def match_points(pick, actual) -> int:
-    """45 exact, else 30 if the 1/X/2 outcome matches, else 0."""
+def match_points(pick, actual, pts_exact: int = config.PTS_EXACT,
+                 pts_toto: int = config.PTS_TOTO) -> int:
+    """Exact pays ``pts_exact``, else ``pts_toto`` if the 1/X/2 outcome matches, else 0.
+    Defaults = group phase (45/30); pass 90/60 to grade a knockout round."""
     if tuple(pick) == tuple(actual):
-        return config.PTS_EXACT
+        return pts_exact
     if _sign(*pick) == _sign(*actual):
-        return config.PTS_TOTO
+        return pts_toto
     return 0
 
 

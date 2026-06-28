@@ -17,7 +17,7 @@ def test_parse_ref_rejects_garbage():
 
 
 def test_load_bracket_real_fixture():
-    b = bk.load_bracket("data/cache/worldcup2026.json")
+    b = bk.load_bracket("data/worldcup2026_fixtures.json")
     assert len(b) == 32                       # 16+8+4+2+1+1
     rounds = {m.round for m in b}
     assert "Round of 32" in rounds and "Final" in rounds

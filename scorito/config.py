@@ -11,6 +11,19 @@ PTS_TOTO = 30           # correct outcome (1/X/2) only
 PTS_POSITION = 25       # per correctly placed team in the auto-derived group table
 MAX_GROUP_POSITION_PTS = 100   # 4 positions x 25
 
+# --- Match scoring (knockout phase) ---
+# Confirmed from Scorito in-app: "stand na max. 120 minuten" (result incl. extra time; the penalty
+# shootout does NOT change the recorded score). XOR like the group phase, doubled: exact pays 90
+# (NOT 90+60), correct toto (1/X/2) pays 60. A draw is a valid pick (tie after 120' -> decided on pens).
+PTS_KO_EXACT = 90
+PTS_KO_TOTO = 60
+
+# Extra-time goal uplift for the recorded 120' score: a match level after 90' plays ~30 more minutes,
+# so expected goals scale by (1 + ET_MINUTE_SHARE * P(draw@90')). 30/90 = 1/3. Modest (~+8-9%);
+# nudges some modal cells 1-0 -> 2-1 and slightly lowers draw probability. (Aggregate-correct
+# approximation; exact ET-convolution would be 2nd-order given the toto term dominates EV.)
+ET_MINUTE_SHARE = 1.0 / 3.0
+
 # --- Tournament-level ---
 CHAMPION_BONUS = 250    # paid only if your pick lifts the trophy
 
@@ -45,6 +58,17 @@ ATGS_REGIONS = "eu,uk"
 # Ratio DEF/GK : MID : ATT = 4 : 2 : 1 is what drives selection.
 TOPSCORER_MULT = {"GK": 32, "DEF": 32, "MID": 16, "ATT": 8}
 TOPSCORER_SLOTS = 6
+
+# Knockout topscorers (confirmed in-app): pick 4, goals THIS ROUND only (per-round, not cumulative),
+# excl. penalty shootout. Multipliers doubled vs group, same 4:2:1 ratio.
+KO_TOPSCORER_MULT = {"GK": 64, "DEF": 64, "MID": 32, "ATT": 16}
+KO_TOPSCORER_SLOTS = 4
+# Single-game penalty bonus (vs the group's PEN_BONUS=0.20 spread over 3 games): ~0.20/3.
+KO_PEN_BONUS = 0.07
+# Realized-form blend (group-stage retrospective: club-g90 alone under-rated in-form scorers like
+# Messi and over-rated goal-shy creators like Wirtz). Effective non-pen g90 shrinks the tournament
+# rate toward the club prior: (prior_games*club_g90 + tourn_nonpen_goals) / (prior_games + games).
+FORM_PRIOR_GAMES = 6
 
 # --- Model parameters ---
 DC_RHO = 0.001          # Dixon-Coles low-score correction (rho)
