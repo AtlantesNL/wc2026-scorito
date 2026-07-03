@@ -46,6 +46,18 @@ def score_candidate(c, team_factors, mult=None, brace_credit=None) -> float:
     return expected_goals * factor * mult[c["position"]]
 
 
+def shrink_mult(mult, shrink, base="ATT"):
+    """Compress the per-goal multiplier table toward the ``base`` (attacker) multiplier.
+
+    ``shrink`` in [0, 1]: ``1`` returns the table unchanged (pure EV); ``0`` maps every position to the
+    base multiplier (rank purely by scoring probability, ignoring the position bonus). This is the
+    lead-protection tilt for topscorer *ranking* — a leader mirrors the attacker-heavy chalk field and
+    should discount the high-multiplier DEF/GK/MID bonus that only an under-owned *differential* pick
+    (a chaser's weapon) would chase. Per position: ``base * (mult[pos]/base) ** shrink``."""
+    b = mult[base]
+    return {pos: b * (m / b) ** shrink for pos, m in mult.items()}
+
+
 def fame_score(c, team_factors) -> float:
     """Rival-ownership weight: expected group-phase goals * team factor, WITHOUT the position
     multiplier — models amateurs chasing famous scorers and ignoring that a DEF/GK goal is worth 4x.

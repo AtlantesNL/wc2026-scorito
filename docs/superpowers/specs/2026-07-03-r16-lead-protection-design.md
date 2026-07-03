@@ -90,6 +90,22 @@ ev    = (p1 + brace_credit[pos] * extra) * mult[pos]
 Same de-bias applied to the hand-fallback EV path (where `exp_goals` is absent, convert its λ the
 same way). Add `KO_BRACE_CREDIT` to `config.py`.
 
+### 2b. Lead-protection topscorer tilt (`topscorers.py::shrink_mult`) — added 2026-07-03
+
+Pure max_ev ranks topscorers by `P(score) × multiplier`, which surfaces high-multiplier **differentials**
+(a set-piece DEF at ×96, a volume MID at ×48 vs a weak opponent) above the star attackers — a *chaser's*
+leverage play, wrong for a leader. A leader mirrors the attacker-heavy chalk field; owning a pick the
+field lacks only adds variance to the margin.
+
+Fix: rank by a **lead-protection selection score** = the same de-biased EV but with the multiplier
+table compressed toward the attacker's via `shrink_mult(mult, s)` → `ATT_mult · (mult[pos]/ATT_mult)^s`.
+`s=1` is a no-op (pure EV, keeps R32 byte-identical); `s=0` is position-blind (rank by scoring
+probability); `s=0.5` (config `LEAD_PROTECTION_MULT_SHRINK`, per-round `lead_shrink`) keeps genuine
+high-probability MIDs competitive while dropping longshot DEF/GK differentials. `run_knockout` computes
+`ko_ev` (true, for display/points) and `ko_sel` (shrunk, for ranking); ranks + picks top-N by `ko_sel`.
+Verified: moves Hakimi/Saibari out of the R16 top-4 back below the chalk ATTs; R32 (`lead_shrink=1.0`)
+unchanged.
+
 ### 3. Round-filter + games-played (`knockout.py::run_knockout`)
 
 - `blend_g90(..., games=scoring["form_games"])` instead of hardcoded `3`.

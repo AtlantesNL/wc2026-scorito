@@ -65,7 +65,7 @@ from scorito.data.knockout_fixtures import (ALIVE_TEAMS, INJURED_OUT, R32_START_
 from scorito.data.odds import _norm
 from scorito.data.topscorer_candidates import CANDIDATES
 from scorito.model.goals import expected_goals
-from scorito.model.topscorers import build_expected_goals, score_candidate
+from scorito.model.topscorers import build_expected_goals, score_candidate, shrink_mult
 
 
 def load_results_nonpen_goals(path):
@@ -199,10 +199,16 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
                              g90=blend_g90(c["g90"], tg, games=scoring["form_games"]), tourn_goals=tg))
     kept = build_expected_goals(adjusted, ties, atgs_map, team_factors,
                                 match_lams=match_lams_et, avg_lam=avg, pen_bonus=scoring["pen_bonus"])
+    # ko_ev = true expected points (for display + the dashboard). ko_sel = the lead-protection ranking
+    # score: the same de-biased EV but with the multiplier compressed toward the attacker's, so we
+    # mirror the chalk field and don't rank an under-owned DEF/MID differential into the slate.
+    sel_mult = shrink_mult(scoring["mult"], scoring.get("lead_shrink", 1.0))
     for c in kept:
         c["ko_ev"] = score_candidate(c, team_factors, mult=scoring["mult"],
                                      brace_credit=scoring["brace_credit"])
-    ranked = sorted(kept, key=lambda c: c["ko_ev"], reverse=True)
+        c["ko_sel"] = score_candidate(c, team_factors, mult=sel_mult,
+                                      brace_credit=scoring["brace_credit"])
+    ranked = sorted(kept, key=lambda c: c["ko_sel"], reverse=True)
     slots = scoring["slots"]
     top4 = ranked[:slots]
 
@@ -273,7 +279,14 @@ def _write_ko_report(r, out_dir):
         L.append(f"| {i} | {tie_txt} | **{m.team1} {p['home']}-{p['away']} {m.team2}** "
                  f"| {p['adv']} | {winp}% | {p['ev']:.1f} |")
     n_top = len(r["top4"])
-    L.append(f"\n## Topscorers — pick {n_top} (pure EV — the max_ev recommendation)\n")
+    tilted = sc.get("lead_shrink", 1.0) < 1.0
+    basis = ("lead-protection: ranked by chalk-tilted score, EV shown" if tilted
+             else "pure EV — the max_ev recommendation")
+    L.append(f"\n## Topscorers — pick {n_top} ({basis})\n")
+    if tilted:
+        L.append("_Ranked to **mirror the chalk field**: the per-goal multiplier is compressed toward "
+                 "the attacker's, so a high-EV but under-owned DEF/MID differential (a chaser's play) "
+                 "won't outrank the star attackers the field owns. EV column is the true expected points._\n")
     L.append("| Player | Team | Pos | Opp | Goals | Src | EV |")
     L.append("|---|---|---|---|---|---|---|")
     for c in r["top4"]:

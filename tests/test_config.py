@@ -52,6 +52,13 @@ def test_ko_brace_credit_att_only():
     assert bc["MID"] == 0.0 and bc["DEF"] == 0.0 and bc["GK"] == 0.0  # others: P(>=1) only
 
 
+def test_ko_round_lead_shrink():
+    # R32 = 1.0 (no tilt -> ranking == pure EV -> byte-identical to the shipped run);
+    # R16 < 1.0 (lead-protection: compress the DEF/GK/MID bonus toward the attacker multiplier).
+    assert config.KO_ROUND_SCORING["Round of 32"]["lead_shrink"] == 1.0
+    assert 0.0 <= config.KO_ROUND_SCORING["Round of 16"]["lead_shrink"] < 1.0
+
+
 def test_atgs_constants():
     assert config.ATGS_MARGIN > 1.0
     assert "eu" in config.ATGS_REGIONS

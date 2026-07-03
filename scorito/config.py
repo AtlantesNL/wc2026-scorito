@@ -72,6 +72,15 @@ KO_PEN_BONUS = 0.07
 # non-attackers are scored on P(>=1 goal). (None => full per-goal credit = the R32 method.)
 KO_BRACE_CREDIT = {"ATT": 1.0, "MID": 0.0, "DEF": 0.0, "GK": 0.0}
 
+# Lead-protection topscorer tilt. When defending a lead, a leader wants to MIRROR the attacker-heavy
+# chalk field, not chase under-owned high-multiplier differentials (a set-piece DEF at 96/goal, a
+# volume MID at 48) — owning a pick the field lacks only ADDS variance to your margin. So for RANKING
+# (not display), compress the multiplier toward the attacker's via shrink_mult(): the exponent below
+# is applied per round in KO_ROUND_SCORING. 1.0 = pure EV (no tilt); 0.0 = position-blind (rank by
+# scoring probability). 0.5 keeps genuine high-probability MIDs competitive while dropping longshot
+# DEF/GK differentials (e.g. it moves Hakimi/Saibari out of the R16 top-4 back below the chalk ATTs).
+LEAD_PROTECTION_MULT_SHRINK = 0.5
+
 # Per-round knockout scoring (confirmed in-app). Each round scales up from the group phase but keeps
 # both ratios constant — exact:toto = 3:2 and DEF/GK:MID:ATT = 4:2:1 — so the max_ev pick *shape* is
 # identical round to round; only the reported points and the lead-dashboard math change.
@@ -82,9 +91,10 @@ KO_BRACE_CREDIT = {"ATT": 1.0, "MID": 0.0, "DEF": 0.0, "GK": 0.0}
 KO_ROUND_SCORING = {
     "Round of 32": dict(exact=PTS_KO_EXACT, toto=PTS_KO_TOTO, mult=KO_TOPSCORER_MULT,
                         slots=KO_TOPSCORER_SLOTS, form_games=3, pen_bonus=KO_PEN_BONUS,
-                        brace_credit=None),
+                        brace_credit=None, lead_shrink=1.0),
     "Round of 16": dict(exact=135, toto=90, mult={"GK": 96, "DEF": 96, "MID": 48, "ATT": 24},
-                        slots=4, form_games=4, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT),
+                        slots=4, form_games=4, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
+                        lead_shrink=LEAD_PROTECTION_MULT_SHRINK),
 }
 # Realized-form blend (group-stage retrospective: club-g90 alone under-rated in-form scorers like
 # Messi and over-rated goal-shy creators like Wirtz). Effective non-pen g90 shrinks the tournament

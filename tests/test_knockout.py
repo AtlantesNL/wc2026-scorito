@@ -10,7 +10,7 @@ from scorito import knockout as ko
 from scorito.eval import metrics
 from scorito.model.grid import build_grid
 from scorito.model.match_ev import score_ev
-from scorito.model.topscorers import build_expected_goals, score_candidate
+from scorito.model.topscorers import build_expected_goals, score_candidate, shrink_mult
 from scorito.types import Match
 
 
@@ -85,6 +85,32 @@ def test_score_candidate_brace_de_bias_demotes_inflated_mid_below_att():
     assert score_candidate(mid, {}, mult=mult) > score_candidate(att, {}, mult=mult)
     assert (score_candidate(att, {}, mult=mult, brace_credit=bc)
             > score_candidate(mid, {}, mult=mult, brace_credit=bc))  # ATT wins de-biased
+
+
+# --- lead-protection tilt: compress the per-goal multiplier toward the attacker multiplier so a
+#     leader mirrors the attacker-heavy chalk field instead of chasing under-owned DEF/MID differentials.
+def test_shrink_mult_compresses_toward_attacker():
+    m = {"GK": 96, "DEF": 96, "MID": 48, "ATT": 24}
+    assert shrink_mult(m, 1.0) == m                              # shrink 1 = no-op (pure EV)
+    assert all(v == 24 for v in shrink_mult(m, 0.0).values())    # shrink 0 = position-blind (chalk)
+    h = shrink_mult(m, 0.5)
+    assert h["ATT"] == 24
+    assert h["MID"] == pytest.approx(24 * (48 / 24) ** 0.5)      # ~33.9
+    assert h["DEF"] == pytest.approx(24 * (96 / 24) ** 0.5)      # 48
+
+
+def test_lead_protection_tilt_demotes_under_owned_differential():
+    m = {"GK": 96, "DEF": 96, "MID": 48, "ATT": 24}
+    bc = config.KO_BRACE_CREDIT
+    att = {"position": "ATT", "exp_goals": 0.55}     # chalk striker
+    deff = {"position": "DEF", "exp_goals": 0.16}    # set-piece longshot, high multiplier
+    # Pure EV: the high-multiplier DEF outranks the striker (the Hakimi problem).
+    assert (score_candidate(deff, {}, mult=m, brace_credit=bc)
+            > score_candidate(att, {}, mult=m, brace_credit=bc))
+    # Lead-protection tilt (shrink 0.5): the chalk striker outranks the differential DEF.
+    sm = shrink_mult(m, 0.5)
+    assert (score_candidate(att, {}, mult=sm, brace_credit=bc)
+            > score_candidate(deff, {}, mult=sm, brace_credit=bc))
 
 
 def test_build_expected_goals_single_game_pen_bonus():
