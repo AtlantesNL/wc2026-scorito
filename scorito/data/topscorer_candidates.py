@@ -89,4 +89,16 @@ CANDIDATES = [
     dict(name="James Rodriguez", team="Colombia", position="MID", g90=0.14, start_prob=0.85, pen_taker=True, pen_share=0.6),  # Colombia set-pieces + PK; MID multiplier
     dict(name="Breel Embolo", team="Switzerland", position="ATT", g90=0.32, start_prob=0.80, pen_taker=False),            # Monaco #9, Switzerland's lead striker
     dict(name="Julio Enciso", team="Paraguay", position="ATT", g90=0.22, start_prob=0.60, pen_taker=False),               # scored vs Germany in R32; Paraguay's main attacking spark
+
+    # --- 2026-07-03: in-form tournament scorers missing from the group pool (verified golden-boot
+    #     research: 3+ goals) + confirmed penalty takers for R16 teams we lacked. g90 role-estimates
+    #     (⚠️ ATGS market supersedes when priced). POSITIONS verified in research.
+    dict(name="Folarin Balogun", team="USA", position="ATT", g90=0.40, start_prob=0.80, pen_taker=False),                 # 3 tourn goals (incl. R32 vs Bosnia); host, behind Pulisic on PKs
+    dict(name="Matheus Cunha", team="Brazil", position="ATT", g90=0.35, start_prob=0.75, pen_taker=False),                # 3 tourn goals; in-form, extra weight now Raphinha is out
+    dict(name="Julian Quinones", team="Mexico", position="ATT", g90=0.35, start_prob=0.78, pen_taker=False),              # 3 tourn goals; Mexico host
+    dict(name="Bradley Barcola", team="France", position="ATT", g90=0.35, start_prob=0.55, pen_taker=False),              # 2 tourn goals (scored R32 vs Sweden); rotates w/ Dembélé, soft Paraguay tie
+    dict(name="Ismael Saibari", team="Morocco", position="MID", g90=0.28, start_prob=0.80, pen_taker=False),              # 3 tourn goals; PSV attacking mid (MID 96 multiplier tier)
+    dict(name="Johan Manzambi", team="Switzerland", position="MID", g90=0.24, start_prob=0.70, pen_taker=False),          # 3 tourn goals; Freiburg attacking mid
+    dict(name="Granit Xhaka", team="Switzerland", position="MID", g90=0.10, start_prob=0.95, pen_taker=True, pen_share=0.9),   # Switzerland's PK taker (scored vs Bosnia); low open-play threat
+    dict(name="Youri Tielemans", team="Belgium", position="MID", g90=0.14, start_prob=0.82, pen_taker=True, pen_share=0.45),   # de-facto BEL taker when KDB off (scored 125' PK winner vs Senegal)
 ]

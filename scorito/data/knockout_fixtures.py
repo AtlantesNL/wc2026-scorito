@@ -48,8 +48,10 @@ R16_TIES = [
 R16_ALIVE_TEAMS = frozenset(t for m in R16_TIES for t in (m.team1, m.team2))
 
 # Injured/suspended out for R16 (team alive, player unavailable). Yellow-card suspensions carry into
-# the KO rounds, so refresh from tomorrow's team news. Raphinha (R32 hamstring) expected fit for R16.
-R16_INJURED_OUT = frozenset()  # >>> UPDATE with tomorrow's suspension/injury news <<<
+# the KO rounds, so refresh from tomorrow's team news.
+# Raphinha: R32 hamstring did NOT recover — ruled OUT for R16 vs Norway (confirmed 2026-07-03 research;
+# backup Paquetá also injured, so Brazil's pen duty is now unsettled → Vinícius the likely stand-in).
+R16_INJURED_OUT = frozenset({"Raphinha"})  # >>> UPDATE with tomorrow's suspension/injury news <<<
 
 # R16 start probabilities — R32 overrides for still-alive teams (Havertz/Germany, Depay/Netherlands
 # dropped as eliminated). Refresh with tomorrow's team news / rotation reads.
