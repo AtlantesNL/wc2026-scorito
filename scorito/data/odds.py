@@ -77,6 +77,7 @@ ATGS_PLAYER_ALIASES = {
     "Raphinha": "Raphael Dias Belloli",
     "Pedri": "Pedro Gonzalez Lopez",
     "Luis Diaz": "Luis Fernando Diaz Marulanda",  # verified vs the 2026-07-03 R16 feed (Col-Gha event)
+    "Julio Enciso": "Julio Cesar Enciso",         # verified vs the 2026-07-03 R16 feed (Par-Fra event)
 }
 
 

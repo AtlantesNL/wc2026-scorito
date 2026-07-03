@@ -1,9 +1,10 @@
 """Knockout-phase pick engine (Round of 32 and onward).
 
 Reuses the group-phase goal engine (market odds -> Dixon-Coles grid) but with knockout scoring:
-match XOR 90 exact / 60 toto on the "stand na 120 min" result, and single-game topscorers with the
-4:2:1 multiplier doubled (ATT 16 / MID 32 / DEF/GK 64). max_ev posture (protect a lead): pure EV,
-0-draw (knockout draws are rarer because extra time breaks most ties).
+match XOR exact/toto on the "stand na 120 min" result and single-game topscorers, both per-round via
+``config.KO_ROUND_SCORING`` (R32 90/60 · 16/32/64; R16 135/90 · 24/48/96). Protect-the-lead posture:
+scorelines are pure EV; topscorer *ranking* additionally shrinks the multiplier toward the attacker's
+(``lead_shrink``) so the slate mirrors the chalk field instead of chasing under-owned differentials.
 
 Pure helpers (``blend_g90``, ``et_adjusted_grid``, ``filter_alive``, ``best_scoreline``) are unit
 tested; ``run_knockout`` wires them through the existing odds/Elo/grid/topscorer code.
@@ -286,7 +287,8 @@ def _write_ko_report(r, out_dir):
     if tilted:
         L.append("_Ranked to **mirror the chalk field**: the per-goal multiplier is compressed toward "
                  "the attacker's, so a high-EV but under-owned DEF/MID differential (a chaser's play) "
-                 "won't outrank the star attackers the field owns. EV column is the true expected points._\n")
+                 "won't outrank the star attackers the field owns. EV column = de-biased expected "
+                 "points (non-attackers credited on P(≥1 goal), not raw per-goal EV)._\n")
     L.append("| Player | Team | Pos | Opp | Goals | Src | EV |")
     L.append("|---|---|---|---|---|---|---|")
     for c in r["top4"]:
@@ -347,7 +349,7 @@ def main(argv=None):
           f"({r['odds_coverage'][0]}/{r['odds_coverage'][1]} priced)")
     print("Scorelines:", ", ".join(f"{p['tie'].team1} {p['home']}-{p['away']} {p['tie'].team2}"
                                     for p in r["match_picks"][:4]), "...")
-    print("Topscorers (max_ev):", ", ".join(c["name"] for c in r["top4"]))
+    print("Topscorers:", ", ".join(c["name"] for c in r["top4"]))
 
 
 if __name__ == "__main__":

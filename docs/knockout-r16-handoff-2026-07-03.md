@@ -63,12 +63,33 @@ Oyarzabal / Dembélé / Vinícius / Haaland / Lautaro.
 - Suspension rules: yellows wiped after groups; only R32 reds ban for R16 → Balogun is the only
   pool-relevant ban. (Two yellows across R32+R16 → miss QF: check again next round.)
 
+## Deep-dive code review (2026-07-03 late — two independent adversarial reviewers, both SAFE)
+- **Goal-model path SAFE**: orientation proven safe 3 ways (synthetic reversed key, full-feed
+  home/away flip → identical slate, end-to-end); XOR EV exact to 1e-12; grid convention proven;
+  ET bump single-application; parse_odds medians hand-recomputed. Theoretical-only: penaltyblog
+  tau-convention mismatch (ρ=0 rerun → zero pick changes), λ-floor vs totals rescale (never binds).
+- **Knockout/topscorer path SAFE**: round wiring, no residual R32 hardcoding, brace/shrink math
+  exact, no pen double-count, no team-name drops, report/CSV mirror the model. Fixed from review:
+  **Enciso ATGS alias** ("Julio Cesar Enciso", verified @8.7), supplement extended with missing
+  alive-team R32 scorers (Enciso/Embolo/Quiñones/Jiménez/Lukaku + Tielemans-pen), report wording
+  (EV column = de-biased), CLI label + docstring.
+- **Operational risks (not code)**: (a) USA–Belgium advancer flips on a ~2-cent odds move
+  (EV 37.55 vs 37.41) — re-pull at lock, treat as coin toss; (b) tonight's-scorer supplement step
+  above; (c) post-run tripwire: any top-10 candidate showing ✍️ while his tie's event is otherwise
+  priced = ATGS alias miss (watch Salah; Embolo is sometimes listed "Breel-Donald Embolo").
+
 ## TONIGHT (small, manual — only what tonight's 3 games decide)
 Edit `scorito/data/knockout_fixtures.py`:
 1. Confirm ties #7/#8 participants (expected **Colombia, Egypt, Argentina**); swap any upset (and add a
    topscorer candidate for a new team via `topscorer_candidates.py` if needed).
 2. Update `STANDINGS` with the post-games points (gap should hold ~+76; up if Lautaro scored).
 3. Add any R16 suspensions to `R16_INJURED_OUT`.
+4. **Extend the results supplement with tonight's 3 games' scorers** (`data/cache/
+   worldcup2026_results.json`, sentinel round "R32 verified-scorer supplement (2026-07-03)").
+   ⚠️ This is PICK-CHANGING if tie #8 stays ATGS-unpriced tomorrow: the deep-dive review showed a
+   Lautaro goal tonight moves his hand-path EV 12.2 → ~15.1 = into the top-4 over Oyarzabal — but
+   only if the file records it. (If the ATGS market prices the tie, the market supersedes and this
+   step only fixes the Goals column.)
 
 ## TOMORROW (one command + eyeball)
 ```
