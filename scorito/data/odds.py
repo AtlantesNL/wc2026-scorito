@@ -76,6 +76,7 @@ ATGS_PLAYER_ALIASES = {
     "Erling Haaland": "Erling Braut Haaland",
     "Raphinha": "Raphael Dias Belloli",
     "Pedri": "Pedro Gonzalez Lopez",
+    "Luis Diaz": "Luis Fernando Diaz Marulanda",  # verified vs the 2026-07-03 R16 feed (Col-Gha event)
 }
 
 

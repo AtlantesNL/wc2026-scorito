@@ -49,6 +49,20 @@ Oyarzabal / Dembélé / Vinícius / Haaland / Lautaro.
 - **CORRECTION: Raphinha OUT** for R16 (hamstring) → `R16_INJURED_OUT`; Vinícius likely Brazil's PK.
 - **+8 in-form candidates added** (Balogun, Cunha, Quiñones, Barcola, Saibari, Manzambi, Xhaka, Tielemans).
 
+## Full-review findings (2026-07-03 evening — everything re-verified)
+- Scoring config matches the in-app Spelregels exactly (135/90/0 XOR, 4 slots, 24/48/96). ✓
+- Bracket + orientation matches the FIFA bracket. ✓ picks.csv consistent. ✓
+- **Draw audit**: engine evaluates every cell incl. draws; no draw pick out-EVs our win pick on any tie
+  (closest USA–Belgium: draw 28.6 vs pick 37.6; pD(120')≈26%). The R32 penalty-draw lesson flips nothing. ✓
+- **ATGS name-matching verified player-by-player** for all priced ties (Mbappé 1.57, Oyarzabal 2.2,
+  Dembélé 2.3, Haaland 2.34, Kane 2.54, …); Messi/Lautaro/James listed under plain names → will match. ✓
+- **FIXED: Balogun is SUSPENDED** (straight red vs Bosnia, no appeal — misses Belgium) → added to
+  `R16_INJURED_OUT`. Cross-validated: books had already dropped him from the anytime market.
+- **FIXED: Luis Díaz ATGS alias** — feed lists him as "Luis Fernando Diaz Marulanda"; alias added +
+  verified resolving (@2.6). Without it he'd have silently hand-fallen-back tomorrow.
+- Suspension rules: yellows wiped after groups; only R32 reds ban for R16 → Balogun is the only
+  pool-relevant ban. (Two yellows across R32+R16 → miss QF: check again next round.)
+
 ## TONIGHT (small, manual — only what tonight's 3 games decide)
 Edit `scorito/data/knockout_fixtures.py`:
 1. Confirm ties #7/#8 participants (expected **Colombia, Egypt, Argentina**); swap any upset (and add a
@@ -62,6 +76,11 @@ python -m scorito.knockout --round r16 --odds-key dfa9e6f2e2088112acc30144157a5a
 ```
 (Re-pulls fresh odds/ATGS — the Argentina/Colombia/Egypt/Switzerland R16 ties will now have markets,
 so Messi/Lautaro become market-priced.) Then transcribe `out/ko_r16/{report.md,picks.csv}`. Eyeball:
+- **Src column = 📈 for Messi, Lautaro, Salah, Luis Díaz** (their ties get priced overnight; Salah's
+  feed spelling could NOT be pre-verified — his R32 market was already suspended at pull time. If any
+  shows ✍️, check the raw feed name and add an `ATGS_PLAYER_ALIASES` entry like Luis Díaz's);
+- **Messi's slot**: his current 25.7 is a hand estimate and optimistic (~1.07 xG vs Switzerland) —
+  expect the market to price him lower; slots 3–4 may reorder. Trust the market run;
 - the **Haaland-mirror-#2** topscorer call once his and Kane's R16 prices are in;
 - **positions** of Salah / Luis Díaz in-app (ATT vs MID = multiplier lever);
 - all four topscorers are **starting**; refresh `R16_INJURED_OUT` with team news.
