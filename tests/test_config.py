@@ -32,6 +32,26 @@ def test_scoreline_leverage_constants():
     assert config.SCORELINE_LEVERAGE_GAMMA["aggressive"] > config.SCORELINE_LEVERAGE_GAMMA["balanced"] > 0
 
 
+def test_ko_round_scoring_rounds():
+    r32 = config.KO_ROUND_SCORING["Round of 32"]
+    # R32 row must equal the legacy constants so existing behaviour is unchanged.
+    assert r32["exact"] == config.PTS_KO_EXACT and r32["toto"] == config.PTS_KO_TOTO
+    assert r32["mult"] == config.KO_TOPSCORER_MULT and r32["slots"] == config.KO_TOPSCORER_SLOTS
+    r16 = config.KO_ROUND_SCORING["Round of 16"]
+    assert r16["exact"] == 135 and r16["toto"] == 90
+    assert r16["mult"] == {"GK": 96, "DEF": 96, "MID": 48, "ATT": 24}
+    assert r16["slots"] == 4 and r16["form_games"] == 4
+    # Ratios preserved (exact:toto = 3:2, DEF/GK:MID:ATT = 4:2:1) -> pick shape unchanged from R32.
+    assert r16["exact"] / r16["toto"] == 1.5
+    assert r16["mult"]["DEF"] / r16["mult"]["ATT"] == 4 and r16["mult"]["MID"] / r16["mult"]["ATT"] == 2
+
+
+def test_ko_brace_credit_att_only():
+    bc = config.KO_BRACE_CREDIT
+    assert bc["ATT"] == 1.0                                # attackers keep full brace credit
+    assert bc["MID"] == 0.0 and bc["DEF"] == 0.0 and bc["GK"] == 0.0  # others: P(>=1) only
+
+
 def test_atgs_constants():
     assert config.ATGS_MARGIN > 1.0
     assert "eu" in config.ATGS_REGIONS

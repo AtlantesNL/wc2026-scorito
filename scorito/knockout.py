@@ -89,7 +89,7 @@ def load_results_nonpen_goals(path):
     return tally
 
 
-def _load_odds(odds_key, odds_file):
+def _load_odds(odds_key, odds_file, cache_tag="r32"):
     if not (odds_key or odds_file):
         return None
     from scorito.data import odds as odds_mod
@@ -98,12 +98,12 @@ def _load_odds(odds_key, odds_file):
     else:
         raw = odds_mod.fetch_odds(odds_key)
         os.makedirs("data/cache", exist_ok=True)
-        with open("data/cache/odds_r32_raw.json", "w", encoding="utf-8") as f:
+        with open(f"data/cache/odds_{cache_tag}_raw.json", "w", encoding="utf-8") as f:
             json.dump(raw, f)
     return odds_mod.parse_odds(raw)
 
 
-def _load_atgs(odds_key, atgs_file, atgs):
+def _load_atgs(odds_key, atgs_file, atgs, cache_tag="r32"):
     if not (atgs_file or (atgs and odds_key)):
         return {}
     from scorito.data import odds as odds_mod
@@ -112,19 +112,58 @@ def _load_atgs(odds_key, atgs_file, atgs):
     else:
         raw = odds_mod.fetch_atgs(odds_key)
         os.makedirs("data/cache", exist_ok=True)
-        with open("data/cache/atgs_r32_raw.json", "w", encoding="utf-8") as f:
+        with open(f"data/cache/atgs_{cache_tag}_raw.json", "w", encoding="utf-8") as f:
             json.dump(raw, f)
     return odds_mod.parse_atgs(raw)
 
 
+def lead_dashboard(standings, scoring):
+    """Markdown lead-protection readout: gap to each rival + how many R16 swing events erase it.
+
+    A leader minimises variance vs the field; this quantifies how safe the cushion is in the round's
+    own point units. Swing units: an exact instead of a toto = ``exact-toto``; a differential
+    topscorer goal = that position's multiplier."""
+    you = standings["you"]
+    exact_swing = scoring["exact"] - scoring["toto"]
+    m = scoring["mult"]
+    L = ["\n## Lead-protection dashboard\n",
+         f"_Standings {standings.get('as_of', '')}._ You: **{you}**.\n",
+         "| Rival | Points | Your lead | Exacts to erase it | Their live differential |",
+         "|---|---|---|---|---|"]
+    for r in standings["rivals"]:
+        gap = you - r["points"]
+        exacts = gap / exact_swing if exact_swing else float("inf")
+        L.append(f"| {r['name']} | {r['points']} | **+{gap}** | ~{exacts:.1f} "
+                 f"(×{exact_swing} each) | {r.get('diff_topscorer', '—')} |")
+    L.append(f"\n_R16 swing units — exact vs toto **+{exact_swing}**, ATT goal **+{m['ATT']}**, "
+             f"MID goal **+{m['MID']}**, DEF/GK goal **+{m['DEF']}**. Both rivals play pure chalk and "
+             "mirror our slate, so realised variance is low: mirror the chalk, hand them no topscorer "
+             "differential, take no contrarian picks._\n")
+    return "\n".join(L)
+
+
 def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_file=None,
-                 results_file="data/cache/worldcup2026_results.json", out_dir="out/ko_r32",
-                 round_name="Round of 32"):
-    """Generate max_ev knockout picks: per-tie scoreline + advancer, and 4 single-game topscorers."""
+                 results_file="data/cache/worldcup2026_results.json", out_dir=None,
+                 round_name="Round of 32", *, alive_teams=None, injured_out=None,
+                 start_overrides=None, tie_notes=None, standings=None):
+    """Generate max_ev knockout picks: per-tie scoreline + advancer, and single-game topscorers.
+
+    Round-aware via ``config.KO_ROUND_SCORING[round_name]`` (points, multipliers, form-games, brace
+    de-bias). The fixtures bundle (``ties``/``alive_teams``/``injured_out``/``start_overrides``/
+    ``tie_notes``) and ``standings`` default to the R32 module data, so an argument-free call
+    reproduces the shipped R32 run exactly; pass the R16 bundle for the Round of 16."""
+    scoring = config.KO_ROUND_SCORING[round_name]
+    alive_teams = ALIVE_TEAMS if alive_teams is None else alive_teams
+    injured_out = INJURED_OUT if injured_out is None else injured_out
+    start_overrides = R32_START_OVERRIDES if start_overrides is None else start_overrides
+    tie_notes = TIE_NOTES if tie_notes is None else tie_notes
+    cache_tag = round_name.lower().replace("round of ", "r").replace(" ", "")  # -> "r32" / "r16"
+    out_dir = out_dir or f"out/ko_{cache_tag}"
+
     teams = sorted({t for m in ties for t in (m.team1, m.team2)})
     elo_map = elo_mod.get_elo(teams)
-    odds_map = _load_odds(odds_key, odds_file)
-    atgs_map = _load_atgs(odds_key, atgs_file, atgs)
+    odds_map = _load_odds(odds_key, odds_file, cache_tag)
+    atgs_map = _load_atgs(odds_key, atgs_file, atgs, cache_tag)
 
     # Per-tie: market (or Elo) expected goals -> ET-adjusted 120' grid -> EV-max scoreline + advancer.
     match_picks, match_lams_et, team_lam = [], {}, defaultdict(list)
@@ -137,7 +176,7 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
         bump = 1.0 + config.ET_MINUTE_SHARE * grid90.p_draw
         e1, e2 = l1 * bump, l2 * bump
         grid = build_grid(e1, e2)
-        h, a, ev = best_scoreline(grid)
+        h, a, ev = best_scoreline(grid, pts_exact=scoring["exact"], pts_toto=scoring["toto"])
         adv = m.team1 if grid.p_home >= grid.p_away else m.team2
         match_picks.append(dict(tie=m, home=h, away=a, ev=ev, p_home=grid.p_home,
                                 p_draw=grid.p_draw, p_away=grid.p_away, adv=adv))
@@ -149,20 +188,23 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
     avg = sum(means.values()) / len(means)
     team_factors = {t: means[t] / avg for t in means}
 
-    # Topscorers: alive+fit candidates, R32 start overrides + realized-form g90 blend, single-game
-    # opponent-specific expected goals, KO multipliers, pure EV (max_ev) top-4.
+    # Topscorers: alive+fit candidates, per-round start overrides + realized-form g90 blend (form-games
+    # entering the round), single-game opponent-specific expected goals, round multipliers with the
+    # brace de-bias, pure EV (max_ev) top-N.
     nonpen = load_results_nonpen_goals(results_file)
     adjusted = []
-    for c in filter_alive(CANDIDATES, ALIVE_TEAMS, INJURED_OUT):
+    for c in filter_alive(CANDIDATES, alive_teams, injured_out):
         tg = nonpen.get(_norm(c["name"]), 0)
-        adjusted.append(dict(c, start_prob=R32_START_OVERRIDES.get(c["name"], c["start_prob"]),
-                             g90=blend_g90(c["g90"], tg, games=3), tourn_goals=tg))
+        adjusted.append(dict(c, start_prob=start_overrides.get(c["name"], c["start_prob"]),
+                             g90=blend_g90(c["g90"], tg, games=scoring["form_games"]), tourn_goals=tg))
     kept = build_expected_goals(adjusted, ties, atgs_map, team_factors,
-                                match_lams=match_lams_et, avg_lam=avg, pen_bonus=config.KO_PEN_BONUS)
+                                match_lams=match_lams_et, avg_lam=avg, pen_bonus=scoring["pen_bonus"])
     for c in kept:
-        c["ko_ev"] = score_candidate(c, team_factors, mult=config.KO_TOPSCORER_MULT)
+        c["ko_ev"] = score_candidate(c, team_factors, mult=scoring["mult"],
+                                     brace_credit=scoring["brace_credit"])
     ranked = sorted(kept, key=lambda c: c["ko_ev"], reverse=True)
-    top4 = ranked[:config.KO_TOPSCORER_SLOTS]
+    slots = scoring["slots"]
+    top4 = ranked[:slots]
 
     # Match-diversified variant: at most one pick per tie (cuts correlation for a lead-protector).
     opp_tie = {t: (m.team1, m.team2) for m in ties for t in (m.team1, m.team2)}
@@ -173,13 +215,14 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
             continue
         diversified.append(c)
         used_ties.add(key)
-        if len(diversified) >= config.KO_TOPSCORER_SLOTS:
+        if len(diversified) >= slots:
             break
 
     generated_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     result = dict(round_name=round_name, match_picks=match_picks, top4=top4,
                   diversified=diversified, ranked=ranked, odds_coverage=(priced, len(ties)),
-                  used_odds=bool(odds_map), used_atgs=bool(atgs_map), generated_at=generated_at)
+                  used_odds=bool(odds_map), used_atgs=bool(atgs_map), generated_at=generated_at,
+                  scoring=scoring, tie_notes=tie_notes, standings=standings)
     _write_ko_report(result, out_dir)
     return result
 
@@ -203,6 +246,9 @@ def _ts_row(c, match_picks):
 def _write_ko_report(r, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     mp = r["match_picks"]
+    sc = r["scoring"]
+    mlt = sc["mult"]
+    tie_notes = r.get("tie_notes") or {}
     goal_model = "market odds + Elo" if r["used_odds"] else "Elo only"
     atgs_note = " + ATGS" if r["used_atgs"] else ""
     total_ev = sum(p["ev"] for p in mp) + sum(c["ko_ev"] for c in r["top4"])
@@ -210,36 +256,40 @@ def _write_ko_report(r, out_dir):
     L.append(f"# Scorito WC2026 — {r['round_name']} picks (max_ev / protect-the-lead)\n")
     L.append(f"_Goal model:_ {goal_model}{atgs_note} · _Odds-priced:_ {r['odds_coverage'][0]}/"
              f"{r['odds_coverage'][1]} · _Generated:_ {r['generated_at']}\n")
-    L.append("_Scoring:_ exact **90** / toto **60** (XOR, result after 120'); topscorers "
-             "ATT 16 / MID 32 / DEF·GK 64, goals this round only.\n")
-    L.append(f"\n**Model expected points (16 ties + 4 topscorers):** {total_ev:.0f}\n")
+    L.append(f"_Scoring:_ exact **{sc['exact']}** / toto **{sc['toto']}** (XOR, result after 120'); "
+             f"topscorers ATT {mlt['ATT']} / MID {mlt['MID']} / DEF·GK {mlt['DEF']}, goals this round only.\n")
+    L.append(f"\n**Model expected points ({len(mp)} ties + {len(r['top4'])} topscorers):** "
+             f"{total_ev:.0f}\n")
+    if r.get("standings"):
+        L.append(lead_dashboard(r["standings"], sc))
     L.append("\n## Match predictions (scoreline + advancer)\n")
     L.append("| # | Tie | Pick | Advancer | Win% | EV |")
     L.append("|---|---|---|---|---|---|")
     for i, p in enumerate(mp, 1):
         m = p["tie"]
         winp = round(100 * max(p["p_home"], p["p_away"]))
-        note = TIE_NOTES.get((m.team1, m.team2))
+        note = tie_notes.get((m.team1, m.team2))
         tie_txt = f"{m.team1} vs {m.team2}" + (f"<br>_{note}_" if note else "")
         L.append(f"| {i} | {tie_txt} | **{m.team1} {p['home']}-{p['away']} {m.team2}** "
                  f"| {p['adv']} | {winp}% | {p['ev']:.1f} |")
-    L.append("\n## Topscorers — pick 4 (pure EV — the max_ev recommendation)\n")
-    L.append("| Player | Team | Pos | R32 opp | Grp goals | Src | EV |")
+    n_top = len(r["top4"])
+    L.append(f"\n## Topscorers — pick {n_top} (pure EV — the max_ev recommendation)\n")
+    L.append("| Player | Team | Pos | Opp | Goals | Src | EV |")
     L.append("|---|---|---|---|---|---|---|")
     for c in r["top4"]:
         L.append(_ts_row(c, mp))
     L.append("\n_📈 = anytime-goalscorer market · 📊 = blended · ✍️ = model g90 (form-blended) + opponent + penalty._\n")
-    L.append("\n### Alternative: match-diversified 4 (same EV approach, ≤1 per tie — slightly lower variance)\n")
-    L.append("| Player | Team | Pos | R32 opp | Grp goals | Src | EV |")
+    L.append(f"\n### Alternative: match-diversified {n_top} (same EV approach, ≤1 per tie — slightly lower variance)\n")
+    L.append("| Player | Team | Pos | Opp | Goals | Src | EV |")
     L.append("|---|---|---|---|---|---|---|")
     for c in r["diversified"]:
         L.append(_ts_row(c, mp))
-    L.append("\n### Next best (5–10)\n")
-    for c in r["ranked"][4:10]:
+    L.append("\n### Next best\n")
+    for c in r["ranked"][n_top:n_top + 6]:
         L.append(f"- {c['name']} ({c['team']}, {c['position']}, vs {_opp_label(c['team'], mp)}) — EV {c['ko_ev']:.1f}")
-    L.append("\n> Cross-check: market odds already price form/injuries. Coin-flips (Belgium–Senegal, "
-             "Portugal–Croatia, Switzerland–Algeria) and the **Egypt-over-Australia** reversal are "
-             "reflected in the win% column. Confirm orientation + starters in-app before the 21:00 lock.\n")
+    L.append("\n> Cross-check: market odds already price form/injuries; coin-flips and any bracket "
+             "reversals are reflected in the win% column. Confirm orientation + starters in-app before "
+             "the lock.\n")
     with open(os.path.join(out_dir, "report.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(L))
 
@@ -255,17 +305,31 @@ def _write_ko_report(r, out_dir):
 
 def main(argv=None):
     import argparse
+
+    from scorito.data import knockout_fixtures as kf
     p = argparse.ArgumentParser(description="Scorito WC2026 knockout pick optimizer (max_ev)")
+    p.add_argument("--round", choices=["r32", "r16"], default="r32",
+                   help="which knockout round (selects bracket + scoring)")
     p.add_argument("--odds-key", default=None, help="The Odds API key (live h2h+totals for the ties)")
     p.add_argument("--odds-file", default=None, help="replay a saved odds JSON instead of fetching")
     p.add_argument("--atgs", action="store_true", help="also pull anytime-goalscorer odds (needs --odds-key)")
     p.add_argument("--atgs-file", default=None, help="replay a saved ATGS JSON")
     p.add_argument("--results-file", default="data/cache/worldcup2026_results.json")
-    p.add_argument("--out", default="out/ko_r32")
+    p.add_argument("--out", default=None, help="output dir (default out/ko_<round>)")
     args = p.parse_args(argv)
+    bundles = {
+        "r32": dict(ties=kf.R32_TIES, round_name="Round of 32", alive_teams=kf.ALIVE_TEAMS,
+                    injured_out=kf.INJURED_OUT, start_overrides=kf.R32_START_OVERRIDES,
+                    tie_notes=kf.TIE_NOTES, standings=None),
+        "r16": dict(ties=kf.R16_TIES, round_name="Round of 16", alive_teams=kf.R16_ALIVE_TEAMS,
+                    injured_out=kf.R16_INJURED_OUT, start_overrides=kf.R16_START_OVERRIDES,
+                    tie_notes=kf.R16_TIE_NOTES, standings=kf.STANDINGS),
+    }
     r = run_knockout(odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
-                     atgs_file=args.atgs_file, results_file=args.results_file, out_dir=args.out)
-    print(f"Wrote {args.out}/report.md and {args.out}/picks.csv")
+                     atgs_file=args.atgs_file, results_file=args.results_file, out_dir=args.out,
+                     **bundles[args.round])
+    out_dir = args.out or f"out/ko_{args.round}"
+    print(f"Wrote {out_dir}/report.md and {out_dir}/picks.csv")
     print(f"Goal model: {'market odds + Elo' if r['used_odds'] else 'Elo only'} "
           f"({r['odds_coverage'][0]}/{r['odds_coverage'][1]} priced)")
     print("Scorelines:", ", ".join(f"{p['tie'].team1} {p['home']}-{p['away']} {p['tie'].team2}"

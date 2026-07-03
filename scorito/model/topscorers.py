@@ -22,12 +22,24 @@ from scorito.data.topscorer_candidates import CANDIDATES
 PEN_BONUS = 0.20  # extra expected group-phase goals for a side's *sole* penalty taker
 
 
-def score_candidate(c, team_factors, mult=None) -> float:
+def score_candidate(c, team_factors, mult=None, brace_credit=None) -> float:
     """``mult`` = per-goal multiplier table (defaults to group ``config.TOPSCORER_MULT``;
-    pass ``config.KO_TOPSCORER_MULT`` for the knockout 16/32/64/64)."""
+    pass ``config.KO_TOPSCORER_MULT`` for the knockout 16/32/64/64).
+
+    ``brace_credit`` (single-game knockout only) is a per-position weight on the "goals beyond the
+    first" term. ``None`` => full per-goal EV = ``E[goals]*mult`` (the group/R32 method). Pass
+    ``config.KO_BRACE_CREDIT`` (ATT 1.0, others 0.0) to score non-attackers on ``P(>=1 goal)``,
+    de-biasing the Poisson brace tail that otherwise inflates high-multiplier midfielders. Applies
+    to the single-game ``exp_goals`` path; the group hand-fallback (``g90*3``) is unaffected."""
     mult = mult or config.TOPSCORER_MULT
     if "exp_goals" in c:
-        return c["exp_goals"] * mult[c["position"]]
+        lam = c["exp_goals"]
+        pos = c["position"]
+        if brace_credit is None:
+            return lam * mult[pos]
+        p1 = 1.0 - math.exp(-max(0.0, lam))          # P(scores at least once)
+        extra = lam - p1                             # E[goals beyond the first]
+        return (p1 + brace_credit.get(pos, 1.0) * extra) * mult[pos]
     pen_share = c.get("pen_share", 1.0 if c.get("pen_taker") else 0.0)
     expected_goals = c["g90"] * 3 * c["start_prob"] + PEN_BONUS * pen_share
     factor = team_factors.get(c["team"], 1.0)

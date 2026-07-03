@@ -65,6 +65,27 @@ KO_TOPSCORER_MULT = {"GK": 64, "DEF": 64, "MID": 32, "ATT": 16}
 KO_TOPSCORER_SLOTS = 4
 # Single-game penalty bonus (vs the group's PEN_BONUS=0.20 spread over 3 games): ~0.20/3.
 KO_PEN_BONUS = 0.07
+
+# Brace de-bias for single-game knockout topscorer EV. Per-goal EV = E[goals]*mult over-credits the
+# Poisson tail (2+ goals in one match), which — because a MID's multiplier is 2x an ATT's — spuriously
+# lifts high-volume midfielders above strikers. Credit the "goals beyond the first" term ATT-ONLY;
+# non-attackers are scored on P(>=1 goal). (None => full per-goal credit = the R32 method.)
+KO_BRACE_CREDIT = {"ATT": 1.0, "MID": 0.0, "DEF": 0.0, "GK": 0.0}
+
+# Per-round knockout scoring (confirmed in-app). Each round scales up from the group phase but keeps
+# both ratios constant — exact:toto = 3:2 and DEF/GK:MID:ATT = 4:2:1 — so the max_ev pick *shape* is
+# identical round to round; only the reported points and the lead-dashboard math change.
+#   group 45/30 (8/16/32) -> R32 90/60 (16/32/64) [2x] -> R16 135/90 (24/48/96) [3x]
+# form_games = games played entering the round (group 3, then +1 per knockout round), used by the
+# realized-form g90 blend. `brace_credit` = the single-game de-bias policy (R32 None => byte-identical
+# to the shipped R32 run; R16 credits braces ATT-only). R32 row == the legacy KO_* constants.
+KO_ROUND_SCORING = {
+    "Round of 32": dict(exact=PTS_KO_EXACT, toto=PTS_KO_TOTO, mult=KO_TOPSCORER_MULT,
+                        slots=KO_TOPSCORER_SLOTS, form_games=3, pen_bonus=KO_PEN_BONUS,
+                        brace_credit=None),
+    "Round of 16": dict(exact=135, toto=90, mult={"GK": 96, "DEF": 96, "MID": 48, "ATT": 24},
+                        slots=4, form_games=4, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT),
+}
 # Realized-form blend (group-stage retrospective: club-g90 alone under-rated in-form scorers like
 # Messi and over-rated goal-shy creators like Wirtz). Effective non-pen g90 shrinks the tournament
 # rate toward the club prior: (prior_games*club_g90 + tourn_nonpen_goals) / (prior_games + games).

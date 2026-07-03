@@ -1,5 +1,7 @@
 """Knockout-phase logic: KO scoring (90/60 XOR), realized-form blend, ET grid,
 single-game topscorer multipliers, alive/injury filter."""
+import math
+
 import numpy as np
 import pytest
 
@@ -54,6 +56,37 @@ def test_score_candidate_knockout_multiplier():
     assert score_candidate(deff, {}, mult=config.KO_TOPSCORER_MULT) == pytest.approx(0.13 * 64)
 
 
+# --- brace de-bias: single-game per-goal EV over-credits multi-goal games for high-multiplier
+#     MIDs (Poisson tail). ATT-only brace credit keeps strikers on full E[goals], scores others on
+#     P(>=1). Default (no brace_credit) stays E[goals]*mult so R32 output is byte-identical. ---
+def test_score_candidate_brace_credit_default_is_full_per_goal():
+    mid = {"position": "MID", "exp_goals": 0.5}
+    assert score_candidate(mid, {}, mult=config.KO_TOPSCORER_MULT) == pytest.approx(0.5 * 32)
+
+
+def test_score_candidate_brace_de_bias_credits_braces_att_only():
+    lam = 0.6
+    mult = config.KO_ROUND_SCORING["Round of 16"]["mult"]
+    bc = config.KO_BRACE_CREDIT
+    att = {"position": "ATT", "exp_goals": lam}
+    mid = {"position": "MID", "exp_goals": lam}
+    p1 = 1.0 - math.exp(-lam)
+    assert score_candidate(att, {}, mult=mult, brace_credit=bc) == pytest.approx(lam * mult["ATT"])
+    assert score_candidate(mid, {}, mult=mult, brace_credit=bc) == pytest.approx(p1 * mult["MID"])
+    assert score_candidate(mid, {}, mult=mult, brace_credit=bc) < lam * mult["MID"]
+
+
+def test_score_candidate_brace_de_bias_demotes_inflated_mid_below_att():
+    # A high-volume MID that outranks a star ATT under raw Poisson should flip under the de-bias.
+    mult = config.KO_ROUND_SCORING["Round of 16"]["mult"]
+    bc = config.KO_BRACE_CREDIT
+    mid = {"position": "MID", "exp_goals": 0.45}   # 0.45*48 = 21.6 raw
+    att = {"position": "ATT", "exp_goals": 0.80}   # 0.80*24 = 19.2 raw  -> MID wins raw
+    assert score_candidate(mid, {}, mult=mult) > score_candidate(att, {}, mult=mult)
+    assert (score_candidate(att, {}, mult=mult, brace_credit=bc)
+            > score_candidate(mid, {}, mult=mult, brace_credit=bc))  # ATT wins de-biased
+
+
 def test_build_expected_goals_single_game_pen_bonus():
     c = [{"name": "X", "team": "A", "position": "ATT", "g90": 0.0,
           "start_prob": 1.0, "pen_taker": True, "pen_share": 1.0}]
@@ -85,6 +118,54 @@ def test_et_grid_raises_total_and_lowers_draw():
 
 
 # --- alive + injury filter ---
+def test_best_scoreline_scales_linearly_with_round_points():
+    # Ratios are identical (135/90 = 1.5 * 90/60) so the modal cell is unchanged and EV scales 1.5x.
+    grid = build_grid(1.7, 0.7)
+    h32, a32, ev32 = ko.best_scoreline(grid, pts_exact=90, pts_toto=60)
+    h16, a16, ev16 = ko.best_scoreline(grid, pts_exact=135, pts_toto=90)
+    assert (h16, a16) == (h32, a32)
+    assert ev16 == pytest.approx(1.5 * ev32)
+
+
+def test_lead_dashboard_reports_gap_and_swings():
+    from scorito.data.knockout_fixtures import STANDINGS
+    dash = ko.lead_dashboard(STANDINGS, config.KO_ROUND_SCORING["Round of 16"])
+    assert "76" in dash and "201" in dash    # gaps vs #2 (3320-3244) and #3 (3320-3119)
+    assert "45" in dash                       # exact-minus-toto swing 135-90
+    assert "96" in dash                       # DEF/GK per-goal swing
+
+
+def test_run_knockout_r16_end_to_end_offline(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    r = ko.run_knockout(ties=kf.R16_TIES, alive_teams=kf.R16_ALIVE_TEAMS,
+                        injured_out=kf.R16_INJURED_OUT, start_overrides=kf.R16_START_OVERRIDES,
+                        tie_notes=kf.R16_TIE_NOTES, round_name="Round of 16", out_dir=str(tmp_path))
+    assert len(r["match_picks"]) == 8 and len(r["top4"]) == 4
+    report = (tmp_path / "report.md").read_text()
+    assert "Round of 16" in report
+    assert "135" in report and "90" in report          # R16 scoring header
+    assert (tmp_path / "picks.csv").exists()
+
+
+def test_r16_fixtures_wellformed():
+    from scorito.data.knockout_fixtures import R16_ALIVE_TEAMS, R16_TIES
+    assert len(R16_TIES) == 8
+    teams = {t for m in R16_TIES for t in (m.team1, m.team2)}
+    assert len(teams) == 16
+    assert teams == set(R16_ALIVE_TEAMS)
+    for known in ("France", "Spain", "Portugal", "Brazil", "England", "Mexico", "Belgium", "USA"):
+        assert known in R16_ALIVE_TEAMS
+
+
+def test_all_r16_teams_have_a_topscorer_candidate():
+    # The engine can only pick a scorer it knows about; every R16 team needs >=1 candidate so a
+    # market-priced striker (e.g. Salah, Luis Díaz) is considered under tomorrow's ATGS odds.
+    from scorito.data.knockout_fixtures import R16_ALIVE_TEAMS
+    from scorito.data.topscorer_candidates import CANDIDATES
+    teams_with = {c["team"] for c in CANDIDATES}
+    assert set(R16_ALIVE_TEAMS) <= teams_with
+
+
 def test_filter_alive_drops_eliminated_and_injured():
     cands = [{"name": "Federico Valverde", "team": "Uruguay"},
              {"name": "Raphinha", "team": "Brazil"},

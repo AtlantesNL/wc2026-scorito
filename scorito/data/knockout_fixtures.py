@@ -28,6 +28,62 @@ R32_TIES = [
 
 ALIVE_TEAMS = frozenset(t for m in R32_TIES for t in (m.team1, m.team2))
 
+# ------------------------------------------------------------------------------------------------
+# Round of 16 (bracket structure fixed; participants = R32 winners). 13 winners are known; the 3
+# from the Jul-3 ties are PRE-FILLED with the expected chalk winners — all three favourites, and
+# every rival + our own R32 slate picked them to advance. >>> CONFIRM TONIGHT after the games and
+# swap any upset before tomorrow's run. <<<
+# ------------------------------------------------------------------------------------------------
+R16_TIES = [
+    Match("Canada", "Morocco", "R16", date="2026-07-04"),
+    Match("Paraguay", "France", "R16", date="2026-07-04"),
+    Match("Brazil", "Norway", "R16", date="2026-07-05"),
+    Match("Mexico", "England", "R16", date="2026-07-05"),
+    Match("Portugal", "Spain", "R16", date="2026-07-06"),
+    Match("USA", "Belgium", "R16", date="2026-07-06"),
+    Match("Colombia", "Egypt", "R16", date="2026-07-07"),      # PENDING: winner(Col-Gha) vs winner(Aus-Egy)
+    Match("Switzerland", "Argentina", "R16", date="2026-07-07"),  # PENDING: Switzerland vs winner(Arg-CpV)
+]
+
+R16_ALIVE_TEAMS = frozenset(t for m in R16_TIES for t in (m.team1, m.team2))
+
+# Injured/suspended out for R16 (team alive, player unavailable). Yellow-card suspensions carry into
+# the KO rounds, so refresh from tomorrow's team news. Raphinha (R32 hamstring) expected fit for R16.
+R16_INJURED_OUT = frozenset()  # >>> UPDATE with tomorrow's suspension/injury news <<<
+
+# R16 start probabilities — R32 overrides for still-alive teams (Havertz/Germany, Depay/Netherlands
+# dropped as eliminated). Refresh with tomorrow's team news / rotation reads.
+R16_START_OVERRIDES = {
+    "Mikel Oyarzabal": 0.90,    # Spain #9 + PK
+    "Kevin De Bruyne": 0.88,    # Belgium, dead-ball duty
+    "Ousmane Dembele": 0.90,    # France, red-hot
+    "Vinicius Junior": 0.90,    # Brazil
+    "Lautaro Martinez": 0.90,   # Argentina starting CF
+    "Lionel Messi": 0.80,       # Argentina, minutes-managed
+    "Cristiano Ronaldo": 0.85,  # Portugal
+    "Julian Alvarez": 0.55,     # Argentina backup CF
+    "Romelu Lukaku": 0.45,      # Belgium impact sub
+}
+
+R16_TIE_NOTES = {
+    ("Paraguay", "France"): "Mbappé vs a low-block Paraguay — France heavy favourite",
+    ("Brazil", "Norway"): "Haaland (a rival's topscorer) vs Brazil — high-quality, tighter",
+    ("Mexico", "England"): "Kane vs host Mexico (Azteca altitude) — tougher than R32",
+    ("Portugal", "Spain"): "Iberian heavyweight coin-flip; the two attacks cancel",
+    ("USA", "Belgium"): "host USA (Seattle) vs an ageing Belgium — close",
+}
+
+# Pool standings entering R16 (points; gap = you - rival). >>> UPDATE after tonight's 3 games <<<.
+# `diff_topscorer` = each rival's ONE non-shared topscorer (drives the lead-exposure readout).
+STANDINGS = {
+    "you": 3320,
+    "as_of": "post-R32, PRE Jul-3 games — UPDATE after tonight",
+    "rivals": [
+        {"name": "#2", "points": 3244, "diff_topscorer": "Haaland (banked +16 in R32)"},
+        {"name": "#3", "points": 3119, "diff_topscorer": "Brobbey (eliminated — dead slot)"},
+    ],
+}
+
 # Injured/out for the R32 round specifically (team still alive, player unavailable this round).
 INJURED_OUT = frozenset({"Raphinha"})  # hamstring vs Haiti; eyeing R16. (Brazil advances.)
 

@@ -58,16 +58,26 @@ from a chalk-picking amateur field): `max_ev` (pure EV — best when your pool p
 ## Knockout phase (Round of 32 onward)
 
 After the group stage, generate knockout picks — per-tie **scoreline + advancer** and **4 topscorers**,
-scored with the confirmed knockout rules (exact **90** / toto **60** on the result after extra time, the
-"stand na 120'"; topscorers ATT 16 / MID 32 / DEF·GK 64, goals that round only):
+scored with the confirmed per-round knockout rules (result after extra time, the "stand na 120'"). The
+round is selected with `--round`; scoring scales up each round but keeps the same ratios (exact:toto
+3:2, DEF/GK:MID:ATT 4:2:1), so the `max_ev` pick *shape* is round-invariant:
+
+| Round | exact / toto | ATT / MID / DEF·GK |
+|---|---|---|
+| `r32` | 90 / 60 | 16 / 32 / 64 |
+| `r16` | 135 / 90 | 24 / 48 / 96 |
 
 ```bash
-.venv/bin/python -m scorito.knockout --odds-key "$ODDS_API_KEY" --atgs
+.venv/bin/python -m scorito.knockout --round r16 --odds-key "$ODDS_API_KEY" --atgs
 ```
 
-Writes `out/ko_r32/{report.md,picks.csv}`. Posture is `max_ev` (protect a lead); the engine reuses the
-group-phase goal model on the real knockout ties. Re-run each round as the bracket resolves. See
-[`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md) for the full design + the R32 run.
+Writes `out/ko_<round>/{report.md,picks.csv}`. Posture is `max_ev` (**protect a lead** — for a leader
+this = mirror the field's chalk, no contrarian picks). Single-game topscorer EV uses an **ATT-only
+brace de-bias** (raw Poisson over-credits multi-goal games, spuriously lifting high-multiplier MIDs).
+When leading, the report adds a **lead-protection dashboard** (gap to each rival + swing math). Re-run
+per round as the bracket resolves. See the R32 run
+([`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md)) and R16 runbook
+([`docs/knockout-r16-handoff-2026-07-03.md`](docs/knockout-r16-handoff-2026-07-03.md)).
 
 ## Validation
 
@@ -94,5 +104,8 @@ Design: [`docs/superpowers/specs/2026-06-08-validation-harness-design.md`](docs/
 ## Status
 
 Group phase complete. **Knockout mode is live** (`scorito.knockout`) — re-run per round as the bracket
-resolves. Round of 32 done (see [`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md));
-two small generalizations are noted there as prerequisites before re-running for the Round of 16.
+resolves. Round of 32 done ([`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md)).
+**Round of 16 engine ready** — round-aware scoring, R16 bracket, ATT-only brace de-bias, and a
+lead-protection dashboard (we finished R32 in **1st**). Tonight: confirm the 3 pending winners +
+standings; tomorrow: pull odds and run `--round r16`. Runbook:
+[`docs/knockout-r16-handoff-2026-07-03.md`](docs/knockout-r16-handoff-2026-07-03.md).

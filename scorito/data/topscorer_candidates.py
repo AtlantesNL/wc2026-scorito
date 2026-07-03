@@ -80,4 +80,13 @@ CANDIDATES = [
     dict(name="Antonio Rudiger", team="Germany", position="DEF", g90=0.07, start_prob=0.40, pen_taker=False),             # 25/26 .085 Real Madrid (1501', small sample); aerial CB, soft Group E. 11 Jun: FIT but DEMOTED — USA bench (Jun 6) was tactical; planned backup behind Tah/Schlotterbeck (Sport1 Jun 3, Bundesliga.com Jun 6 predicted XI) → 0.66→0.40
     dict(name="Joao Cancelo", team="Portugal", position="DEF", g90=0.06, start_prob=0.55, pen_taker=False),               # ~0 league goals 25/26 (Al-Hilal→Barça loan, rotational)
     dict(name="William Saliba", team="France", position="DEF", g90=0.04, start_prob=0.85, pen_taker=False),               # 25/26 .05/.03 Arsenal (barely scores)
+
+    # --- R16-added: attackers for teams that advanced past R32 but were absent from the group pool.
+    #     g90s are role-based estimates (⚠️ verify vs ATGS market tomorrow); ATGS λ supersedes them
+    #     when priced. ⚠️ VERIFY POSITION in-app (multiplier lever): Salah/Luis Díaz likely ATT.
+    dict(name="Mohamed Salah", team="Egypt", position="ATT", g90=0.55, start_prob=0.95, pen_taker=True, pen_share=0.8),   # Liverpool talisman + Egypt PK; elite non-pen threat vs Colombia
+    dict(name="Luis Diaz", team="Colombia", position="ATT", g90=0.45, start_prob=0.92, pen_taker=False),                  # Bayern winger; Colombia's main goal threat
+    dict(name="James Rodriguez", team="Colombia", position="MID", g90=0.14, start_prob=0.85, pen_taker=True, pen_share=0.6),  # Colombia set-pieces + PK; MID multiplier
+    dict(name="Breel Embolo", team="Switzerland", position="ATT", g90=0.32, start_prob=0.80, pen_taker=False),            # Monaco #9, Switzerland's lead striker
+    dict(name="Julio Enciso", team="Paraguay", position="ATT", g90=0.22, start_prob=0.60, pen_taker=False),               # scored vs Germany in R32; Paraguay's main attacking spark
 ]
