@@ -101,4 +101,5 @@ CANDIDATES = [
     dict(name="Johan Manzambi", team="Switzerland", position="MID", g90=0.24, start_prob=0.70, pen_taker=False),          # 3 tourn goals; Freiburg attacking mid
     dict(name="Granit Xhaka", team="Switzerland", position="MID", g90=0.10, start_prob=0.95, pen_taker=True, pen_share=0.9),   # Switzerland's PK taker (scored vs Bosnia); low open-play threat
     dict(name="Youri Tielemans", team="Belgium", position="MID", g90=0.14, start_prob=0.82, pen_taker=True, pen_share=0.45),   # de-facto BEL taker when KDB off (scored 125' PK winner vs Senegal)
+    dict(name="Jhon Arias", team="Colombia", position="ATT", g90=0.30, start_prob=0.88, pen_taker=False),                 # scored the R32 winner vs Ghana (14'); Colombia's in-form wide threat
 ]

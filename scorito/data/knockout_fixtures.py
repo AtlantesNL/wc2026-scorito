@@ -29,10 +29,9 @@ R32_TIES = [
 ALIVE_TEAMS = frozenset(t for m in R32_TIES for t in (m.team1, m.team2))
 
 # ------------------------------------------------------------------------------------------------
-# Round of 16 (bracket structure fixed; participants = R32 winners). 13 winners are known; the 3
-# from the Jul-3 ties are PRE-FILLED with the expected chalk winners — all three favourites, and
-# every rival + our own R32 slate picked them to advance. >>> CONFIRM TONIGHT after the games and
-# swap any upset before tomorrow's run. <<<
+# Round of 16 — CONFIRMED 2026-07-04 after all R32 results (verified vs FIFA/Al Jazeera/beIN
+# schedules). NB the Jul-7 pairings are Argentina-EGYPT (Atlanta) and Switzerland-COLOMBIA
+# (Vancouver) — the earlier pre-fill had these two ties cross-paired from a misread bracket.
 # ------------------------------------------------------------------------------------------------
 R16_TIES = [
     Match("Canada", "Morocco", "R16", date="2026-07-04"),
@@ -41,8 +40,8 @@ R16_TIES = [
     Match("Mexico", "England", "R16", date="2026-07-05"),
     Match("Portugal", "Spain", "R16", date="2026-07-06"),
     Match("USA", "Belgium", "R16", date="2026-07-06"),
-    Match("Colombia", "Egypt", "R16", date="2026-07-07"),      # PENDING: winner(Col-Gha) vs winner(Aus-Egy)
-    Match("Switzerland", "Argentina", "R16", date="2026-07-07"),  # PENDING: Switzerland vs winner(Arg-CpV)
+    Match("Argentina", "Egypt", "R16", date="2026-07-07"),      # confirmed: Arg beat CpV 3-2 AET; Egy on pens
+    Match("Switzerland", "Colombia", "R16", date="2026-07-07"),  # confirmed: Col beat Ghana 1-0
 ]
 
 R16_ALIVE_TEAMS = frozenset(t for m in R16_TIES for t in (m.team1, m.team2))
@@ -74,17 +73,21 @@ R16_TIE_NOTES = {
     ("Brazil", "Norway"): "Haaland (a rival's topscorer) vs Brazil — high-quality, tighter",
     ("Mexico", "England"): "Kane vs host Mexico (Azteca altitude) — tougher than R32",
     ("Portugal", "Spain"): "Iberian heavyweight coin-flip; the two attacks cancel",
-    ("USA", "Belgium"): "host USA (Seattle) vs an ageing Belgium — close",
+    ("USA", "Belgium"): "host USA (Seattle) vs an ageing Belgium — close; USA missing Balogun (susp.)",
+    ("Argentina", "Egypt"): "Argentina laboured vs Cape Verde (3-2 AET) but Messi red-hot; Egypt drew 120' twice",
+    ("Switzerland", "Colombia"): "organised vs organised; Arias/Luis Díaz the Colombia threats",
 }
 
-# Pool standings entering R16 (points; gap = you - rival). >>> UPDATE after tonight's 3 games <<<.
+# Pool standings entering R16 (points; gap = you - rival). Projected from known picks + final R32
+# results (Jul-3: all zeroed on Egypt's 1-1, all toto'd Argentina, YOU exact'd Colombia 1-0 = +30 on
+# both rivals; Messi +16 shared). Verify vs the in-app leaderboard before lock.
 # `diff_topscorer` = each rival's ONE non-shared topscorer (drives the lead-exposure readout).
 STANDINGS = {
-    "you": 3320,
-    "as_of": "post-R32, PRE Jul-3 games — UPDATE after tonight",
+    "you": 3486,
+    "as_of": "R32 complete (projected; verify in-app)",
     "rivals": [
-        {"name": "#2", "points": 3244, "diff_topscorer": "Haaland (banked +16 in R32)"},
-        {"name": "#3", "points": 3119, "diff_topscorer": "Brobbey (eliminated — dead slot)"},
+        {"name": "#2", "points": 3380, "diff_topscorer": "Haaland (banked +16 in R32)"},
+        {"name": "#3", "points": 3255, "diff_topscorer": "Brobbey (eliminated — dead slot)"},
     ],
 }
 

@@ -156,7 +156,8 @@ def test_best_scoreline_scales_linearly_with_round_points():
 def test_lead_dashboard_reports_gap_and_swings():
     from scorito.data.knockout_fixtures import STANDINGS
     dash = ko.lead_dashboard(STANDINGS, config.KO_ROUND_SCORING["Round of 16"])
-    assert "76" in dash and "201" in dash    # gaps vs #2 (3320-3244) and #3 (3320-3119)
+    for r in STANDINGS["rivals"]:            # gap line per rival, derived from the live data
+        assert f"+{STANDINGS['you'] - r['points']}" in dash
     assert "45" in dash                       # exact-minus-toto swing 135-90
     assert "96" in dash                       # DEF/GK per-goal swing
 
