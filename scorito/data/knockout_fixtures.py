@@ -125,17 +125,18 @@ QF_TIE_NOTES = {
     ("Argentina", "Switzerland"): "Messi (8, Boot leader) vs the shootout-survivors; SUI conceded 0 in 120'",
 }
 
-# Pool standings entering the QF. YOUR points = 3486 + 633 banked in R16 (exact Por 0-1 Esp = 135,
-# 5 totos = 450, Mbappé+Messi = 48). Rival R16 rounds are NOT yet known — the numbers below assume
-# they full-mirrored our scorelines (585) and #2 played the Kane/Haaland chalk slate (+120 ts) while
-# #3 banked ~72 ts. >>> REPLACE with the in-app leaderboard before the QF lock — this is the input
-# to the lead dashboard and the mirror-vs-EV topscorer call. <<<
+# Pool standings entering the QF — IN-APP VERIFIED 2026-07-08 (user read the leaderboard).
+# Our 4119 = 3486 + 633 reconciles exactly. Rival R16 topscorer slates (visible post-round):
+# #2 = Kane/Mbappé/Messi/Vinícius (72 pts; they took the Brazil side of the Haaland tie and lost),
+# #3 = Haaland/Kane/Mbappé/Messi (120 pts — perfect chalk round, still lost ground on scorelines).
+# QF read: everyone shares Kane/Mbappé/Messi; the round's topscorer game is slot 4 only.
+# #3 holds Haaland persistently (R32+R16); #2's 4th is unknown (Vinícius eliminated — must repick).
 STANDINGS = {
     "you": 4119,
-    "as_of": "R16 complete (projected; VERIFY IN-APP before QF lock)",
+    "as_of": "R16 complete (in-app verified 2026-07-08)",
     "rivals": [
-        {"name": "#2", "points": 4085, "diff_topscorer": "Haaland (7 goals — Norway ALIVE, QF vs England)"},
-        {"name": "#3", "points": 3900, "diff_topscorer": "unknown — re-read their R16 slate in-app"},
+        {"name": "#2", "points": 4001, "diff_topscorer": "slot-4 unknown (R16 4th Vinícius = eliminated; likely Haaland/Oyarzabal/Bellingham)"},
+        {"name": "#3", "points": 3860, "diff_topscorer": "Haaland (held R32+R16; 7 goals, QF vs England)"},
     ],
 }
 
