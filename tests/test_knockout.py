@@ -174,6 +174,50 @@ def test_run_knockout_r16_end_to_end_offline(tmp_path):
     assert (tmp_path / "picks.csv").exists()
 
 
+def test_lead_dashboard_qf_swing_units():
+    from scorito.data.knockout_fixtures import STANDINGS
+    dash = ko.lead_dashboard(STANDINGS, config.KO_ROUND_SCORING["Quarterfinal"])
+    assert "60" in dash                       # exact-minus-toto swing 180-120
+    assert "128" in dash                      # DEF/GK per-goal swing
+
+
+def test_round_tag_matches_cli_choices():
+    # Cache files + default out dirs derive from the round name; they must match the CLI names
+    # (out/ko_qf, odds_qf_raw.json), not a long "quarterfinal" tag the runbook never uses.
+    assert ko._round_tag("Round of 32") == "r32"
+    assert ko._round_tag("Round of 16") == "r16"
+    assert ko._round_tag("Quarterfinal") == "qf"
+
+
+def test_run_knockout_qf_end_to_end_via_cli(tmp_path):
+    # --round qf must select the QF bundle (4 ties, QF scoring header) end to end.
+    ko.main(["--round", "qf", "--out", str(tmp_path)])
+    report = (tmp_path / "report.md").read_text()
+    assert "Quarterfinal" in report
+    assert "180" in report and "120" in report         # QF scoring header
+    assert report.count("| ") > 4 and (tmp_path / "picks.csv").exists()
+    picks = (tmp_path / "picks.csv").read_text()
+    assert picks.count("match,") == 4                  # 4 QF ties only
+
+
+def test_qf_fixtures_wellformed():
+    from scorito.data.knockout_fixtures import QF_ALIVE_TEAMS, QF_TIES
+    assert len(QF_TIES) == 4
+    teams = {t for m in QF_TIES for t in (m.team1, m.team2)}
+    assert len(teams) == 8
+    assert teams == set(QF_ALIVE_TEAMS)
+    # Winners of the verified R16 results, and only those.
+    assert teams == {"France", "Morocco", "Spain", "Belgium", "Norway", "England",
+                     "Argentina", "Switzerland"}
+
+
+def test_all_qf_teams_have_a_topscorer_candidate():
+    from scorito.data.knockout_fixtures import QF_ALIVE_TEAMS
+    from scorito.data.topscorer_candidates import CANDIDATES
+    teams_with = {c["team"] for c in CANDIDATES}
+    assert set(QF_ALIVE_TEAMS) <= teams_with
+
+
 def test_r16_fixtures_wellformed():
     from scorito.data.knockout_fixtures import R16_ALIVE_TEAMS, R16_TIES
     assert len(R16_TIES) == 8

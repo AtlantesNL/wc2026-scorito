@@ -90,6 +90,12 @@ def load_results_nonpen_goals(path):
     return tally
 
 
+def _round_tag(round_name):
+    """Short round tag ("r32"/"r16"/"qf") used for cache filenames and the default out dir —
+    kept identical to the CLI --round choices so paths match what the runbooks reference."""
+    return round_name.lower().replace("round of ", "r").replace("quarterfinal", "qf").replace(" ", "")
+
+
 def _load_odds(odds_key, odds_file, cache_tag="r32"):
     if not (odds_key or odds_file):
         return None
@@ -158,7 +164,7 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
     injured_out = INJURED_OUT if injured_out is None else injured_out
     start_overrides = R32_START_OVERRIDES if start_overrides is None else start_overrides
     tie_notes = TIE_NOTES if tie_notes is None else tie_notes
-    cache_tag = round_name.lower().replace("round of ", "r").replace(" ", "")  # -> "r32" / "r16"
+    cache_tag = _round_tag(round_name)  # -> "r32" / "r16" / "qf"
     out_dir = out_dir or f"out/ko_{cache_tag}"
 
     teams = sorted({t for m in ties for t in (m.team1, m.team2)})
@@ -323,7 +329,7 @@ def main(argv=None):
 
     from scorito.data import knockout_fixtures as kf
     p = argparse.ArgumentParser(description="Scorito WC2026 knockout pick optimizer (max_ev)")
-    p.add_argument("--round", choices=["r32", "r16"], default="r32",
+    p.add_argument("--round", choices=["r32", "r16", "qf"], default="r32",
                    help="which knockout round (selects bracket + scoring)")
     p.add_argument("--odds-key", default=None, help="The Odds API key (live h2h+totals for the ties)")
     p.add_argument("--odds-file", default=None, help="replay a saved odds JSON instead of fetching")
@@ -339,6 +345,9 @@ def main(argv=None):
         "r16": dict(ties=kf.R16_TIES, round_name="Round of 16", alive_teams=kf.R16_ALIVE_TEAMS,
                     injured_out=kf.R16_INJURED_OUT, start_overrides=kf.R16_START_OVERRIDES,
                     tie_notes=kf.R16_TIE_NOTES, standings=kf.STANDINGS),
+        "qf": dict(ties=kf.QF_TIES, round_name="Quarterfinal", alive_teams=kf.QF_ALIVE_TEAMS,
+                   injured_out=kf.QF_INJURED_OUT, start_overrides=kf.QF_START_OVERRIDES,
+                   tie_notes=kf.QF_TIE_NOTES, standings=kf.STANDINGS),
     }
     r = run_knockout(odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
                      atgs_file=args.atgs_file, results_file=args.results_file, out_dir=args.out,

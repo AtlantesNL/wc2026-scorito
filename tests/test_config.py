@@ -46,6 +46,21 @@ def test_ko_round_scoring_rounds():
     assert r16["mult"]["DEF"] / r16["mult"]["ATT"] == 4 and r16["mult"]["MID"] / r16["mult"]["ATT"] == 2
 
 
+def test_ko_round_scoring_qf():
+    # Confirmed in-app 2026-07-08 (Spelregels paste): exact 180 / toto 120 (XOR, stand na 120'),
+    # topscorers A 32 / M 64 / V+K 128, 4 slots. form_games = 3 group + R32 + R16 = 5.
+    qf = config.KO_ROUND_SCORING["Quarterfinal"]
+    assert qf["exact"] == 180 and qf["toto"] == 120
+    assert qf["mult"] == {"GK": 128, "DEF": 128, "MID": 64, "ATT": 32}
+    assert qf["slots"] == 4 and qf["form_games"] == 5
+    # Ratios still exact:toto = 3:2 and DEF/GK:MID:ATT = 4:2:1 -> pick shape round-invariant.
+    assert qf["exact"] / qf["toto"] == 1.5
+    assert qf["mult"]["DEF"] / qf["mult"]["ATT"] == 4 and qf["mult"]["MID"] / qf["mult"]["ATT"] == 2
+    # Same protect-the-lead posture as R16: ATT-only brace de-bias + multiplier shrink for ranking.
+    assert qf["brace_credit"] == config.KO_BRACE_CREDIT
+    assert qf["lead_shrink"] == config.KO_ROUND_SCORING["Round of 16"]["lead_shrink"]
+
+
 def test_ko_brace_credit_att_only():
     bc = config.KO_BRACE_CREDIT
     assert bc["ATT"] == 1.0                                # attackers keep full brace credit

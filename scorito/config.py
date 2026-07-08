@@ -95,6 +95,10 @@ KO_ROUND_SCORING = {
     "Round of 16": dict(exact=135, toto=90, mult={"GK": 96, "DEF": 96, "MID": 48, "ATT": 24},
                         slots=4, form_games=4, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
                         lead_shrink=LEAD_PROTECTION_MULT_SHRINK),
+    # Confirmed in-app 2026-07-08 (Spelregels): 4x group, same ratios, still 4 slots / XOR / 120'.
+    "Quarterfinal": dict(exact=180, toto=120, mult={"GK": 128, "DEF": 128, "MID": 64, "ATT": 32},
+                         slots=4, form_games=5, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
+                         lead_shrink=LEAD_PROTECTION_MULT_SHRINK),
 }
 # Realized-form blend (group-stage retrospective: club-g90 alone under-rated in-form scorers like
 # Messi and over-rated goal-shy creators like Wirtz). Effective non-pen g90 shrinks the tournament
