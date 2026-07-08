@@ -34,14 +34,14 @@ ALIVE_TEAMS = frozenset(t for m in R32_TIES for t in (m.team1, m.team2))
 # (Vancouver) — the earlier pre-fill had these two ties cross-paired from a misread bracket.
 # ------------------------------------------------------------------------------------------------
 R16_TIES = [
-    Match("Canada", "Morocco", "R16", date="2026-07-04"),
-    Match("Paraguay", "France", "R16", date="2026-07-04"),
-    Match("Brazil", "Norway", "R16", date="2026-07-05"),
-    Match("Mexico", "England", "R16", date="2026-07-05"),
-    Match("Portugal", "Spain", "R16", date="2026-07-06"),
-    Match("USA", "Belgium", "R16", date="2026-07-06"),
-    Match("Argentina", "Egypt", "R16", date="2026-07-07"),      # confirmed: Arg beat CpV 3-2 AET; Egy on pens
-    Match("Switzerland", "Colombia", "R16", date="2026-07-07"),  # confirmed: Col beat Ghana 1-0
+    Match("Canada", "Morocco", "R16", date="2026-07-04"),        # FINAL 0-3 (toto)
+    Match("Paraguay", "France", "R16", date="2026-07-04"),       # FINAL 0-1, Mbappé pen (toto)
+    Match("Brazil", "Norway", "R16", date="2026-07-05"),         # FINAL 1-2, Haaland brace (zero)
+    Match("Mexico", "England", "R16", date="2026-07-05"),        # FINAL 2-3 (toto)
+    Match("Portugal", "Spain", "R16", date="2026-07-06"),        # FINAL 0-1, Merino 90+1' (EXACT +135)
+    Match("USA", "Belgium", "R16", date="2026-07-06"),           # FINAL 1-4 (toto)
+    Match("Argentina", "Egypt", "R16", date="2026-07-07"),       # FINAL 3-2 in 90', Messi 1g (toto)
+    Match("Switzerland", "Colombia", "R16", date="2026-07-07"),  # FINAL 0-0 aet, SUI 4-3 pens (zero)
 ]
 
 R16_ALIVE_TEAMS = frozenset(t for m in R16_TIES for t in (m.team1, m.team2))
@@ -78,16 +78,61 @@ R16_TIE_NOTES = {
     ("Switzerland", "Colombia"): "organised vs organised; Arias/Luis Díaz the Colombia threats",
 }
 
-# Pool standings entering R16 (points; gap = you - rival). Projected from known picks + final R32
-# results (Jul-3: all zeroed on Egypt's 1-1, all toto'd Argentina, YOU exact'd Colombia 1-0 = +30 on
-# both rivals; Messi +16 shared). Verify vs the in-app leaderboard before lock.
-# `diff_topscorer` = each rival's ONE non-shared topscorer (drives the lead-exposure readout).
+# ------------------------------------------------------------------------------------------------
+# Quarterfinals — CONFIRMED 2026-07-08 after all R16 results. Bracket verified against four
+# independent sources (Wikipedia bracket + ESPN + FOX + Al Jazeera schedules, all agreeing);
+# NB the raw Wikipedia knockout-stage fetch garbles R16 winner cells — never trust it alone.
+# Semis: winner QF1 vs winner QF2 (Jul-14 Dallas), winner QF3 vs winner QF4 (Jul-15 Atlanta).
+# ------------------------------------------------------------------------------------------------
+QF_TIES = [
+    Match("France", "Morocco", "QF", date="2026-07-09"),       # Boston, 16:00 ET (= 22:00 CEST lock)
+    Match("Spain", "Belgium", "QF", date="2026-07-10"),        # LA/SoFi, 15:00 ET
+    Match("Norway", "England", "QF", date="2026-07-11"),       # Miami, 17:00 ET
+    Match("Argentina", "Switzerland", "QF", date="2026-07-11"),  # Kansas City, 21:00 ET
+]
+
+QF_ALIVE_TEAMS = frozenset(t for m in QF_TIES for t in (m.team1, m.team2))
+
+# Injured/suspended out for the QF (team alive, player unavailable), per 2026-07-08 research sweep:
+# - Tchouaméni (FRA): adductor recurrence, out vs Morocco (not a candidate; listed for completeness).
+# - Amadou Onana (BEL): ACL vs USA, out for tournament.
+# - Jarell Quansah (ENG): straight red vs Mexico -> banned for QF vs Norway.
+# Doubtful, re-check on lock day: Saibari (MAR hamstring, MRI — candidate!), Nico Williams (ESP
+# adductor, bench-only), Manzambi (SUI knee — candidate!), Reece James (ENG hamstring, likely sub);
+# Norway camp illness (Strand Larsen +others, improving). Cards were wiped at the KO start and next
+# wipe is after the QF, so a QF booking = semi ban (Hakimi/Rice/Bellingham/Xhaka etc. on 1 yellow)
+# — but nobody is suspended FOR the QF except Quansah.
+QF_INJURED_OUT = frozenset({"Ismael Saibari", "Johan Manzambi"})  # doubtful-out; >>> re-check before lock <<<
+
+# QF start probabilities — refresh with lock-day team news. Eliminated-team overrides dropped.
+QF_START_OVERRIDES = {
+    "Mikel Oyarzabal": 0.90,    # Spain #9 + PK (started R16, subbed 90+7')
+    "Kevin De Bruyne": 0.88,    # Belgium, dead-ball duty
+    "Ousmane Dembele": 0.90,    # France
+    "Lautaro Martinez": 0.75,   # Argentina — BENCHED in R16 (sub 66'); re-read lock-day lineups
+    "Lionel Messi": 0.85,       # started + scored R16; no fitness noise
+    "Julian Alvarez": 0.60,     # started R16 ahead of Lautaro
+    "Romelu Lukaku": 0.45,      # Belgium impact sub (scored 90+2' vs USA)
+}
+
+QF_TIE_NOTES = {
+    ("France", "Morocco"): "2022 semi rematch; Tchouaméni out, Saibari doubtful — Mbappé on pens",
+    ("Spain", "Belgium"): "Spain scraped past Portugal 90+1'; Belgium put 4 past USA — KDB/Lukaku in form",
+    ("Norway", "England"): "Haaland (7 goals) vs a Quansah-less England; Norway camp illness watch",
+    ("Argentina", "Switzerland"): "Messi (8, Boot leader) vs the shootout-survivors; SUI conceded 0 in 120'",
+}
+
+# Pool standings entering the QF. YOUR points = 3486 + 633 banked in R16 (exact Por 0-1 Esp = 135,
+# 5 totos = 450, Mbappé+Messi = 48). Rival R16 rounds are NOT yet known — the numbers below assume
+# they full-mirrored our scorelines (585) and #2 played the Kane/Haaland chalk slate (+120 ts) while
+# #3 banked ~72 ts. >>> REPLACE with the in-app leaderboard before the QF lock — this is the input
+# to the lead dashboard and the mirror-vs-EV topscorer call. <<<
 STANDINGS = {
-    "you": 3486,
-    "as_of": "R32 complete (projected; verify in-app)",
+    "you": 4119,
+    "as_of": "R16 complete (projected; VERIFY IN-APP before QF lock)",
     "rivals": [
-        {"name": "#2", "points": 3380, "diff_topscorer": "Haaland (banked +16 in R32)"},
-        {"name": "#3", "points": 3255, "diff_topscorer": "Brobbey (eliminated — dead slot)"},
+        {"name": "#2", "points": 4085, "diff_topscorer": "Haaland (7 goals — Norway ALIVE, QF vs England)"},
+        {"name": "#3", "points": 3900, "diff_topscorer": "unknown — re-read their R16 slate in-app"},
     ],
 }
 
