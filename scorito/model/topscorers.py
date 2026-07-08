@@ -112,7 +112,14 @@ def sample_player_goals(candidates, team_factors, sims, rng):
 
 
 def _atgs_lambda(price, margin):
-    """ATGS price -> per-match goal rate. p=(1/price)/margin de-vigged; lambda=-ln(1-p)."""
+    """ATGS price -> per-match goal rate. p=(1/price)/margin de-vigged; lambda=-ln(1-p).
+
+    KNOWN LIMITATION (2026-07-08 empirical review vs R16 outcomes): a flat margin is ~fair at the
+    short-priced head (top-8: 4.82 expected goals, 5 realized; R32 backtest consistent) but the
+    ATGS market's true overround is 40-60%, concentrated in the longshot tail — implied p in the
+    0.2-0.5 band realized ~40% low (z~2.3, single round). Ranking among short-priced picks is
+    unaffected (monotone transform); do NOT trust the EV column above ~price 6, and revisit a
+    price-dependent margin once the QF adds a second ATGS-vs-outcome sample."""
     p = min(0.99, (1.0 / price) / margin)
     return -math.log(1.0 - p)
 
@@ -133,6 +140,11 @@ def build_expected_goals(candidates, matches, atgs_map, team_factors,
         plain_key = _norm(c["name"])
         # ATGS prices are conditional on the player appearing (bets void on DNP), so scale by an
         # appearance prob >= start_prob (a sub can still play); high-start players are unaffected.
+        # Known crudeness (2026-07-08 review): a first-choice supersub (start 0.4 but enters every
+        # game) gets appear 0.55 vs a true ~0.9 — underrates Lukaku-types ~40%; never pick-relevant
+        # yet. Also unmodelled: books settle anytime-scorer at 90' while Scorito counts through
+        # 120', so market lambdas run ~7-8% low — near-uniform across ties (spread <=1.1%), hence
+        # ranking-safe; a level bias only.
         appear = min(1.0, c["start_prob"] + 0.15)
         total, n_mkt = 0.0, 0
         for (h, a) in cms:

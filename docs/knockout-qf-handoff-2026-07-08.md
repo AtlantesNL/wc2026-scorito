@@ -93,3 +93,29 @@ User asked why all four QF picks are 1-0/0-1. Full adversarial verification of t
   should lean to the field's chalk digits anyway — leader mirrors). **SF-round TODO: evaluate
   price-implied totals properly** (add R32 backtest, Shin-devig the O/U, then A/B the two slates
   across all scored KO rounds before adopting).
+
+## Topscorer-method review (2026-07-08 late — two adversarial forks: code semantics + empirical)
+
+User asked whether the goalscorer picking is done "the right way". Verdicts (both forks agree):
+- **NO BUG affects any current or plausible pick.** Double-count audit clean (pens + team factor
+  market-path-only-excluded, non-pen blend vs pen_share disjoint, appear-vs-start asymmetry sound);
+  brace/shrink math exact (`(p1+credit·extra)·mult`, shrink {32,64,128}→{32,45.25,64}, ko_sel ranks /
+  ko_ev displays); orientation/alias/price-guard edge cases hold; QF composition correct.
+- **Head calibration GOOD** (the region picks come from): R16 top-8 ATTs 4.82 expected goals →
+  5 realized; both p≥.5 players scored; consistent with the R32 backtest (8.1 vs 9).
+- **Tail/mid-band INFLATED**: flat `ATGS_MARGIN=1.06` vs a real 40-60% longshot-concentrated
+  overround; implied p in the .2-.5 band realized ~40% low (z≈2.3, one round). Ranking-safe
+  (monotone); EV column untrustworthy above ~price 6. Re-test after the QF (sample doubles) before
+  any margin retune. (Comments added in `topscorers.py`.)
+- **De-bias rationale CORRECTED**: tournament-wide braces fit Poisson at EVERY position (ATT 37%
+  vs 23-31% implied, MID 18% vs 14% — Bellingham & Ounahi braced in R16 alone). "Raw Poisson
+  inflates MID braces" was the margin problem in disguise. The ATT-only brace credit stays as
+  deliberate chalk-mirroring (cost so far: zero — every R16 ranking variant realized the same 48).
+- **Variant A/B on R16**: base vs full-Poisson vs no-brace vs no-shrink vs no-appear → all realized
+  48 (contested slot-3/4 candidates all blanked). n=8 cannot discriminate these knobs; they are
+  strategy choices, and the shipped slate was weakly-best.
+- **Minor level biases (ranking-safe, documented in code, no action)**: 90'-settlement gap ≈ −7-8%
+  on all market λs; supersub appearance underrated (Lukaku EV 5.0 → ~8.2 at true P(appear)).
+- **Data nit to recheck at leisure**: R32 Argentina–Cape Verde equalizer credited to Lisandro
+  Martínez in the verified supplement; one later news agent said Lautaro. Only matters if Lautaro's
+  form-blend tally ever becomes pick-relevant (he's market-priced, so currently it does not).
