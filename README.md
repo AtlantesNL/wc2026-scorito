@@ -31,7 +31,7 @@ mkdir -p data/cache && curl -sL \
   -o data/cache/worldcup2026.json
 ```
 
-Run the tests with `.venv/bin/python -m pytest -q` (107 passing).
+Run the tests with `.venv/bin/python -m pytest -q` (139 passing).
 
 ## Usage
 
@@ -66,18 +66,21 @@ round is selected with `--round`; scoring scales up each round but keeps the sam
 |---|---|---|
 | `r32` | 90 / 60 | 16 / 32 / 64 |
 | `r16` | 135 / 90 | 24 / 48 / 96 |
+| `qf` | 180 / 120 | 32 / 64 / 128 |
 
 ```bash
-.venv/bin/python -m scorito.knockout --round r16 --odds-key "$ODDS_API_KEY" --atgs
+.venv/bin/python -m scorito.knockout --round qf --odds-key "$ODDS_API_KEY" --atgs
 ```
 
 Writes `out/ko_<round>/{report.md,picks.csv}`. Posture is `max_ev` (**protect a lead** — for a leader
 this = mirror the field's chalk, no contrarian picks). Single-game topscorer EV uses an **ATT-only
-brace de-bias** (raw Poisson over-credits multi-goal games, spuriously lifting high-multiplier MIDs).
-When leading, the report adds a **lead-protection dashboard** (gap to each rival + swing math). Re-run
-per round as the bracket resolves. See the R32 run
-([`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md)) and R16 runbook
-([`docs/knockout-r16-handoff-2026-07-03.md`](docs/knockout-r16-handoff-2026-07-03.md)).
+brace de-bias**: non-attackers are credited on P(≥1 goal) rather than raw per-goal EV — a deliberate
+chalk-mirroring tilt (the 2026-07-08 empirical review found braces Poisson-consistent at every
+position; the real longshot inflation is bookmaker margin, documented in `topscorers.py`). When
+leading, the report adds a **lead-protection dashboard** (gap to each rival + swing math). Re-run
+per round as the bracket resolves. Round runbooks:
+[R32](docs/knockout-r32-handoff-2026-06-28.md) · [R16](docs/knockout-r16-handoff-2026-07-03.md) ·
+[QF](docs/knockout-qf-handoff-2026-07-08.md).
 
 ## Validation
 
@@ -103,9 +106,9 @@ Design: [`docs/superpowers/specs/2026-06-08-validation-harness-design.md`](docs/
 
 ## Status
 
-Group phase complete. **Knockout mode is live** (`scorito.knockout`) — re-run per round as the bracket
-resolves. Round of 32 done ([`docs/knockout-r32-handoff-2026-06-28.md`](docs/knockout-r32-handoff-2026-06-28.md)).
-**Round of 16 engine ready** — round-aware scoring, R16 bracket, ATT-only brace de-bias, and a
-lead-protection dashboard (we finished R32 in **1st**). Tonight: confirm the 3 pending winners +
-standings; tomorrow: pull odds and run `--round r16`. Runbook:
-[`docs/knockout-r16-handoff-2026-07-03.md`](docs/knockout-r16-handoff-2026-07-03.md).
+Group phase, Round of 32, and Round of 16 complete — **1st place entering the quarterfinals**
+(R16 banked 633 vs 515 expected: 1 exact + 5 totos + Mbappé/Messi; lead +118 on #2, +259 on #3,
+in-app verified). **Quarterfinal engine live** (`--round qf`, scoring confirmed in-app): bracket
+Fra-Mar · Esp-Bel · Nor-Eng · Arg-Sui, provisional slate all-1-0/0-1 + Kane/Mbappé/Messi/Haaland.
+Lock Thu 2026-07-09 22:00 CEST — re-pull odds + transcribe. Runbook (incl. the R16 retro and the
+scoreline/topscorer method reviews): [`docs/knockout-qf-handoff-2026-07-08.md`](docs/knockout-qf-handoff-2026-07-08.md).
