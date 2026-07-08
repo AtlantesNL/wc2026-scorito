@@ -74,7 +74,7 @@ CANDIDATES = [
 
     # --- Set-piece / aerial DEFENDERS (32×) — high-ceiling differentiation -----
     # None is a confirmed first-choice penalty taker; value = open-play + set-piece × 32.
-    dict(name="Achraf Hakimi", team="Morocco", position="DEF", g90=0.16, start_prob=0.95, pen_taker=False, pen_share=0.2),  # 25/26 .18/.13 PSG; FIT ✓ (played full 120' CL final ~24 May after Apr hamstring); captain, FK+corner taker
+    dict(name="Achraf Hakimi", team="Morocco", position="DEF", g90=0.16, start_prob=0.95, pen_taker=False, pen_share=0.1),  # 25/26 .18/.13 PSG; FIT ✓; captain, FK+corner taker. Pen demoted 2026-07-08: Brahim Díaz is MAR #1 (Il Margine) and Hakimi MISSED his R32 shootout pen
     dict(name="Virgil van Dijk", team="Netherlands", position="DEF", g90=0.14, start_prob=0.95, pen_taker=False),         # 25/26 .13/.16 Liverpool (38 games, aerial corner threat)
     dict(name="Theo Hernandez", team="France", position="DEF", g90=0.12, start_prob=0.80, pen_taker=False),               # Saudi (Al-Hilal) g90 .16 → discount; LB
     dict(name="Antonio Rudiger", team="Germany", position="DEF", g90=0.07, start_prob=0.40, pen_taker=False),             # 25/26 .085 Real Madrid (1501', small sample); aerial CB, soft Group E. 11 Jun: FIT but DEMOTED — USA bench (Jun 6) was tactical; planned backup behind Tah/Schlotterbeck (Sport1 Jun 3, Bundesliga.com Jun 6 predicted XI) → 0.66→0.40
@@ -102,4 +102,19 @@ CANDIDATES = [
     dict(name="Granit Xhaka", team="Switzerland", position="MID", g90=0.10, start_prob=0.95, pen_taker=True, pen_share=0.9),   # Switzerland's PK taker (scored vs Bosnia); low open-play threat
     dict(name="Youri Tielemans", team="Belgium", position="MID", g90=0.14, start_prob=0.82, pen_taker=True, pen_share=0.45),   # de-facto BEL taker when KDB off (scored 125' PK winner vs Senegal)
     dict(name="Jhon Arias", team="Colombia", position="ATT", g90=0.30, start_prob=0.88, pen_taker=False),                 # scored the R32 winner vs Ghana (14'); Colombia's in-form wide threat
+    # --- QF additions (2026-07-08 research sweep, two agents; all ATGS-priced under these plain
+    #     names). Positions = best Scorito guess — VERIFY IN-APP before picking any of them
+    #     (MID vs ATT doubles the multiplier). Club g90 is the blend prior; R16 goals flow in
+    #     from the results supplement automatically.
+    dict(name="Charles De Ketelaere", team="Belgium", position="ATT", g90=0.12, start_prob=0.85, pen_taker=False),        # 2 vs USA but Atalanta 25/26 only ~.12 npG/90 — tournament form >> club baseline
+    dict(name="Romelu Lukaku", team="Belgium", position="ATT", g90=0.40, start_prob=0.40, pen_taker=False, pen_share=0.1),  # supersub consensus (2 sub goals); 25/26 lost season (quad surgery) -> 24/25 prior .39; BEL pen #2
+    dict(name="Hans Vanaken", team="Belgium", position="MID", g90=0.16, start_prob=0.90, pen_taker=False),                # Brugge 7/39; club PK taker but 4th in BEL pen order
+    dict(name="Mikel Merino", team="Spain", position="MID", g90=0.35, start_prob=0.55, pen_taker=False),                  # R16 winner as sub (90+1'); Arsenal .35 G/90; QF start CONTESTED (4-3-3 only)
+    dict(name="Azzedine Ounahi", team="Morocco", position="MID", g90=0.25, start_prob=0.85, pen_taker=False),             # 2 vs Canada; Girona 5/24
+    dict(name="Soufiane Rahimi", team="Morocco", position="ATT", g90=0.35, start_prob=0.75, pen_taker=False),             # starts if Saibari out (trending); Al Ain 9/16 heavily discounted (UAE league)
+    dict(name="Brahim Diaz", team="Morocco", position="MID", g90=0.25, start_prob=0.85, pen_taker=True, pen_share=0.6),   # Morocco pen #1 (Il Margine; Hakimi #2 + missed in shootout); g90 rough est.
+    dict(name="Alexander Sorloth", team="Norway", position="ATT", g90=0.42, start_prob=0.30, pen_taker=False),            # Atleti's LaLiga top scorer (13) but projected BENCH behind Haaland
+    dict(name="Enzo Fernandez", team="Argentina", position="MID", g90=0.22, start_prob=0.90, pen_taker=False),            # R16 winner (90+2'); Chelsea ~8 npPL goals (Palmer takes pens)
+    dict(name="Cristian Romero", team="Argentina", position="DEF", g90=0.10, start_prob=0.95, pen_taker=False),           # scored vs Egypt; set-piece CB (DEF 128 tier — chaser's punt, lead-shrink keeps him down)
+    dict(name="Dan Ndoye", team="Switzerland", position="ATT", g90=0.10, start_prob=0.85, pen_taker=False),               # scored vs Algeria; Forest 1 PL goal — tournament-sharp only
 ]

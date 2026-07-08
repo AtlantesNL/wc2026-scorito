@@ -93,26 +93,29 @@ QF_TIES = [
 
 QF_ALIVE_TEAMS = frozenset(t for m in QF_TIES for t in (m.team1, m.team2))
 
-# Injured/suspended out for the QF (team alive, player unavailable), per 2026-07-08 research sweep:
-# - Tchouaméni (FRA): adductor recurrence, out vs Morocco (not a candidate; listed for completeness).
+# Injured/suspended out for the QF (team alive, player unavailable), per 2026-07-08 evening sweep:
+# - Tchouaméni (FRA): adductor tear, "would take a miracle" (Marca) — out vs Morocco (not a candidate).
 # - Amadou Onana (BEL): ACL vs USA, out for tournament.
 # - Jarell Quansah (ENG): straight red vs Mexico -> banned for QF vs Norway.
-# Doubtful, re-check on lock day: Saibari (MAR hamstring, MRI — candidate!), Nico Williams (ESP
-# adductor, bench-only), Manzambi (SUI knee — candidate!), Reece James (ENG hamstring, likely sub);
-# Norway camp illness (Strand Larsen +others, improving). Cards were wiped at the KO start and next
-# wipe is after the QF, so a QF booking = semi ban (Hakimi/Rice/Bellingham/Xhaka etc. on 1 yellow)
+# - Saibari (MAR): MRI ruled out a serious tear BUT still training apart on Jul-8; coach only starts
+#   fully-fit players -> game-time call trending OUT (Rahimi starts). Kept out; flip if he trains.
+# - Manzambi (SUI): knee, Yakin "don't think you can recover in such a short time" -> likely out.
+# Doubtful only (NOT out): Nico Williams 50/50 to start, Reece James unlikely-to-start, Norway camp
+# flu (Strand Larsen/Holmgren Pedersen — Haaland NOT affected). Cards were wiped at the KO start and
+# next wipe is after the QF, so a QF booking = semi ban (Hakimi/Rice/Bellingham/Xhaka on 1 yellow)
 # — but nobody is suspended FOR the QF except Quansah.
-QF_INJURED_OUT = frozenset({"Ismael Saibari", "Johan Manzambi"})  # doubtful-out; >>> re-check before lock <<<
+QF_INJURED_OUT = frozenset({"Ismael Saibari", "Johan Manzambi"})  # >>> re-check both before lock <<<
 
-# QF start probabilities — refresh with lock-day team news. Eliminated-team overrides dropped.
+# QF start probabilities — refreshed 2026-07-08 (two-agent team-news sweep; predicted XIs from
+# Sports Mole/Squawka/Yardbarker/Bulinews). Lukaku moved into CANDIDATES (start_prob 0.40) —
+# no override needed. Re-check on lock day.
 QF_START_OVERRIDES = {
-    "Mikel Oyarzabal": 0.90,    # Spain #9 + PK (started R16, subbed 90+7')
-    "Kevin De Bruyne": 0.88,    # Belgium, dead-ball duty
-    "Ousmane Dembele": 0.90,    # France
-    "Lautaro Martinez": 0.75,   # Argentina — BENCHED in R16 (sub 66'); re-read lock-day lineups
-    "Lionel Messi": 0.85,       # started + scored R16; no fitness noise
-    "Julian Alvarez": 0.60,     # started R16 ahead of Lautaro
-    "Romelu Lukaku": 0.45,      # Belgium impact sub (scored 90+2' vs USA)
+    "Mikel Oyarzabal": 0.90,    # Spain #9 + pen #1 (started R16)
+    "Kevin De Bruyne": 0.85,    # returns to the XI (USA bench was load management, first in 38 apps)
+    "Ousmane Dembele": 0.90,    # France, Ballon d'Or, starts
+    "Lautaro Martinez": 0.50,   # Álvarez started R16, Bulinews QF XI has Álvarez again — coach-dependent
+    "Lionel Messi": 0.85,       # started + scored R16; Scaloni: "Leo is fine", no minute management
+    "Julian Alvarez": 0.75,     # current first-choice ST read
 }
 
 QF_TIE_NOTES = {
