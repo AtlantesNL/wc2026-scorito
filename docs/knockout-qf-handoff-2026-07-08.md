@@ -73,3 +73,23 @@ semi ban (Hakimi, Rice, Bellingham, Xhaka each one booking away) but only Quansa
    full-mirroring #2's slate) is the variance-minimising play — codify or decide explicitly this
    time; don't leave it as an eyeball note again.
 7. Transcribe `out/ko_qf/{report.md,picks.csv}` before 22:00 CEST.
+
+## Scoreline-reasoning review (2026-07-08 late — inline + independent fork, verdicts agree)
+
+User asked why all four QF picks are 1-0/0-1. Full adversarial verification of the explanation:
+- **CONFIRMED**: XOR EV = 60·P(exact)+120·P(side) (code-exact); within-side ranking = cell prob;
+  P(2-0)/P(1-0) = λ_fav/2 (DC ρ=.001 negligible) → 2-0 needs λ_fav ≳ 2.0 and no QF favourite
+  clears it (max 1.94); table numbers reproduced from scratch; R16's 0-2/2-0 picks had λ 2.25/2.08;
+  side term = 90-91% of pick EV.
+- **CORRECTED**: recorded-draw risk is **21-24%** per tie (was misstated 15-19%; draw picks still
+  EV 31-36 vs 70-86, nowhere near). And "market prices all ties at ~2.7" was an artifact: every tie's
+  **median totals LINE is the standard 2.5** and `goals_from_odds` snaps the λ-sum to the line,
+  discarding the over/under PRICES where tempo opinion lives (devigged P(over 2.5): Fra-Mar .48,
+  Esp-Bel .53, Nor-Eng .55, Arg-Sui .43 → price-implied totals 2.41-2.89, NOT uniform).
+- **Materiality**: price-implied totals would flip 3 of 4 QF pick DIGITS (1-0→2-0 ×2, 0-1→1-2;
+  sides never change), ~+3.7 EV on paper. **But the R16 backtest (n=8, actual results) scored
+  line-snap 585 vs price-implied 540** — the higher-total variant loses the Portugal 0-1 exact.
+- **DECISION: keep line-snap for the QF** (unvalidated ~1% EV tweak on lock eve; near-tie digits
+  should lean to the field's chalk digits anyway — leader mirrors). **SF-round TODO: evaluate
+  price-implied totals properly** (add R32 backtest, Shin-devig the O/U, then A/B the two slates
+  across all scored KO rounds before adopting).
