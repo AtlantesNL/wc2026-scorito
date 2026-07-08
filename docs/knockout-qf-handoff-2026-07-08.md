@@ -116,6 +116,8 @@ User asked whether the goalscorer picking is done "the right way". Verdicts (bot
   strategy choices, and the shipped slate was weakly-best.
 - **Minor level biases (ranking-safe, documented in code, no action)**: 90'-settlement gap ≈ −7-8%
   on all market λs; supersub appearance underrated (Lukaku EV 5.0 → ~8.2 at true P(appear)).
-- **Data nit to recheck at leisure**: R32 Argentina–Cape Verde equalizer credited to Lisandro
-  Martínez in the verified supplement; one later news agent said Lautaro. Only matters if Lautaro's
-  form-blend tally ever becomes pick-relevant (he's market-priced, so currently it does not).
+- **Data nit RESOLVED (2026-07-08, 3 sources: ESPN/Al Jazeera/FOX)**: the R32 Cape Verde goal was
+  **Lisandro** Martínez (92') — the supplement was correct; the "Lautaro" claim in one news-agent
+  report was wrong. Full goal-tally audit vs Goal.com golden-boot standings: all 7 leaders
+  reconcile exactly under `_norm` (Messi 8 · Mbappé 7/6np · Haaland 7 · Kane 6/4np · Dembélé 4 ·
+  Oyarzabal 4 · Bellingham 4); Lautaro correctly stands at 1 (group pen), 0 non-pen.
