@@ -97,26 +97,37 @@ QF_ALIVE_TEAMS = frozenset(t for m in QF_TIES for t in (m.team1, m.team2))
 # - Tchouaméni (FRA): adductor tear, "would take a miracle" (Marca) — out vs Morocco (not a candidate).
 # - Amadou Onana (BEL): ACL vs USA, out for tournament.
 # - Jarell Quansah (ENG): straight red vs Mexico -> banned for QF vs Norway.
-# - Saibari (MAR): MRI ruled out a serious tear BUT still training apart on Jul-8; coach only starts
-#   fully-fit players -> game-time call trending OUT (Rahimi starts). Kept out; flip if he trains.
-# - Manzambi (SUI): knee, Yakin "don't think you can recover in such a short time" -> likely out.
-# Doubtful only (NOT out): Nico Williams 50/50 to start, Reece James unlikely-to-start, Norway camp
-# flu (Strand Larsen/Holmgren Pedersen — Haaland NOT affected). Cards were wiped at the KO start and
-# next wipe is after the QF, so a QF booking = semi ban (Hakimi/Rice/Bellingham/Xhaka on 1 yellow)
-# — but nobody is suspended FOR the QF except Quansah.
-QF_INJURED_OUT = frozenset({"Ismael Saibari", "Johan Manzambi"})  # >>> re-check both before lock <<<
+# - Saibari (MAR): CONFIRMED OUT — coach Ouahbi, Jul-9 presser: "Everyone's available, except
+#   Saibari, with the match coming too early for him." (ESPN/Al Jazeera Jul-9). Rahimi starts.
+# - Manzambi (SUI): knee, still a game-time medical call as of Jul-9 but every quote/headline leans
+#   OUT ("likely to miss", Yakin: "only if... no risks involved"). Kept out.
+# Doubtful only (NOT out): Nico Williams available but bench-predicted (Baena starts), Reece James
+# "almost certainly not" fit (Sky Jul-9; Spence/Konsa at RB). Norway camp flu RESOLVED Jul-9 (team
+# doctor: "All the players are healthy now"; Haaland never affected, trained normally Jul-9).
+# Cards were wiped at the KO start and next wipe is after the QF, so a QF booking = semi ban
+# (Hakimi/Rice/Bellingham/Xhaka on 1 yellow) — but nobody is suspended FOR the QF except Quansah.
+QF_INJURED_OUT = frozenset({"Ismael Saibari", "Johan Manzambi"})  # lock-day verified 2026-07-09
 
-# QF start probabilities — refreshed 2026-07-08 (two-agent team-news sweep; predicted XIs from
-# Sports Mole/Squawka/Yardbarker/Bulinews). Lukaku moved into CANDIDATES (start_prob 0.40) —
-# no override needed. Re-check on lock day.
+# QF start probabilities — lock-day refresh 2026-07-09 (four-agent sweep, one per tie; Sports
+# Mole/ESPN/Rotowire/Yahoo/ESPN-Argentina previews all dated Jul-8/9). Lukaku bench-predicted
+# everywhere ("impact sub, lack of match fitness") — CANDIDATES 0.40 stands, no override.
 QF_START_OVERRIDES = {
-    "Mikel Oyarzabal": 0.90,    # Spain #9 + pen #1 (started R16)
-    "Kevin De Bruyne": 0.85,    # returns to the XI (USA bench was load management, first in 38 apps)
+    "Mikel Oyarzabal": 0.90,    # confirmed starting false-9 + pen #1, zero rotation talk (Jul-9)
+    "Kevin De Bruyne": 0.85,    # every Jul-8/9 predicted XI recalls him centrally
     "Ousmane Dembele": 0.90,    # France, Ballon d'Or, starts
-    "Lautaro Martinez": 0.50,   # Álvarez started R16, Bulinews QF XI has Álvarez again — coach-dependent
-    "Lionel Messi": 0.85,       # started + scored R16; Scaloni: "Leo is fine", no minute management
-    "Julian Alvarez": 0.75,     # current first-choice ST read
+    "Lautaro Martinez": 0.45,   # bench again per ESPN-Arg/Cadena3 Jul-9 consensus; live alternative
+    "Lionel Messi": 0.85,       # full squad fit (Edul Jul-9); no minute management, no concern
+    "Julian Alvarez": 0.80,     # Argentine media converge on Álvarez retaining the start (Jul-9)
 }
+
+# Slot-4 decision, LOCKED 2026-07-09 (lock day): force Haaland into the topscorer slate.
+# Everyone shares Kane/Mbappé/Messi, so the QF topscorer game is slot 4 only. #3 (+259) has held
+# Haaland every KO round; #2 (+118) must repick (Vinícius eliminated) and Haaland is their modal
+# choice. Cost vs the free ranking (Oyarzabal) was −0.5 EV on Jul-8 prices, −1.0 EV on Jul-9
+# lock-day prices (drift, cents-level, no ATGS move: Haaland median 2.30→2.30). Holding him zeroes
+# the likeliest rival differential — the R16 regret (didn't mirror, Haaland braced, −48 vs #2) is
+# the precedent this codifies. Lock-day sweep: Norway flu resolved, Haaland trained normally Jul-9.
+QF_TOPSCORER_FORCED = ("Erling Haaland",)
 
 QF_TIE_NOTES = {
     ("France", "Morocco"): "2022 semi rematch; Tchouaméni out, Saibari doubtful — Mbappé on pens",

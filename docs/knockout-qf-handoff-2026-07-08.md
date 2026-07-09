@@ -74,6 +74,33 @@ semi ban (Hakimi, Rice, Bellingham, Xhaka each one booking away) but only Quansa
    time; don't leave it as an eyeball note again.
 7. Transcribe `out/ko_qf/{report.md,picks.csv}` before 22:00 CEST.
 
+## LOCK DAY 2026-07-09 — executed (~19:00-19:45 CEST, lock 22:00)
+
+**FINAL SLATE (out/ko_qf, regenerated from the Jul-9 19:15 CEST odds pull): Fra 1-0 · Esp 1-0 ·
+Nor 0-1 Eng · Arg 1-0 + Kane / Mbappé / Messi / Haaland ⚑ (forced).** Model EV 405.
+
+- **Fresh odds+ATGS pulled** (key live, 4/4 priced; Jul-8 snapshots backed up as
+  `data/cache/*_qf_raw_0708.json`). Diff vs Jul-8: cents-level only (Norway 4.15→4.20,
+  Spain 1.62→1.65, ATGS medians flat — Haaland 2.30→2.30, Oyarzabal 2.20→2.20). NOT material.
+- **The free ranking flipped slot-4 to Oyarzabal** (17.9 vs Haaland 16.9; Jul-8 gap was 0.5, now
+  1.0 — drift on a near-tie, not a signal). Decision held: **Haaland, now CODIFIED** as
+  `QF_TOPSCORER_FORCED` + `forced_topscorers=` in `run_knockout` (raises if the name drops out of
+  the candidate pool; ⚑ in report). 5 new tests, 144 green. r32/r16 regen verified pick-identical.
+- **Four-agent news sweep (one per tie, all Jul-9 sources):** Saibari coach-CONFIRMED OUT (Rahimi
+  starts); Norway flu RESOLVED (team doctor: all healthy; Haaland never affected, trained Jul-9);
+  Oyarzabal confirmed false-9 + pen #1; Nico Williams available-but-bench (Baena); KDB recalled,
+  Lukaku bench everywhere; Messi fine, full ARG squad available; Álvarez consensus starter
+  (Lautaro 0.50→0.45, Álvarez 0.75→0.80); Manzambi leans out (kept out); Xhaka available.
+  Zero pick impact — the sweep de-risked the slate rather than changed it.
+- **Data artifact logged (SF TODO in `odds.py`):** Pinnacle triple-lists players within one
+  event's ATGS market (Haaland 2.2/2.33/1.62) → one book gets 3 of ~6 pooled-median votes
+  (Haaland 2.30→2.25, ~1% P). Ranking-safe, not hot-fixed on lock eve; dedupe per (book, player)
+  before the semis.
+- **Left for the user (in-app, before 22:00 CEST):** transcribe the 8 rows above; glance at #2's
+  QF slate if visible (Haaland repick confirms the mirror; nothing changes either way — the call
+  is locked); FRA-MAR official lineups drop ~21:00 CEST — only a shock Mbappé absence would
+  warrant a rethink of tie 1.
+
 ## Scoreline-reasoning review (2026-07-08 late — inline + independent fork, verdicts agree)
 
 User asked why all four QF picks are 1-0/0-1. Full adversarial verification of the explanation:

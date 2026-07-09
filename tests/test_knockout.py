@@ -244,3 +244,63 @@ def test_filter_alive_drops_eliminated_and_injured():
     kept = ko.filter_alive(cands, alive_teams={"England", "Brazil", "Argentina"},
                            injured_out={"Raphinha"})
     assert {c["name"] for c in kept} == {"Harry Kane"}
+
+
+# --- forced topscorer: the rival-mirroring call, codified (QF runbook step 6) ---
+def _qf_bundle(kf):
+    return dict(ties=kf.QF_TIES, alive_teams=kf.QF_ALIVE_TEAMS, injured_out=kf.QF_INJURED_OUT,
+                start_overrides=kf.QF_START_OVERRIDES, tie_notes=kf.QF_TIE_NOTES,
+                round_name="Quarterfinal")
+
+
+def test_forced_topscorer_pulled_into_slate(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    base = _qf_bundle(kf)
+    free = ko.run_knockout(out_dir=str(tmp_path / "free"), **base)
+    outsider = free["ranked"][6]["name"]              # well outside the natural top-4
+    forced = ko.run_knockout(out_dir=str(tmp_path / "forced"),
+                             forced_topscorers=(outsider,), **base)
+    names = [c["name"] for c in forced["top4"]]
+    assert outsider in names and len(names) == 4
+    # displaces exactly the lowest-ranked natural pick, keeps the top 3
+    assert set(names) == {outsider} | {c["name"] for c in free["top4"][:3]}
+    report = (tmp_path / "forced" / "report.md").read_text()
+    assert "⚑" in report                              # forced pick is visibly marked
+    assert outsider in (tmp_path / "forced" / "picks.csv").read_text()
+
+
+def test_forced_topscorer_already_in_slate_is_noop(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    base = _qf_bundle(kf)
+    free = ko.run_knockout(out_dir=str(tmp_path / "free"), **base)
+    leader = free["top4"][0]["name"]
+    forced = ko.run_knockout(out_dir=str(tmp_path / "forced"),
+                             forced_topscorers=(leader,), **base)
+    assert [c["name"] for c in forced["top4"]] == [c["name"] for c in free["top4"]]
+
+
+def test_forced_topscorer_unknown_name_raises(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    with pytest.raises(ValueError, match="No Such Player"):
+        ko.run_knockout(out_dir=str(tmp_path), forced_topscorers=("No Such Player",),
+                        **_qf_bundle(kf))
+
+
+def test_qf_forced_topscorer_wellformed_and_wired():
+    # The lock-day decision lives in the fixtures module and must reference a real, alive,
+    # fit candidate; the qf CLI bundle must actually apply it.
+    from scorito.data.knockout_fixtures import (QF_ALIVE_TEAMS, QF_INJURED_OUT,
+                                                QF_TOPSCORER_FORCED)
+    from scorito.data.topscorer_candidates import CANDIDATES
+    by_name = {c["name"]: c for c in CANDIDATES}
+    for name in QF_TOPSCORER_FORCED:
+        assert name in by_name and by_name[name]["team"] in QF_ALIVE_TEAMS
+        assert name not in QF_INJURED_OUT
+
+
+def test_cli_qf_applies_forced_topscorer(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    ko.main(["--round", "qf", "--out", str(tmp_path)])
+    picks = (tmp_path / "picks.csv").read_text()
+    for name in kf.QF_TOPSCORER_FORCED:
+        assert name in picks

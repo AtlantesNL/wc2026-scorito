@@ -133,6 +133,11 @@ def parse_atgs(raw):
                         continue
                     prices.setdefault(_norm(player), []).append(o["price"])
         if prices:
+            # SF TODO (2026-07-09 lock-day finding): Pinnacle triple-lists some players within one
+            # event's anytime market (Haaland 2.2/2.33/1.62 vs England), giving one book 3 of ~6
+            # votes in this pooled median (shifted Haaland 2.30->2.25, ~1% in P — ranking-safe, no
+            # pick impact, so not hot-fixed on lock eve). Before the semis: median per (book,
+            # player) first, then median across books.
             out[key] = {p: statistics.median(v) for p, v in prices.items()}
     return out
 

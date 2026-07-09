@@ -150,6 +150,7 @@ def lead_dashboard(standings, scoring):
 
 
 def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_file=None,
+                 forced_topscorers=(),
                  results_file="data/cache/worldcup2026_results.json", out_dir=None,
                  round_name="Round of 32", *, alive_teams=None, injured_out=None,
                  start_overrides=None, tie_notes=None, standings=None):
@@ -217,7 +218,18 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
                                       brace_credit=scoring["brace_credit"])
     ranked = sorted(kept, key=lambda c: c["ko_sel"], reverse=True)
     slots = scoring["slots"]
-    top4 = ranked[:slots]
+    # Forced picks (rival-mirroring): held in the slate regardless of rank. A name that isn't a
+    # live candidate raises — if the player got hurt/eliminated the decision must be revisited,
+    # not silently dropped.
+    forced_topscorers = tuple(forced_topscorers or ())
+    missing = [n for n in forced_topscorers if not any(c["name"] == n for c in ranked)]
+    if missing:
+        raise ValueError(f"forced topscorer(s) not in the candidate pool: {missing} — "
+                         "eliminated, injured_out, or a name mismatch; revisit the decision")
+    forced = [c for c in ranked if c["name"] in forced_topscorers]
+    filler = [c for c in ranked if c["name"] not in forced_topscorers]
+    top4 = sorted(forced + filler[:slots - len(forced)],
+                  key=lambda c: c["ko_sel"], reverse=True)
 
     # Match-diversified variant: at most one pick per tie (cuts correlation for a lead-protector).
     opp_tie = {t: (m.team1, m.team2) for m in ties for t in (m.team1, m.team2)}
@@ -233,6 +245,7 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
 
     generated_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     result = dict(round_name=round_name, match_picks=match_picks, top4=top4,
+                  forced=frozenset(forced_topscorers),
                   diversified=diversified, ranked=ranked, odds_coverage=(priced, len(ties)),
                   used_odds=bool(odds_map), used_atgs=bool(atgs_map), generated_at=generated_at,
                   scoring=scoring, tie_notes=tie_notes, standings=standings)
@@ -250,9 +263,10 @@ def _opp_label(team, match_picks):
     return "?"
 
 
-def _ts_row(c, match_picks):
+def _ts_row(c, match_picks, forced=frozenset()):
     src = {"market": "📈", "hand": "✍️", "blend": "📊"}.get(c.get("goals_src"), "✍️")
-    return (f"| {c['name']} | {c['team']} | {c['position']} | {_opp_label(c['team'], match_picks)} "
+    mark = " ⚑" if c["name"] in forced else ""
+    return (f"| {c['name']}{mark} | {c['team']} | {c['position']} | {_opp_label(c['team'], match_picks)} "
             f"| {c.get('tourn_goals', 0)} | {src} | {round(c['ko_ev'], 1)} |")
 
 
@@ -298,8 +312,11 @@ def _write_ko_report(r, out_dir):
     L.append("| Player | Team | Pos | Opp | Goals | Src | EV |")
     L.append("|---|---|---|---|---|---|---|")
     for c in r["top4"]:
-        L.append(_ts_row(c, mp))
+        L.append(_ts_row(c, mp, forced=r.get("forced", frozenset())))
     L.append("\n_📈 = anytime-goalscorer market · 📊 = blended · ✍️ = model g90 (form-blended) + opponent + penalty._\n")
+    if r.get("forced"):
+        L.append("_⚑ = forced pick (rival-mirroring decision), held regardless of rank — dated "
+                 "rationale in `knockout_fixtures.py`._\n")
     L.append(f"\n### Alternative: match-diversified {n_top} (same EV approach, ≤1 per tie — slightly lower variance)\n")
     L.append("| Player | Team | Pos | Opp | Goals | Src | EV |")
     L.append("|---|---|---|---|---|---|---|")
@@ -347,7 +364,8 @@ def main(argv=None):
                     tie_notes=kf.R16_TIE_NOTES, standings=kf.STANDINGS),
         "qf": dict(ties=kf.QF_TIES, round_name="Quarterfinal", alive_teams=kf.QF_ALIVE_TEAMS,
                    injured_out=kf.QF_INJURED_OUT, start_overrides=kf.QF_START_OVERRIDES,
-                   tie_notes=kf.QF_TIE_NOTES, standings=kf.STANDINGS),
+                   tie_notes=kf.QF_TIE_NOTES, standings=kf.STANDINGS,
+                   forced_topscorers=kf.QF_TOPSCORER_FORCED),
     }
     r = run_knockout(odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
                      atgs_file=args.atgs_file, results_file=args.results_file, out_dir=args.out,
