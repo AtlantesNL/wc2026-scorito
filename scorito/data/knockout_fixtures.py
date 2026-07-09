@@ -121,9 +121,12 @@ QF_START_OVERRIDES = {
 }
 
 # Slot-4 decision, LOCKED 2026-07-09 (lock day): force Haaland into the topscorer slate.
-# Everyone shares Kane/Mbappé/Messi, so the QF topscorer game is slot 4 only. #3 (+259) has held
-# Haaland every KO round; #2 (+118) must repick (Vinícius eliminated) and Haaland is their modal
-# choice. Cost vs the free ranking (Oyarzabal) was −0.5 EV on Jul-8 prices, −1.0 EV on Jul-9
+# Everyone shares Kane/Mbappé/Messi, so the QF topscorer game is slot 4 only. #3 (+259) held
+# Haaland in R16 — as Norway underdog vs Brazil (in-app verified; NB rank ≠ same person across
+# rounds, so R32 slates are NOT attributed to today's rivals); #2 (+118) must repick (Vinícius
+# eliminated) — plausible set {Haaland, Bellingham, Oyarzabal, Dembélé, Álvarez}, and the mirror
+# only loses if #2 lands on Oyarzabal specifically with P > ~2/3 (exposure model, 2026-07-09).
+# Cost vs the free ranking (Oyarzabal) was −0.5 EV on Jul-8 prices, −1.0 EV on Jul-9
 # lock-day prices (drift, cents-level, no ATGS move: Haaland median 2.30→2.30). Holding him zeroes
 # the likeliest rival differential — the R16 regret (didn't mirror, Haaland braced, −48 vs #2) is
 # the precedent this codifies. Lock-day sweep: Norway flu resolved, Haaland trained normally Jul-9.
@@ -141,13 +144,15 @@ QF_TIE_NOTES = {
 # #2 = Kane/Mbappé/Messi/Vinícius (72 pts; they took the Brazil side of the Haaland tie and lost),
 # #3 = Haaland/Kane/Mbappé/Messi (120 pts — perfect chalk round, still lost ground on scorelines).
 # QF read: everyone shares Kane/Mbappé/Messi; the round's topscorer game is slot 4 only.
-# #3 holds Haaland persistently (R32+R16); #2's 4th is unknown (Vinícius eliminated — must repick).
+# #3's R16 slate held Haaland (vs favourite Brazil); #2's 4th is unknown (Vinícius eliminated —
+# must repick). Only R16 slates are attributed to today's rivals: leaderboard rank ≠ same person
+# across rounds, so R32-era "#2/#3 held X" claims are provenance-unsafe (user flag, 2026-07-09).
 STANDINGS = {
     "you": 4119,
     "as_of": "R16 complete (in-app verified 2026-07-08)",
     "rivals": [
         {"name": "#2", "points": 4001, "diff_topscorer": "slot-4 unknown (R16 4th Vinícius = eliminated; likely Haaland/Oyarzabal/Bellingham)"},
-        {"name": "#3", "points": 3860, "diff_topscorer": "Haaland (held R32+R16; 7 goals, QF vs England)"},
+        {"name": "#3", "points": 3860, "diff_topscorer": "Haaland (R16 slate, held as underdog; 7 goals, QF vs England)"},
     ],
 }
 
