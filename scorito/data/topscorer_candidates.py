@@ -117,4 +117,33 @@ CANDIDATES = [
     dict(name="Enzo Fernandez", team="Argentina", position="MID", g90=0.22, start_prob=0.90, pen_taker=False),            # R16 winner (90+2'); Chelsea ~8 npPL goals (Palmer takes pens)
     dict(name="Cristian Romero", team="Argentina", position="DEF", g90=0.10, start_prob=0.95, pen_taker=False),           # scored vs Egypt; set-piece CB (DEF 128 tier — chaser's punt, lead-shrink keeps him down)
     dict(name="Dan Ndoye", team="Switzerland", position="ATT", g90=0.10, start_prob=0.85, pen_taker=False),               # scored vs Algeria; Forest 1 PL goal — tournament-sharp only
+    # --- SF additions (2026-07-13 two-agent news sweep; consensus predicted XIs Jul-12/13). The
+    #     four SF squads were thin in the pool. NB Foden & Palmer are NOT in England's 26 (Tuchel
+    #     cut both in May) — do not re-add. Positions = best Scorito guess, ⚠️ VERIFY IN-APP before
+    #     picking any non-verified MID (wingers have graded ATT in-app so far; attacking mids MID).
+    #     g90 = club-rate blend prior; ATGS market supersedes when priced.
+    dict(name="Bukayo Saka", team="England", position="ATT", g90=0.42, start_prob=0.85, pen_taker=False, pen_share=0.1),  # replaced Madueke at HT vs Norway, now in every predicted XI
+    dict(name="Anthony Gordon", team="England", position="ATT", g90=0.30, start_prob=0.80, pen_taker=False),              # holds LW ahead of Rashford in both consensus XIs
+    dict(name="Noni Madueke", team="England", position="ATT", g90=0.32, start_prob=0.15, pen_taker=False),                # lost the RW spot to Saka at HT vs Norway
+    dict(name="Marcus Rashford", team="England", position="ATT", g90=0.35, start_prob=0.15, pen_taker=False),             # bench; England pen #2
+    dict(name="Ollie Watkins", team="England", position="ATT", g90=0.55, start_prob=0.15, pen_taker=False),               # backup 9 behind Kane (was QF ATGS #4-priced — supersub value only)
+    dict(name="Ivan Toney", team="England", position="ATT", g90=0.45, start_prob=0.08, pen_taker=False),                  # third-choice 9; <10 Tuchel minutes pre-tournament
+    dict(name="Eberechi Eze", team="England", position="MID", g90=0.28, start_prob=0.25, pen_taker=False),                # Rice's HT replacement vs Norway; starts only if Rice isn't right
+    dict(name="Declan Rice", team="England", position="MID", g90=0.12, start_prob=0.80, pen_taker=False),                 # gastro bug + neural back, trending fit for Wednesday
+    dict(name="Elliot Anderson", team="England", position="MID", g90=0.10, start_prob=0.85, pen_taker=False),             # nailed double-pivot per both consensus XIs
+    dict(name="Michael Olise", team="France", position="ATT", g90=0.38, start_prob=0.92, pen_taker=False),                # nailed; tournament-leading 5 assists; winger -> ATT guess ⚠️
+    dict(name="Desire Doue", team="France", position="ATT", g90=0.32, start_prob=0.85, pen_taker=False),                  # preferred over Barcola in every XI; assisted Mbappé's QF goal
+    dict(name="Marcus Thuram", team="France", position="ATT", g90=0.45, start_prob=0.15, pen_taker=False),                # fit again (calf) but bench-only per Sports Mole + Rotowire
+    dict(name="Adrien Rabiot", team="France", position="MID", g90=0.15, start_prob=0.85, pen_taker=False),                # double-pivot starter in all XIs
+    dict(name="Dani Olmo", team="Spain", position="MID", g90=0.30, start_prob=0.90, pen_taker=False),                     # #10 in all predicted XIs; scored the shot Ruiz's QF rebound came from
+    dict(name="Fabian Ruiz", team="Spain", position="MID", g90=0.18, start_prob=0.45, pen_taker=False),                   # scored QF vs Belgium; pivot battle w/ Pedri (minority starter)
+    dict(name="Alex Baena", team="Spain", position="ATT", g90=0.25, start_prob=0.85, pen_taker=False),                    # keeps LW ahead of Nico Williams in all XIs; winger -> ATT guess ⚠️
+    dict(name="Ferran Torres", team="Spain", position="ATT", g90=0.45, start_prob=0.12, pen_taker=False),                 # named only as Oyarzabal's alternative
+    dict(name="Nico Williams", team="Spain", position="ATT", g90=0.30, start_prob=0.12, pen_taker=False),                 # fit again (adductor), "pushing from the bench"
+    dict(name="Borja Iglesias", team="Spain", position="ATT", g90=0.35, start_prob=0.08, pen_taker=False),                # late target-man option (was QF ATGS-priced at head level — appearance-capped)
+    dict(name="Alexis Mac Allister", team="Argentina", position="MID", g90=0.20, start_prob=0.85, pen_taker=False),       # scored QF opener (header); every XI, minority "rest" scenario
+    dict(name="Rodrigo De Paul", team="Argentina", position="MID", g90=0.10, start_prob=0.85, pen_taker=False),           # diamond shuttler, nailed
+    dict(name="Leandro Paredes", team="Argentina", position="MID", g90=0.08, start_prob=0.80, pen_taker=False),           # anchor; limped off 110' vs SUI = cramp, fit per Edul
+    dict(name="Nicolas Gonzalez", team="Argentina", position="ATT", g90=0.25, start_prob=0.15, pen_taker=False),          # impressed as sub vs SUI; only the outlier 4-3-3 starts him
+    dict(name="Thiago Almada", team="Argentina", position="MID", g90=0.30, start_prob=0.15, pen_taker=False),             # cameo threat, no consensus XI start
 ]

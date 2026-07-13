@@ -86,3 +86,21 @@ def test_parse_winner_market_dedupes_same_exchange_across_regions():
     m = parse_winner_market(raw)
     assert abs(sum(m.values()) - 1.0) < 1e-9
     assert m["Spain"] == pytest.approx(m["France"])    # the duplicated Betfair no longer outvotes WH
+
+
+def test_parse_atgs_dedupes_within_book_before_pooling():
+    # Pinnacle triple-lists players within one event (2026-07-09 lock-day finding): one book must
+    # get ONE vote (its own median) in the cross-book pool, not three of five.
+    from scorito.data.odds import parse_atgs
+    raw = [{"home_team": "Norway", "away_team": "England", "bookmakers": [
+        {"key": "pinnacle", "markets": [{"key": "player_goal_scorer_anytime", "outcomes": [
+            {"name": "Erling Haaland", "price": 1.5},
+            {"name": "Erling Haaland", "price": 1.6},
+            {"name": "Erling Haaland", "price": 1.7}]}]},
+        {"key": "b2", "markets": [{"key": "player_goal_scorer_anytime", "outcomes": [
+            {"name": "Erling Haaland", "price": 3.0}]}]},
+        {"key": "b3", "markets": [{"key": "player_goal_scorer_anytime", "outcomes": [
+            {"name": "Erling Haaland", "price": 3.4}]}]},
+    ]}]
+    sel = parse_atgs(raw)[("Norway", "England")]
+    assert sel["erling haaland"] == pytest.approx(3.0)   # median(1.6, 3.0, 3.4); flat pool gives 1.7

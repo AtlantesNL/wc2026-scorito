@@ -69,10 +69,13 @@ from scorito.model.goals import expected_goals
 from scorito.model.topscorers import build_expected_goals, score_candidate, shrink_mult
 
 
-def load_results_nonpen_goals(path):
-    """``{normalized_name: non-penalty group-stage goals}`` from an openfootball results file.
+def load_results_nonpen_goals(path, before=None):
+    """``{normalized_name: non-penalty tournament goals}`` from an openfootball results file.
     Penalties (and own goals) are excluded so the realized-form blend doesn't double-count the
-    separate pen_share term. Missing/unreadable file -> empty (blend then leaves g90 == club rate)."""
+    separate pen_share term. Missing/unreadable file -> empty (blend then leaves g90 == club rate).
+    ``before`` (ISO date): only count matches dated strictly earlier — the file accumulates
+    per-round verified-scorer supplements, so a PAST round's replay must not blend in FUTURE goals
+    (2026-07-13: the QF supplement flipped the shipped R32 slot-4 near-tie on regen without this)."""
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -80,6 +83,8 @@ def load_results_nonpen_goals(path):
         return {}
     tally = {}
     for m in data.get("matches", []):
+        if before and m.get("date") and m["date"] >= before:
+            continue
         for side in ("goals1", "goals2"):
             for g in (m.get(side) or []):
                 if g.get("owngoal") or g.get("penalty"):
@@ -91,9 +96,10 @@ def load_results_nonpen_goals(path):
 
 
 def _round_tag(round_name):
-    """Short round tag ("r32"/"r16"/"qf") used for cache filenames and the default out dir —
+    """Short round tag ("r32"/"r16"/"qf"/"sf") used for cache filenames and the default out dir —
     kept identical to the CLI --round choices so paths match what the runbooks reference."""
-    return round_name.lower().replace("round of ", "r").replace("quarterfinal", "qf").replace(" ", "")
+    return (round_name.lower().replace("round of ", "r").replace("quarterfinal", "qf")
+            .replace("semifinal", "sf").replace(" ", ""))
 
 
 def _load_odds(odds_key, odds_file, cache_tag="r32"):
@@ -142,7 +148,7 @@ def lead_dashboard(standings, scoring):
         exacts = gap / exact_swing if exact_swing else float("inf")
         L.append(f"| {r['name']} | {r['points']} | **+{gap}** | ~{exacts:.1f} "
                  f"(×{exact_swing} each) | {r.get('diff_topscorer', '—')} |")
-    L.append(f"\n_R16 swing units — exact vs toto **+{exact_swing}**, ATT goal **+{m['ATT']}**, "
+    L.append(f"\n_Swing units this round — exact vs toto **+{exact_swing}**, ATT goal **+{m['ATT']}**, "
              f"MID goal **+{m['MID']}**, DEF/GK goal **+{m['DEF']}**. Both rivals play pure chalk and "
              "mirror our slate, so realised variance is low: mirror the chalk, hand them no topscorer "
              "differential, take no contrarian picks._\n")
@@ -199,14 +205,16 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
     # Topscorers: alive+fit candidates, per-round start overrides + realized-form g90 blend (form-games
     # entering the round), single-game opponent-specific expected goals, round multipliers with the
     # brace de-bias, pure EV (max_ev) top-N.
-    nonpen = load_results_nonpen_goals(results_file)
+    round_start = min((m.date for m in ties if getattr(m, "date", None)), default=None)
+    nonpen = load_results_nonpen_goals(results_file, before=round_start)
     adjusted = []
     for c in filter_alive(CANDIDATES, alive_teams, injured_out):
         tg = nonpen.get(_norm(c["name"]), 0)
         adjusted.append(dict(c, start_prob=start_overrides.get(c["name"], c["start_prob"]),
                              g90=blend_g90(c["g90"], tg, games=scoring["form_games"]), tourn_goals=tg))
     kept = build_expected_goals(adjusted, ties, atgs_map, team_factors,
-                                match_lams=match_lams_et, avg_lam=avg, pen_bonus=scoring["pen_bonus"])
+                                match_lams=match_lams_et, avg_lam=avg, pen_bonus=scoring["pen_bonus"],
+                                tail_devig=scoring.get("atgs_tail_devig", False))
     # ko_ev = true expected points (for display + the dashboard). ko_sel = the lead-protection ranking
     # score: the same de-biased EV but with the multiplier compressed toward the attacker's, so we
     # mirror the chalk field and don't rank an under-owned DEF/MID differential into the slate.
@@ -346,7 +354,7 @@ def main(argv=None):
 
     from scorito.data import knockout_fixtures as kf
     p = argparse.ArgumentParser(description="Scorito WC2026 knockout pick optimizer (max_ev)")
-    p.add_argument("--round", choices=["r32", "r16", "qf"], default="r32",
+    p.add_argument("--round", choices=["r32", "r16", "qf", "sf"], default="r32",
                    help="which knockout round (selects bracket + scoring)")
     p.add_argument("--odds-key", default=None, help="The Odds API key (live h2h+totals for the ties)")
     p.add_argument("--odds-file", default=None, help="replay a saved odds JSON instead of fetching")
@@ -366,6 +374,10 @@ def main(argv=None):
                    injured_out=kf.QF_INJURED_OUT, start_overrides=kf.QF_START_OVERRIDES,
                    tie_notes=kf.QF_TIE_NOTES, standings=kf.STANDINGS,
                    forced_topscorers=kf.QF_TOPSCORER_FORCED),
+        "sf": dict(ties=kf.SF_TIES, round_name="Semifinal", alive_teams=kf.SF_ALIVE_TEAMS,
+                   injured_out=kf.SF_INJURED_OUT, start_overrides=kf.SF_START_OVERRIDES,
+                   tie_notes=kf.SF_TIE_NOTES, standings=kf.STANDINGS,
+                   forced_topscorers=kf.SF_TOPSCORER_FORCED),
     }
     r = run_knockout(odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
                      atgs_file=args.atgs_file, results_file=args.results_file, out_dir=args.out,

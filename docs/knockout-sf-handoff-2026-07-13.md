@@ -128,6 +128,37 @@ tiebreak lead) · Messi 8 · Haaland 7 (elim.) · Bellingham 6 · Kane 6 · Demb
 8. Transcribe `out/ko_sf/{report.md,picks.csv}` before 21:00 CEST. FRA–ESP lineups ~20:00 CEST —
    only a shock Mbappé/Messi-class absence reopens picks.
 
+## PREP DONE 2026-07-13 (evening session, user go-ahead + key) — runbook steps 2-6 executed early
+
+- **Scoring CONFIRMED in-app** (user screenshot): exact 225 / toto 150, ATT 40 / MID 80 / DEF·GK
+  160 — the predicted 5× pattern exactly. Coded as `KO_ROUND_SCORING["Semifinal"]` (form_games=6).
+- **Engine extended** (TDD, 157 tests green, was 144): `--round sf` + SF fixtures bundle +
+  `_round_tag`; STANDINGS → 4631/4475/4337 with the shuffle warning inline.
+- **Both ATGS fixes shipped**: (a) Pinnacle per-(book,player) dedupe in `parse_atgs` — on the QF
+  raws it moved 18 medians, zero picks; (b) **power tail de-vig** (`atgs_tail_devig`, SF-onward
+  flag): per event solve k≥1 with Σpᵢᵏ = 0.9·λ_total. Live SF markets carry Σp ≈ 6.3-6.8 implied
+  scorers vs target 2.45 (~2.6× overround, as the QF band test predicted); head keeps ~61% of
+  implied, tail ~44%. **A/B flat-vs-devig on the live pull: top-4 IDENTICAL** — it fixes the EV
+  column, not the picks. Earlier rounds keep the flat margin (replay identity).
+- **Replay date-cutoff fix** (found during regen): the results file accumulates per-round scorer
+  supplements, so past-round replays now pass the round's first tie date as a cutoff — without it
+  the QF supplement's future goals flipped the R32 slot-4 blend. r16 + qf replays: pick-identical.
+  (The r32 picks.csv-vs-report mismatch turned out to PRE-DATE today: the shipped report.md
+  (Jun-28 20:30, Bellingham #4) and picks.csv (21:07, Lautaro) disagree with each other — the csv
+  reflects the documented lock-night hand-evolution. Today's regen reproduces the report exactly.)
+- **Candidates curated** (+24 across the four SF squads, consensus-XI start probs; positions for
+  new wingers are ATT guesses ⚠️ verify in-app if one nears the slate). NB **Foden & Palmer are
+  NOT in England's 26** (cut in May). QF scorer supplement added (12 goals, zero pens — Mbappé's
+  28' pen was saved). Non-pen tallies now: Messi 8 · Mbappé 7 · Bellingham 6 · Kane 4.
+- **Live pull DONE ~08:34 UTC Jul-13** (key live, 2/2 priced + 46/44 ATGS players; cached as
+  `data/cache/{odds,atgs}_sf_raw.json`). **PROVISIONAL SLATE (out/ko_sf): Fra 1-0 Esp · Eng 1-0
+  Arg + Mbappé / Kane / Messi / Oyarzabal** (EV 182; both ties market coin-flips 44%/40% with ~20%
+  recorded-draw risk). Bellingham ranks #5 (sel-ranked below Oyarzabal by the chalk-mirror shrink;
+  his raw EV 8.3 vs Oyarzabal 6.4 — the slot-4 tension to resolve against rival slates).
+- **Remaining for lock day (Tue Jul-14, before 21:00 CEST)**: runbook steps 1 (in-app standings +
+  BOTH rival SF slates → set `SF_TOPSCORER_FORCED` if mirroring), 6-re-pull (fresh odds
+  cents-check ~19:00 CEST), 7 (slot-4 final call), 8 (transcribe). FRA-ESP lineups ~20:00 CEST.
+
 ## Open items beyond the SF
 - 90'-settlement gap (−7-8% on market λs) and supersub appearance credit — documented, unpriced,
   still ranking-safe; revisit only if a Final-round pick is a genuine near-tie.

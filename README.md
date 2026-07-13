@@ -67,6 +67,13 @@ round is selected with `--round`; scoring scales up each round but keeps the sam
 | `r32` | 90 / 60 | 16 / 32 / 64 |
 | `r16` | 135 / 90 | 24 / 48 / 96 |
 | `qf` | 180 / 120 | 32 / 64 / 128 |
+| `sf` | 225 / 150 | 40 / 80 / 160 |
+
+From the SF on, ATGS goal rates additionally get a **power tail de-vig** (`atgs_tail_devig` per round
+in config): per event, solve k ≥ 1 with Σpᵢᵏ = `ATGS_SCORERS_PER_GOAL`·λ_total — the anytime market's
+real overround is ~2× and longshot-concentrated (QF band test: ~26 implied scorers, 11 realized), so
+a flat margin under-corrects the mid/tail and inflates the EV column. Earlier rounds keep the flat
+margin so their cached-odds replays reproduce the shipped slates.
 
 ```bash
 .venv/bin/python -m scorito.knockout --round qf --odds-key "$ODDS_API_KEY" --atgs
@@ -110,8 +117,11 @@ Group phase through the quarterfinals complete — **1st place entering the semi
 512 vs 407 expected: 4/4 advancers, 4 totos + Mbappé; you 4631, +156 on #2, +294 on #3 — both
 rivals are NEW names, the board provably shuffled). QF retro closed two method TODOs:
 price-implied totals REFUTED (flips zero picks on both snapshots — line-snap stays), ATGS
-flat-margin inflation CONFIRMED on the doubled sample (mid-band realized ~55-68% under implied →
-per-event renormalisation queued for the SF). **SF engine NOT yet extended** (`--round sf` +
-Semifinal scoring + ATGS fixes = lock-day step). Bracket: Fra-Esp (Tue Jul-14 Dallas) ·
-Eng-Arg (Wed Jul-15 Atlanta). Lock Tue 2026-07-14 21:00 CEST. Runbook (incl. the QF retro):
-[`docs/knockout-sf-handoff-2026-07-13.md`](docs/knockout-sf-handoff-2026-07-13.md).
+flat-margin inflation CONFIRMED on the doubled sample (mid-band realized ~55-68% under implied).
+**Semifinal engine live** (`--round sf`, scoring confirmed in-app 225/150 · 40/80/160): ATGS power
+tail de-vig + Pinnacle per-(book,player) dedupe + replay date-cutoff shipped (157 tests green;
+r16/qf cached replays pick-identical). **Provisional SF slate from the Jul-13 live pull: Fra 1-0
+Esp · Eng 1-0 Arg + Mbappé/Kane/Messi/Oyarzabal** (slot-4 open — read rival slates in-app first;
+top-4 identical under flat-vs-devig A/B). Bracket: Fra-Esp (Tue Jul-14 Dallas) · Eng-Arg (Wed
+Jul-15 Atlanta). Lock Tue 2026-07-14 21:00 CEST — fresh odds re-pull + rival read + transcribe.
+Runbook (incl. the QF retro): [`docs/knockout-sf-handoff-2026-07-13.md`](docs/knockout-sf-handoff-2026-07-13.md).

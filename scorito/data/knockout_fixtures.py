@@ -139,20 +139,83 @@ QF_TIE_NOTES = {
     ("Argentina", "Switzerland"): "Messi (8, Boot leader) vs the shootout-survivors; SUI conceded 0 in 120'",
 }
 
-# Pool standings entering the QF — IN-APP VERIFIED 2026-07-08 (user read the leaderboard).
-# Our 4119 = 3486 + 633 reconciles exactly. Rival R16 topscorer slates (visible post-round):
-# #2 = Kane/Mbappé/Messi/Vinícius (72 pts; they took the Brazil side of the Haaland tie and lost),
-# #3 = Haaland/Kane/Mbappé/Messi (120 pts — perfect chalk round, still lost ground on scorelines).
-# QF read: everyone shares Kane/Mbappé/Messi; the round's topscorer game is slot 4 only.
-# #3's R16 slate held Haaland (vs favourite Brazil); #2's 4th is unknown (Vinícius eliminated —
-# must repick). Only R16 slates are attributed to today's rivals: leaderboard rank ≠ same person
-# across rounds, so R32-era "#2/#3 held X" claims are provenance-unsafe (user flag, 2026-07-09).
+# ------------------------------------------------------------------------------------------------
+# Semifinals — CONFIRMED 2026-07-13 after all QF results (each tie ≥2 independent sources:
+# ESPN/FOX/Al Jazeera/AP/England FA; QF actuals Fra 2-0 Mar · Esp 2-1 Bel · Nor 1-2 Eng aet ·
+# Arg 3-1 Sui aet). Scoring confirmed in-app (user screenshot 2026-07-13): exact 225 / toto 150,
+# topscorer ATT 40 / MID 80 / DEF·GK 160. Lock = first SF kickoff, Tue 2026-07-14 21:00 CEST.
+# Third place Sat Jul-18 Miami; Final Sun Jul-19 East Rutherford.
+# ------------------------------------------------------------------------------------------------
+SF_TIES = [
+    Match("France", "Spain", "SF", date="2026-07-14"),     # Arlington/Dallas, 15:00 ET (= 21:00 CEST lock)
+    Match("England", "Argentina", "SF", date="2026-07-15"),  # Atlanta, 15:00 ET
+]
+
+SF_ALIVE_TEAMS = frozenset(t for m in SF_TIES for t in (m.team1, m.team2))
+
+# Unavailable for the SF (Jul-12/13 sweep, two agents, ≥2 sources per claim):
+# - Jarell Quansah (ENG): serves match 2 of the 2-game red-card ban — misses the SF, back for a final.
+# - Jordan Henderson (ENG): arm surgery (hoarding fall celebration), bench-in-cast at best.
+# Doubtful only (NOT out): Tchouaméni 50-50 (5-day plan lands on matchday; Koné the default),
+# Rice trending fit (gastro bug + neural back, HT pull vs Norway), Konsa minor cramp, Romero fit
+# per TyC/Edul, Medina returning-but-bench. Yellow slates were wiped after the QF — no accumulation
+# bans; next amnesty n/a (final rounds).
+SF_INJURED_OUT = frozenset({"Jarell Quansah", "Jordan Henderson"})
+
+# SF start probabilities — 2026-07-13 two-agent sweep (Sports Mole/ESPN/Rotowire/KhelNow previews,
+# all Jul-12/13). Consensus XIs: FRA 4-2-3-1 Maignan; Koundé-Upamecano-Saliba-Digne (Theo OUT of
+# the XI); Koné-Rabiot; Dembélé-Olise-Doué behind Mbappé. ESP 4-2-3-1 Simón; Porro-Cubarsí-Laporte-
+# Cucurella; Rodri-Pedri; Yamal-Olmo-Baena; Oyarzabal. ENG 4-2-3-1 Pickford; Konsa-Stones-Guéhi-
+# O'Reilly; Rice-Anderson; Saka-Bellingham-Gordon; Kane. ARG diamond unchanged: E.Martínez;
+# Molina-Romero-L.Martínez-Tagliafico; Paredes; De Paul-Mac Allister; Enzo; Messi-Álvarez.
+SF_START_OVERRIDES = {
+    # France
+    "Kylian Mbappe": 0.95,      # Grade-1 ankle sprain, "completely fine", in every XI; pen #1
+    "Ousmane Dembele": 0.92,    # nailed, 5 tournament goals
+    "Bradley Barcola": 0.12,    # bench — Doué preferred in every predicted XI
+    "Theo Hernandez": 0.12,     # lost the LB spot to Digne (all consensus XIs)
+    "William Saliba": 0.95,
+    # Spain
+    "Mikel Oyarzabal": 0.92,    # leads the line again (false-9) in all XIs; pen #1 (8/8 since 2025)
+    "Lamine Yamal": 0.92,       # nailed
+    "Pedri": 0.55,              # pivot battle with Fabián Ruiz (3 of 4 sources start Pedri)
+    "Mikel Merino": 0.12,       # two KO winners off the bench but in NO source's predicted XI
+    # England
+    "Harry Kane": 0.95,         # captain, pen #1 (WC all-time pen leader)
+    "Jude Bellingham": 0.95,    # braces vs Mexico AND Norway
+    # Argentina
+    "Lionel Messi": 0.92,       # eye cut = zero concern; played all 120 vs SUI; pen #1 (2 misses!)
+    "Julian Alvarez": 0.88,     # kept the start everywhere since the Egypt benching; QF screamer
+    "Lautaro Martinez": 0.15,   # super-sub ("understudy"), sealed the QF from the bench
+    "Enzo Fernandez": 0.90,
+    "Cristian Romero": 0.80,    # ET fatigue/knee = cramp, fit per Edul; minority Medina scenario
+}
+
+# Slot-4 decision, OPEN as of 2026-07-13: no forced pick yet. The QF mirror (Haaland ⚑) cost zero
+# and is the policy precedent, but the board PROVABLY shuffled after the QF (deltas +474/+477 from
+# the old #2/#3 totals are impossible under 60s+32t ≡ 0 mod 4 — today's #2/#3 are new people), so
+# NOTHING is known about the current rivals' tendencies. Read both SF slates in-app on lock day
+# (Jul-14); if a rival-held slot-4 candidate is visible (Bellingham the likely battleground — MID
+# ×80, braced in both his KO games), set SF_TOPSCORER_FORCED accordingly. Until then: engine ranking.
+SF_TOPSCORER_FORCED = ()
+
+SF_TIE_NOTES = {
+    ("France", "Spain"): "Euro-24 semi rematch; Tchouaméni 50-50 (Koné default), Mbappé ankle 'fine' — Oyarzabal false-9 + pen #1",
+    ("England", "Argentina"): "Quansah suspended (Konsa RB); Rice trending fit after bug; ARG diamond unchanged, Lautaro super-sub",
+}
+
+# Pool standings entering the SF — reported by the user 2026-07-13 (QF complete). Our
+# 4631 = 4119 + 512 reconciles exactly (4 totos 480 + Mbappé 32). PROVENANCE (now proven, not just
+# policy): any QF delta must be 60s+32t ≡ 0 mod 4, but 4475−4001=474 ≡ 2 and 4337−3860=477 is odd —
+# both impossible, so today's #2/#3 are NOT last round's #2/#3. The board shuffled beneath us and
+# NO prior-round slate reads attach to these names. Read both SF slates in-app before the slot-4
+# call (leaderboard rank ≠ same person across rounds — user flag 2026-07-09, vindicated 2026-07-13).
 STANDINGS = {
-    "you": 4119,
-    "as_of": "R16 complete (in-app verified 2026-07-08)",
+    "you": 4631,
+    "as_of": "QF complete (user-reported 2026-07-13)",
     "rivals": [
-        {"name": "#2", "points": 4001, "diff_topscorer": "slot-4 unknown (R16 4th Vinícius = eliminated; likely Haaland/Oyarzabal/Bellingham)"},
-        {"name": "#3", "points": 3860, "diff_topscorer": "Haaland (R16 slate, held as underdog; 7 goals, QF vs England)"},
+        {"name": "#2 neemaar jr", "points": 4475, "diff_topscorer": "UNKNOWN — new name at #2 (board shuffled); read SF slate in-app Jul-14"},
+        {"name": "#3 thomneleman", "points": 4337, "diff_topscorer": "UNKNOWN — new name at #3; read SF slate in-app Jul-14"},
     ],
 }
 

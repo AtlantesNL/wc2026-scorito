@@ -52,6 +52,12 @@ SCORELINE_LEVERAGE_GAMMA = {"max_ev": 0.0, "balanced": 0.1, "aggressive": 0.2}
 # eu+uk regions for book consensus (~2 credits/event x 72 group games on The Odds API free tier).
 ATGS_MARGIN = 1.06
 ATGS_REGIONS = "eu,uk"
+# Power tail de-vig target (SF onward, per KO_ROUND_SCORING["…"]["atgs_tail_devig"]): the market's
+# real ATGS overround is ~2x and longshot-concentrated (QF band test 2026-07-13: flat-margin
+# implied ~26 scorers across 4 ties, 11 realized; R16 same signature), so per event solve k>=1 with
+# sum(p_i^k) = ATGS_SCORERS_PER_GOAL * lambda_total. 0.9 = E[distinct scorers]/E[goals] (repeat
+# scorers make it <1; QF: 12 goals by 11 scorers, R16 23 by ~20 -> ~0.9).
+ATGS_SCORERS_PER_GOAL = 0.9
 
 # --- Topscorers (confirmed from Scorito in-app Spelregels, group phase) ---
 # Points per goal by position; each topscorer plays max 3 group games.
@@ -99,6 +105,13 @@ KO_ROUND_SCORING = {
     "Quarterfinal": dict(exact=180, toto=120, mult={"GK": 128, "DEF": 128, "MID": 64, "ATT": 32},
                          slots=4, form_games=5, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
                          lead_shrink=LEAD_PROTECTION_MULT_SHRINK),
+    # Confirmed in-app 2026-07-13 (Spelregels, user screenshot): 5x group, same ratios, 4 slots /
+    # XOR / 120'. atgs_tail_devig: power de-vig of the ATGS overround (see ATGS_SCORERS_PER_GOAL) —
+    # introduced for the SF only; earlier rounds keep the flat margin so their cached-odds replays
+    # stay byte-identical to what was shipped.
+    "Semifinal": dict(exact=225, toto=150, mult={"GK": 160, "DEF": 160, "MID": 80, "ATT": 40},
+                      slots=4, form_games=6, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
+                      lead_shrink=LEAD_PROTECTION_MULT_SHRINK, atgs_tail_devig=True),
 }
 # Realized-form blend (group-stage retrospective: club-g90 alone under-rated in-form scorers like
 # Messi and over-rated goal-shy creators like Wirtz). Effective non-pen g90 shrinks the tournament

@@ -122,6 +122,11 @@ def parse_atgs(raw):
         key = (_ofb(ev["home_team"]), _ofb(ev["away_team"]))
         prices = {}
         for bk in ev.get("bookmakers", []):
+            # One vote per (book, player): Pinnacle triple-lists some players within one event's
+            # anytime market (Haaland 2.2/2.33/1.62 vs England, 2026-07-09 lock-day finding), which
+            # would hand a single book 3 of ~6 votes in the cross-book pool. Median within the book
+            # first, then median across books (fixed 2026-07-13, pre-SF).
+            book_prices = {}
             for mk in bk.get("markets", []):
                 if mk.get("key") != "player_goal_scorer_anytime":
                     continue
@@ -131,13 +136,10 @@ def parse_atgs(raw):
                     player = o.get("description") or o.get("name", "")
                     if player in ("", "Yes", "No", "Over", "Under"):
                         continue
-                    prices.setdefault(_norm(player), []).append(o["price"])
+                    book_prices.setdefault(_norm(player), []).append(o["price"])
+            for p, v in book_prices.items():
+                prices.setdefault(p, []).append(statistics.median(v))
         if prices:
-            # SF TODO (2026-07-09 lock-day finding): Pinnacle triple-lists some players within one
-            # event's anytime market (Haaland 2.2/2.33/1.62 vs England), giving one book 3 of ~6
-            # votes in this pooled median (shifted Haaland 2.30->2.25, ~1% in P — ranking-safe, no
-            # pick impact, so not hot-fixed on lock eve). Before the semis: median per (book,
-            # player) first, then median across books.
             out[key] = {p: statistics.median(v) for p, v in prices.items()}
     return out
 

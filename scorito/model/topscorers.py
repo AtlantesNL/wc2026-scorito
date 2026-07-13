@@ -124,13 +124,43 @@ def _atgs_lambda(price, margin):
     return -math.log(1.0 - p)
 
 
+def atgs_tail_devig(atgs_map, match_lams, margin=config.ATGS_MARGIN,
+                    scorers_per_goal=config.ATGS_SCORERS_PER_GOAL):
+    """Per-event power de-vig of ATGS prices -> ``{event_key: {norm_player: P(scores)}}``.
+
+    The anytime market's true overround is ~2x and concentrated in the longshot tail (QF band test
+    2026-07-13: flat-margin implied p summed to ~26 scorers across 4 ties, 11 realized — while the
+    short-priced head realized ~fair in both measured rounds). A flat margin cannot express that, so
+    per event solve k >= 1 with ``sum_i p_i^k = scorers_per_goal * lambda_total`` — the goal model's
+    expected distinct scorers. ``p^k`` barely moves a 1.9-priced head pick but crushes a 12.0
+    longshot, matching the observed band structure. k is floored at 1 (thin markets are never
+    inflated); events with no lambda (no h2h price) keep the flat-margin p."""
+    out = {}
+    for key, prices in (atgs_map or {}).items():
+        ps = {pl: min(0.99, (1.0 / pr) / margin) for pl, pr in prices.items() if pr and pr > 1.0}
+        lams = (match_lams.get(key) or match_lams.get((key[1], key[0]))) if match_lams else None
+        if lams and ps:
+            target = scorers_per_goal * (lams[0] + lams[1])
+            if sum(ps.values()) > target:
+                lo, hi = 1.0, 8.0
+                for _ in range(60):
+                    mid = (lo + hi) / 2
+                    lo, hi = (mid, hi) if sum(p ** mid for p in ps.values()) > target else (lo, mid)
+                k = (lo + hi) / 2
+                ps = {pl: p ** k for pl, p in ps.items()}
+        out[key] = ps
+    return out
+
+
 def build_expected_goals(candidates, matches, atgs_map, team_factors,
                          match_lams=None, avg_lam=None, margin=config.ATGS_MARGIN,
-                         pen_bonus=PEN_BONUS):
+                         pen_bonus=PEN_BONUS, tail_devig=False):
     """Augment each candidate with ``exp_goals`` (expected group goals) + ``goals_src``: market lambda
     (-ln(1-p), includes pens+opponent -> no team_factor/pen re-applied) scaled by appearance prob,
     where the player is priced for that group match; else the hand g90 fallback. Order-agnostic match
-    lookup, tried under both the name alias and the plain name."""
+    lookup, tried under both the name alias and the plain name. ``tail_devig=True`` (SF onward, per
+    ``KO_ROUND_SCORING``) replaces the flat-margin p with the ``atgs_tail_devig`` power de-vig."""
+    devig = atgs_tail_devig(atgs_map, match_lams, margin) if (tail_devig and atgs_map) else None
     out = []
     for c in candidates:
         cms = [(m.team1, m.team2) for m in matches if c["team"] in (m.team1, m.team2)]
@@ -151,7 +181,12 @@ def build_expected_goals(candidates, matches, atgs_map, team_factors,
             sel = atgs_map.get((h, a)) or atgs_map.get((a, h)) or {}
             price = sel.get(alias_key) or sel.get(plain_key)   # alias first, then plain name
             if price and price > 1.0:
-                total += _atgs_lambda(price, margin) * appear
+                if devig is not None:
+                    psel = devig.get((h, a)) or devig.get((a, h)) or {}
+                    p = psel.get(alias_key) or psel.get(plain_key)
+                    total += -math.log(1.0 - p) * appear
+                else:
+                    total += _atgs_lambda(price, margin) * appear
                 n_mkt += 1
             else:
                 lam = match_lams.get((h, a)) if match_lams else None

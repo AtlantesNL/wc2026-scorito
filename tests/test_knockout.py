@@ -1,5 +1,6 @@
 """Knockout-phase logic: KO scoring (90/60 XOR), realized-form blend, ET grid,
 single-game topscorer multipliers, alive/injury filter."""
+import json
 import math
 
 import numpy as np
@@ -304,3 +305,124 @@ def test_cli_qf_applies_forced_topscorer(tmp_path):
     picks = (tmp_path / "picks.csv").read_text()
     for name in kf.QF_TOPSCORER_FORCED:
         assert name in picks
+
+
+# --- Semifinal round (scoring confirmed in-app, user screenshot 2026-07-13) ---
+def test_sf_round_scoring_confirmed_in_app():
+    sc = config.KO_ROUND_SCORING["Semifinal"]
+    assert sc["exact"] == 225 and sc["toto"] == 150
+    assert sc["mult"] == {"GK": 160, "DEF": 160, "MID": 80, "ATT": 40}
+    assert sc["slots"] == 4 and sc["form_games"] == 6
+    assert sc["brace_credit"] == config.KO_BRACE_CREDIT
+    assert sc["lead_shrink"] == config.LEAD_PROTECTION_MULT_SHRINK
+    # round-invariant ratios (pick shape unchanged): exact:toto 3:2, DEF/GK:MID:ATT 4:2:1, 5x group
+    assert sc["exact"] * 2 == sc["toto"] * 3
+    assert sc["mult"]["DEF"] == 4 * sc["mult"]["ATT"] == 2 * sc["mult"]["MID"]
+    assert sc["exact"] == 5 * config.PTS_EXACT
+    assert sc["mult"]["ATT"] == 5 * config.TOPSCORER_MULT["ATT"]
+
+
+def test_round_tag_semifinal():
+    assert ko._round_tag("Semifinal") == "sf"
+
+
+def test_sf_fixtures_wellformed():
+    from scorito.data.knockout_fixtures import SF_ALIVE_TEAMS, SF_TIES, SF_TOPSCORER_FORCED
+    assert len(SF_TIES) == 2
+    teams = {t for m in SF_TIES for t in (m.team1, m.team2)}
+    assert teams == {"France", "Spain", "England", "Argentina"}
+    assert teams == set(SF_ALIVE_TEAMS)
+    assert [m.date for m in SF_TIES] == ["2026-07-14", "2026-07-15"]
+    # Slot-4 mirror decision pending the in-app rival-slate read (rank-shuffle proof 2026-07-13
+    # means nothing is known about the new #2/#3 tendencies yet) — no forced pick until then.
+    assert SF_TOPSCORER_FORCED == ()
+
+
+def test_all_sf_teams_have_a_topscorer_candidate():
+    from scorito.data.knockout_fixtures import SF_ALIVE_TEAMS
+    from scorito.data.topscorer_candidates import CANDIDATES
+    teams_with = {c["team"] for c in CANDIDATES}
+    assert set(SF_ALIVE_TEAMS) <= teams_with
+
+
+def test_standings_updated_post_qf():
+    from scorito.data.knockout_fixtures import STANDINGS
+    assert STANDINGS["you"] == 4631
+    assert [r["points"] for r in STANDINGS["rivals"]] == [4475, 4337]
+
+
+def test_run_knockout_sf_end_to_end_via_cli(tmp_path):
+    ko.main(["--round", "sf", "--out", str(tmp_path)])
+    report = (tmp_path / "report.md").read_text()
+    assert "Semifinal" in report
+    assert "225" in report and "150" in report        # SF scoring header
+    picks = (tmp_path / "picks.csv").read_text()
+    assert picks.count("match,") == 2                 # 2 SF ties only
+
+
+# --- ATGS tail de-vig (2026-07-13 QF band test: market implies ~26 scorers, 11 realized; the flat
+#     1.06 margin removes ~6% of a ~2x longshot-concentrated overround). Power de-vig per event:
+#     solve k >= 1 with sum(p_i^k) = ATGS_SCORERS_PER_GOAL * lambda_total — longshots shrink more
+#     than the (empirically ~fair) head. Gated per round: OFF for played rounds (replay identity).
+def test_atgs_tail_devig_flag_only_from_semifinal_on():
+    assert config.KO_ROUND_SCORING["Semifinal"].get("atgs_tail_devig") is True
+    for rn in ("Round of 32", "Round of 16", "Quarterfinal"):
+        assert not config.KO_ROUND_SCORING[rn].get("atgs_tail_devig")
+
+
+def test_atgs_tail_devig_shrinks_longshots_more_and_hits_target():
+    from scorito.model.topscorers import atgs_tail_devig
+    prices = {f"p{i}": 3.0 for i in range(6)}
+    prices["head"] = 1.9
+    prices["tail"] = 12.0
+    probs = atgs_tail_devig({("A", "B"): prices}, match_lams={("A", "B"): (1.4, 1.1)}, margin=1.0)
+    p = probs[("A", "B")]
+    target = config.ATGS_SCORERS_PER_GOAL * 2.5
+    assert sum(p.values()) == pytest.approx(target, rel=1e-3)
+    head_ratio = p["head"] / (1 / 1.9)
+    tail_ratio = p["tail"] / (1 / 12.0)
+    assert tail_ratio < head_ratio < 1.0
+
+
+def test_atgs_tail_devig_never_inflates_thin_markets():
+    from scorito.model.topscorers import atgs_tail_devig
+    probs = atgs_tail_devig({("A", "B"): {"head": 1.9}},
+                            match_lams={("A", "B"): (1.4, 1.1)}, margin=1.0)
+    assert probs[("A", "B")]["head"] == pytest.approx(1 / 1.9)   # sum p < target -> k stays 1
+
+
+def test_atgs_tail_devig_reversed_event_key_and_unpriced_event():
+    from scorito.model.topscorers import atgs_tail_devig
+    prices = {f"p{i}": 2.5 for i in range(8)}
+    probs = atgs_tail_devig({("B", "A"): prices, ("C", "D"): prices},
+                            match_lams={("A", "B"): (1.4, 1.1)}, margin=1.0)
+    assert sum(probs[("B", "A")].values()) == pytest.approx(config.ATGS_SCORERS_PER_GOAL * 2.5, rel=1e-3)
+    assert probs[("C", "D")]["p0"] == pytest.approx(1 / 2.5)     # no lambda for the event -> flat only
+
+
+def test_build_expected_goals_tail_devig_shrinks_crowded_market_longshot():
+    cands = [dict(name="Tail Man", team="A", position="ATT", g90=0.2, start_prob=0.85, pen_taker=False)]
+    prices = {f"filler {i}": 3.0 for i in range(8)}
+    prices["tail man"] = 10.0
+    m = [Match("A", "B", "SF")]
+    kw = dict(atgs_map={("A", "B"): prices}, team_factors={"A": 1.0, "B": 1.0},
+              match_lams={("A", "B"): (1.4, 1.1)}, avg_lam=1.25)
+    flat = build_expected_goals(cands, m, **kw)[0]
+    dv = build_expected_goals(cands, m, tail_devig=True, **kw)[0]
+    assert dv["goals_src"] == "market"
+    assert dv["exp_goals"] < flat["exp_goals"]
+
+
+def test_load_results_nonpen_goals_respects_date_cutoff(tmp_path):
+    # Replays of PAST rounds must not see FUTURE goals: the results file accumulates per-round
+    # verified-scorer supplements, so a round replay passes its first tie date as the cutoff
+    # (found 2026-07-13: the QF supplement flipped the shipped R32 slot-4 near-tie on regen).
+    f = tmp_path / "results.json"
+    f.write_text(json.dumps({"matches": [
+        {"date": "2026-06-20", "goals1": [{"name": "Early Bird"}], "goals2": []},
+        {"date": "2026-07-13", "goals1": [{"name": "Late Riser"}, {"name": "Early Bird"}], "goals2": []},
+    ]}))
+    full = ko.load_results_nonpen_goals(str(f))
+    assert full == {"early bird": 2, "late riser": 1}                    # no cutoff: everything
+    cut = ko.load_results_nonpen_goals(str(f), before="2026-07-09")
+    assert cut == {"early bird": 1}                                      # QF-era replay: no future goals
