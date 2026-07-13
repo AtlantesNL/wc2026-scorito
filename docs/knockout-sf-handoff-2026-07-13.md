@@ -205,6 +205,30 @@ Four independent attacks on today's shipped model code, all passed:
    `scorers_per_goal` is calibrated on the book-listed universe + 120' λs (documented in
    docstring), undated results-file rows would bypass the cutoff (all 107 rows are dated).
 
+## FINAL SLATE 2026-07-13 evening — ready to transcribe (lock Tue Jul-14 21:00 CEST)
+
+**Fra 1-0 Esp · Eng 1-0 Arg + Mbappé / Kane / Messi / Bellingham ⚑ (forced). Model EV 207.**
+Fresh evening pull (cents-only drift vs morning: Mbappé ATGS 2.10→2.11, Eng-Arg away 3.07→3.10;
+morning snapshots kept as `*_sf_raw_0713am.json`). 162 tests green.
+
+**VISIBILITY CORRECTION (user, 2026-07-13): current-round rival slates are NOT visible before the
+deadline — only completed rounds show.** Every "read their SF slate first" step above is void; the
+slate is decided on our own models. Consequence for slot-4: **Bellingham forced** (rationale dated
+in `knockout_fixtures.py`): he's #4 by pure EV anyway (8.3 vs Oyarzabal 6.4), the fame-field model
+says he's the likeliest rival slot-4 (position-blind fame ownership — the shrink's
+position-as-ownership proxy misfires on a twice-braced superstar MID), and an unmirrored
+Bellingham brace = −160 (the R16 Haaland regret ×2) vs ~−6 unmirrored-Oyarzabal exposure.
+
+While transcribing (all optional, none blocking):
+- Glance at rivals' **QF** slates (completed round = visible): only BOTH rivals on Oyarzabal-and-
+  not-Bellingham would argue flipping slot-4 back; any rival QF Bellingham confirms the force.
+  Their QF scoreline DIGITS are the only signal for the Fra-Esp 1-0-vs-2-1 coin-toss (±1 EV,
+  free to mirror; default stays 1-0 = corrected-grid argmax).
+- FRA-ESP lineups ~20:00 CEST: only a shock Mbappé/Kane/Messi/Bellingham-class absence reopens
+  anything (Bellingham nailed 0.95; forced-pick guard raises if he's scratched from candidates).
+- Optional cents-refresh: `.venv/bin/python -m scorito.knockout --round sf --odds-key <key> --atgs`
+  (~6 credits; two same-day pulls moved nothing).
+
 ## Open items beyond the SF
 - 90'-settlement gap (−7-8% on market λs) and supersub appearance credit — documented, unpriced,
   still ranking-safe; revisit only if a Final-round pick is a genuine near-tie.

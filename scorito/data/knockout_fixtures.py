@@ -191,13 +191,20 @@ SF_START_OVERRIDES = {
     "Cristian Romero": 0.80,    # ET fatigue/knee = cramp, fit per Edul; minority Medina scenario
 }
 
-# Slot-4 decision, OPEN as of 2026-07-13: no forced pick yet. The QF mirror (Haaland ⚑) cost zero
-# and is the policy precedent, but the board PROVABLY shuffled after the QF (deltas +474/+477 from
-# the old #2/#3 totals are impossible under 60s+32t ≡ 0 mod 4 — today's #2/#3 are new people), so
-# NOTHING is known about the current rivals' tendencies. Read both SF slates in-app on lock day
-# (Jul-14); if a rival-held slot-4 candidate is visible (Bellingham the likely battleground — MID
-# ×80, braced in both his KO games), set SF_TOPSCORER_FORCED accordingly. Until then: engine ranking.
-SF_TOPSCORER_FORCED = ()
+# Slot-4 decision, LOCKED 2026-07-13 evening: force Bellingham. Current-round rival slates are
+# NOT visible before the deadline (user rule 2026-07-13 — only completed rounds show), so the QF's
+# "read their slate first" play is impossible; decide on our own models. Three convergent reasons:
+# (1) PURE EV already ranks him #4 (ko_ev 8.3 vs Oyarzabal 6.4, devigged) — only the lead-shrink
+#     demotes him, and its position-as-ownership proxy misfires here: it guards against UNDER-owned
+#     MID/DEF differentials, while Bellingham (6 goals, braced in BOTH his knockout games, biggest
+#     name on the hottest form) is exactly who the fame-biased field over-owns, position-blind.
+# (2) Mirror math: an unmirrored rival Bellingham goal is −80, a brace −160 (the R16 Haaland regret
+#     ×2). Unmirrored Oyarzabal exposure is 40×p≈6 — an order of magnitude smaller.
+# (3) If rivals hold neither, we simply hold the higher-EV pick; downside ≈ 0.
+# The board shuffled (mod-4 proof) so nothing is known about the new #2/#3 — this is the play that
+# is least wrong across all their plausible slates. Their QF slates (visible post-deadline) can
+# still be glanced at while transcribing: only BOTH-rivals-on-Oyarzabal would argue a flip.
+SF_TOPSCORER_FORCED = ("Jude Bellingham",)
 
 SF_TIE_NOTES = {
     ("France", "Spain"): "Euro-24 semi rematch; Tchouaméni 50-50 (Koné default), Mbappé ankle 'fine' — Oyarzabal false-9 + pen #1",
@@ -214,8 +221,8 @@ STANDINGS = {
     "you": 4631,
     "as_of": "QF complete (user-reported 2026-07-13)",
     "rivals": [
-        {"name": "#2 neemaar jr", "points": 4475, "diff_topscorer": "UNKNOWN — new name at #2 (board shuffled); read SF slate in-app Jul-14"},
-        {"name": "#3 thomneleman", "points": 4337, "diff_topscorer": "UNKNOWN — new name at #3; read SF slate in-app Jul-14"},
+        {"name": "#2 neemaar jr", "points": 4475, "diff_topscorer": "UNKNOWN (SF slates invisible pre-deadline); QF slate readable post-round — glance while transcribing"},
+        {"name": "#3 thomneleman", "points": 4337, "diff_topscorer": "UNKNOWN — same; Bellingham ⚑ forced to cap any slot-4 differential"},
     ],
 }
 

@@ -119,9 +119,10 @@ rivals are NEW names, the board provably shuffled). QF retro closed two method T
 price-implied totals REFUTED (flips zero picks on both snapshots — line-snap stays), ATGS
 flat-margin inflation CONFIRMED on the doubled sample (mid-band realized ~55-68% under implied).
 **Semifinal engine live** (`--round sf`, scoring confirmed in-app 225/150 · 40/80/160): ATGS power
-tail de-vig + Pinnacle per-(book,player) dedupe + replay date-cutoff shipped (157 tests green;
-r16/qf cached replays pick-identical). **Provisional SF slate from the Jul-13 live pull: Fra 1-0
-Esp · Eng 1-0 Arg + Mbappé/Kane/Messi/Oyarzabal** (slot-4 open — read rival slates in-app first;
-top-4 identical under flat-vs-devig A/B). Bracket: Fra-Esp (Tue Jul-14 Dallas) · Eng-Arg (Wed
-Jul-15 Atlanta). Lock Tue 2026-07-14 21:00 CEST — fresh odds re-pull + rival read + transcribe.
-Runbook (incl. the QF retro): [`docs/knockout-sf-handoff-2026-07-13.md`](docs/knockout-sf-handoff-2026-07-13.md).
+tail de-vig + exact ET-mixture grid + Pinnacle per-(book,player) dedupe + replay date-cutoff
+shipped and adversarially verified (162 tests green; r16/qf cached replays pick-identical;
+mixture MC-verified). **FINAL SF slate (Jul-13 evening pull): Fra 1-0 Esp · Eng 1-0 Arg +
+Mbappé/Kane/Messi/Bellingham⚑ (forced — fame-field mirror; rival slates are invisible
+pre-deadline, a user-confirmed platform rule), EV 207.** Bracket: Fra-Esp (Tue Jul-14 Dallas) ·
+Eng-Arg (Wed Jul-15 Atlanta). Lock Tue 2026-07-14 21:00 CEST — transcribe `out/ko_sf`. Runbook
+(incl. the QF retro): [`docs/knockout-sf-handoff-2026-07-13.md`](docs/knockout-sf-handoff-2026-07-13.md).

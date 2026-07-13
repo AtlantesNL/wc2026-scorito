@@ -333,9 +333,10 @@ def test_sf_fixtures_wellformed():
     assert teams == {"France", "Spain", "England", "Argentina"}
     assert teams == set(SF_ALIVE_TEAMS)
     assert [m.date for m in SF_TIES] == ["2026-07-14", "2026-07-15"]
-    # Slot-4 mirror decision pending the in-app rival-slate read (rank-shuffle proof 2026-07-13
-    # means nothing is known about the new #2/#3 tendencies yet) — no forced pick until then.
-    assert SF_TOPSCORER_FORCED == ()
+    # Slot-4 LOCKED 2026-07-13: Bellingham forced (fame-field mirror + he is #4 by pure EV anyway;
+    # current-round rival slates are NOT visible pre-deadline — user rule — so the decision cannot
+    # wait for an in-app read; rationale dated in knockout_fixtures.py).
+    assert SF_TOPSCORER_FORCED == ("Jude Bellingham",)
 
 
 def test_all_sf_teams_have_a_topscorer_candidate():
