@@ -108,7 +108,8 @@ KO_ROUND_SCORING = {
     # Confirmed in-app 2026-07-13 (Spelregels, user screenshot): 5x group, same ratios, 4 slots /
     # XOR / 120'. atgs_tail_devig: power de-vig of the ATGS overround (see ATGS_SCORERS_PER_GOAL) —
     # introduced for the SF only; earlier rounds keep the flat margin so their cached-odds replays
-    # stay byte-identical to what was shipped.
+    # stay PICK-identical to what was shipped (not byte-identical: the parse_atgs per-book dedupe
+    # is global and moves EV cents / display order on replays — verified zero pick impact).
     # et_mixture: exact 120' extra-time mixture instead of the uniform lambda bump — matters for
     # coin-flip ties (see knockout.et_mixture_grid); also SF-onward for replay identity.
     "Semifinal": dict(exact=225, toto=150, mult={"GK": 160, "DEF": 160, "MID": 80, "ATT": 40},

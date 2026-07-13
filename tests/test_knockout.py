@@ -469,3 +469,14 @@ def test_et_mixture_firms_up_modal_10_for_coinflip_ties():
     uni = ko.build_grid(l1 * bump, l2 * bump)
     mix = ko.et_mixture_grid(l1, l2)
     assert mix.exact(1, 0) / mix.exact(2, 1) > uni.exact(1, 0) / uni.exact(2, 1) > 1.0
+
+
+def test_atgs_tail_devig_warns_when_bisection_ceiling_binds():
+    # Pathological market (near-certain scorer + sub-half-goal match): k is clamped at the ceiling
+    # and the target is unreachable — warn loudly instead of silently under-devigging (adversarial
+    # review 2026-07-13, unreachable on real data; both live SF events solve at k~1.6).
+    from scorito.model.topscorers import atgs_tail_devig
+    with pytest.warns(UserWarning, match="ceiling"):
+        probs = atgs_tail_devig({("A", "B"): {"star": 1.05}},
+                                match_lams={("A", "B"): (0.2, 0.2)}, margin=1.0)
+    assert probs[("A", "B")]["star"] > 0.36   # target missed, clamped result returned

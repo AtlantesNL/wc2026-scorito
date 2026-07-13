@@ -184,6 +184,27 @@ Full adversarial sweep of the all-1-0 pattern before repeating it in the SF:
   is inside noise and it closes a differential. If digits aren't visible, keep the engine's 1-0
   (model argmax under the corrected grid).
 
+## Model-correctness verification (2026-07-13 late — user challenge "is the model itself correct?")
+
+Four independent attacks on today's shipped model code, all passed:
+1. **Monte-Carlo vs analytic** (2M sims/tie, seeded): `et_mixture_grid` matches brute-force
+   simulation of the true process on every checked cell (max dev ~3e-4 = MC error); share→0
+   degenerates to the 90' grid at 1e-13. Mixture p_draw@120 = 13.7% vs realized 4/28 = 14.3%.
+2. **ET-rate assumption** (λ×30/90): our tournament's 8 actual ET periods — model expected 6.4 ET
+   goals, 7 realized.
+3. **De-vig retrodiction on the QF pull** (out-of-sample for the constant): predicted 9.7 distinct
+   scorers vs 11 realized (flat margin said 26.2); head band .334 predicted vs .333 realized;
+   all bands within noise.
+4. **Independent adversarial reviewer** (re-derived all math, ran own probes, tried to refute):
+   **SAFE** — mixture decomposition exact to 0.0 at hand-derived values; bisection monotone,
+   residual ≤4e-16 on real events (k≈1.6); dedupe one-vote-per-book verified incl. split-market
+   edge; report EVs reconcile to an independent reimplementation (Mbappé 12.8 = −ln(1−.274)·40
+   exact). Findings fixed/filed: config "byte-identical" comment corrected to pick-identical
+   (dedupe moves EV cents on replays, zero picks); k-ceiling clamp now WARNS (unreachable on real
+   data — test added, 162 green); theoretical-only: grid-edge ET truncation (3e-11 at soccer λs),
+   `scorers_per_goal` is calibrated on the book-listed universe + 120' λs (documented in
+   docstring), undated results-file rows would bypass the cutoff (all 107 rows are dated).
+
 ## Open items beyond the SF
 - 90'-settlement gap (−7-8% on market λs) and supersub appearance credit — documented, unpriced,
   still ranking-safe; revisit only if a Final-round pick is a genuine near-tie.

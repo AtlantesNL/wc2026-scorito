@@ -12,6 +12,7 @@ defaults to 1.0 for a flagged first-choice ``pen_taker`` and 0.0 otherwise, so a
 co-/second-choice taker can be modelled at e.g. 0.5 rather than all-or-nothing.
 """
 import math
+import warnings
 
 import numpy as np
 
@@ -134,7 +135,11 @@ def atgs_tail_devig(atgs_map, match_lams, margin=config.ATGS_MARGIN,
     per event solve k >= 1 with ``sum_i p_i^k = scorers_per_goal * lambda_total`` — the goal model's
     expected distinct scorers. ``p^k`` barely moves a 1.9-priced head pick but crushes a 12.0
     longshot, matching the observed band structure. k is floored at 1 (thin markets are never
-    inflated); events with no lambda (no h2h price) keep the flat-margin p."""
+    inflated); events with no lambda (no h2h price) keep the flat-margin p.
+
+    NB (adversarial review 2026-07-13): ``scorers_per_goal`` is calibrated on the BOOK-LISTED
+    player universe (~45/event) against 120' lambdas — it implicitly absorbs both book coverage
+    and the ~7-8% 90'-settlement level bias, so re-check it if either changes materially."""
     out = {}
     for key, prices in (atgs_map or {}).items():
         ps = {pl: min(0.99, (1.0 / pr) / margin) for pl, pr in prices.items() if pr and pr > 1.0}
@@ -148,6 +153,10 @@ def atgs_tail_devig(atgs_map, match_lams, margin=config.ATGS_MARGIN,
                     lo, hi = (mid, hi) if sum(p ** mid for p in ps.values()) > target else (lo, mid)
                 k = (lo + hi) / 2
                 ps = {pl: p ** k for pl, p in ps.items()}
+                if sum(ps.values()) > target * 1.01:   # k ceiling bound (real events solve at k~1.6)
+                    warnings.warn(f"ATGS tail de-vig: k ceiling ({hi}) binds for {key} — "
+                                  f"sum p^k = {sum(ps.values()):.3f} > target {target:.3f}; "
+                                  "EV column for this event remains inflated.")
         out[key] = ps
     return out
 
