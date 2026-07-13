@@ -159,6 +159,31 @@ tiebreak lead) · Messi 8 · Haaland 7 (elim.) · Bellingham 6 · Kane 6 · Demb
   BOTH rival SF slates → set `SF_TOPSCORER_FORCED` if mirroring), 6-re-pull (fresh odds
   cents-check ~19:00 CEST), 7 (slot-4 final call), 8 (transcribe). FRA-ESP lineups ~20:00 CEST.
 
+## Scoreline-digit review (2026-07-13 late — user challenge: "none of the QF went 1-0/0-1")
+
+Full adversarial sweep of the all-1-0 pattern before repeating it in the SF:
+- **Calibration is CLEAN**: pooled 28 KO ties, model-expected 74.6 goals vs 77 realized (+3%,
+  z=+0.28); expected exact hits ~3 vs 2 realized. Zero QF exacts was the model's own forecast
+  (0.51 expected). No blanket λ inflation is justified — the QF's +11% was round noise (R32: −0%).
+- **Empirical family counts** (120', n=28): 2-1/1-2 ×7 · 1-0/0-1 ×4 · 2-0/0-2 ×4 · draws ×4 ·
+  bigger ×9. **Digit-policy backtest** (our sides held): shipped 1935 · all-1-0 1950 · all-2-0
+  1950 · **all-2-1 2040**. The 2-1 edge (+105 ≈ 1.5 exacts) flips sign round-to-round (R16: 1-0
+  won by +90) — hindsight-fit, not a signal to chase.
+- **Structural fix found & SHIPPED — exact ET mixture** (`et_mixture_grid`, SF-onward flag,
+  161 tests): the uniform λ-bump inflates the WHOLE distribution for ET, thinning modal 1-0
+  toward 2-1 even for matches decided in 90'. The exact mixture (decided matches keep their 90'
+  score; only the ~27% draw paths add Poisson(λ/3) ET goals) says **1-0 beats 2-1 by 1.0-1.2 EV
+  in both SF ties** — firmer than the uniform grid suggested — and backtests 1950 vs 1935.
+  Bonus: honest 120' side-probs (Fra 51% / Eng 47%; draw-at-120 ~9%). Picks unchanged.
+- **Tempo sensitivity**: devigged O/U prices lean opposite ways — Fra-Esp P(over 2.5)=.509
+  (price-implied total +8.8% → mixture flips to **2-1 by 0.3 EV**), Eng-Arg .414 (under →
+  **1-0 by 2.2 EV**, robust). So: **Eng-Arg 0-1... 1-0 England is FINAL; Fra-Esp digits are a
+  genuine coin-toss (±1 EV pt)** between 1-0 and 2-1.
+- **Lock-day tiebreak (the leader's rule, same as slot-4)**: when reading rivals' SF slates
+  in-app, note their DIGITS too. If a rival plays Fra-Esp 2-1(-family), mirror it — the EV cost
+  is inside noise and it closes a differential. If digits aren't visible, keep the engine's 1-0
+  (model argmax under the corrected grid).
+
 ## Open items beyond the SF
 - 90'-settlement gap (−7-8% on market λs) and supersub appearance credit — documented, unpriced,
   still ranking-safe; revisit only if a Final-round pick is a genuine near-tie.

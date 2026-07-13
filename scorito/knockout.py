@@ -9,8 +9,12 @@ scorelines are pure EV; topscorer *ranking* additionally shrinks the multiplier 
 Pure helpers (``blend_g90``, ``et_adjusted_grid``, ``filter_alive``, ``best_scoreline``) are unit
 tested; ``run_knockout`` wires them through the existing odds/Elo/grid/topscorer code.
 """
+import math
+
+import numpy as np
+
 from scorito import config
-from scorito.model.grid import build_grid
+from scorito.model.grid import ScoreGrid, build_grid
 from scorito.model.match_ev import score_ev
 
 
@@ -30,6 +34,37 @@ def et_adjusted_grid(lam_home, lam_away, et_share=config.ET_MINUTE_SHARE):
     g90 = build_grid(lam_home, lam_away)
     bump = 1.0 + et_share * g90.p_draw
     return build_grid(lam_home * bump, lam_away * bump)
+
+
+def et_mixture_grid(lam_home, lam_away, et_share=config.ET_MINUTE_SHARE):
+    """Exact 120' mixture (SF onward, ``et_mixture`` in KO_ROUND_SCORING): matches decided after 90'
+    KEEP their 90' score; only 90'-draw paths play 30 more minutes at Poisson(lambda*et_share).
+
+    Same E[total goals] as the uniform bump, different SHAPE: the bump inflates lambdas for the
+    whole distribution, thinning the modal 1-0 toward 2-0/2-1 even for matches that never see extra
+    time. For coin-flip ties (p_draw@90 ~27%) that distorts the digit argmax — the exact mixture
+    keeps 1-0 vs 2-1 honest (2026-07-13 analysis, prompted by the user's "all our picks are 1-0"
+    challenge; 28-tie backtest: mixture digits 1950 vs uniform 1935). Gated per round so played
+    rounds' cached replays stay pick-identical."""
+    g90 = build_grid(lam_home, lam_away)
+    m = g90.matrix
+    n = m.shape[0]
+    e1, e2 = lam_home * et_share, lam_away * et_share
+    pa = [math.exp(-e1) * e1 ** k / math.factorial(k) for k in range(n)]
+    pb = [math.exp(-e2) * e2 ** k / math.factorial(k) for k in range(n)]
+    out = np.zeros_like(m)
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                out[i, j] += m[i, j]                       # decided in 90' — score stands
+    for d in range(n):                                     # level after 90' -> extra time
+        pd = m[d, d]
+        for a in range(n - d):
+            for b in range(n - d):
+                out[d + a, d + b] += pd * pa[a] * pb[b]
+    ph = float(np.tril(out, -1).sum())
+    pdr = float(np.trace(out))
+    return ScoreGrid(out, ph, pdr, float(np.triu(out, 1).sum()))
 
 
 def best_scoreline(grid, pts_exact=config.PTS_KO_EXACT, pts_toto=config.PTS_KO_TOTO):
@@ -188,8 +223,8 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
             priced += 1
         grid90 = build_grid(l1, l2)
         bump = 1.0 + config.ET_MINUTE_SHARE * grid90.p_draw
-        e1, e2 = l1 * bump, l2 * bump
-        grid = build_grid(e1, e2)
+        e1, e2 = l1 * bump, l2 * bump   # 120' expected goals — identical under both grid shapes
+        grid = et_mixture_grid(l1, l2) if scoring.get("et_mixture") else build_grid(e1, e2)
         h, a, ev = best_scoreline(grid, pts_exact=scoring["exact"], pts_toto=scoring["toto"])
         adv = m.team1 if grid.p_home >= grid.p_away else m.team2
         match_picks.append(dict(tie=m, home=h, away=a, ev=ev, p_home=grid.p_home,

@@ -426,3 +426,46 @@ def test_load_results_nonpen_goals_respects_date_cutoff(tmp_path):
     assert full == {"early bird": 2, "late riser": 1}                    # no cutoff: everything
     cut = ko.load_results_nonpen_goals(str(f), before="2026-07-09")
     assert cut == {"early bird": 1}                                      # QF-era replay: no future goals
+
+
+# --- exact ET mixture (2026-07-13, user challenge "all our picks are 1-0"): the uniform lambda
+#     bump distorts digit comparisons for coin-flip ties — decided-at-90' matches keep their 90'
+#     score; only the ~27% draw paths play 30 more minutes. Gated per round like atgs_tail_devig.
+def test_et_mixture_flag_only_from_semifinal_on():
+    assert config.KO_ROUND_SCORING["Semifinal"].get("et_mixture") is True
+    for rn in ("Round of 32", "Round of 16", "Quarterfinal"):
+        assert not config.KO_ROUND_SCORING[rn].get("et_mixture")
+
+
+def test_et_mixture_grid_mass_decided_and_draw_decay():
+    l1, l2 = 1.4, 1.1
+    g90 = ko.build_grid(l1, l2)
+    mix = ko.et_mixture_grid(l1, l2)
+    assert float(mix.matrix.sum()) == pytest.approx(float(g90.matrix.sum()), abs=1e-6)  # MAX_GOALS truncation
+    # P120(1-0) = P90(1-0) + P90(0-0)*P_ET(1-0): decided matches keep their score, the 0-0 path adds
+    s = config.ET_MINUTE_SHARE
+    p_et_10 = (l1 * s) * math.exp(-l1 * s) * math.exp(-l2 * s)
+    assert mix.exact(1, 0) == pytest.approx(g90.exact(1, 0) + g90.exact(0, 0) * p_et_10, rel=1e-6)
+    assert mix.p_draw < g90.p_draw        # draws only survive ET via equal added goals
+
+
+def test_et_mixture_preserves_expected_total_of_uniform_bump():
+    l1, l2 = 1.4, 1.1
+    g90 = ko.build_grid(l1, l2)
+    bump = 1.0 + config.ET_MINUTE_SHARE * g90.p_draw
+    def exp_total(mat):
+        n = mat.shape[0]
+        return float(sum((i + j) * mat[i, j] for i in range(n) for j in range(n)))
+    mix = ko.et_mixture_grid(l1, l2)
+    assert exp_total(mix.matrix) == pytest.approx((l1 + l2) * bump, rel=5e-3)
+
+
+def test_et_mixture_firms_up_modal_10_for_coinflip_ties():
+    # The uniform bump narrows P(1-0)/P(2-1) by inflating lambdas for the WHOLE distribution; the
+    # exact mixture keeps the 90' mode for decided matches, so the ratio must be wider.
+    l1, l2 = 1.39, 1.11                    # the SF France-Spain lambdas
+    g90 = ko.build_grid(l1, l2)
+    bump = 1.0 + config.ET_MINUTE_SHARE * g90.p_draw
+    uni = ko.build_grid(l1 * bump, l2 * bump)
+    mix = ko.et_mixture_grid(l1, l2)
+    assert mix.exact(1, 0) / mix.exact(2, 1) > uni.exact(1, 0) / uni.exact(2, 1) > 1.0

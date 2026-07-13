@@ -109,9 +109,12 @@ KO_ROUND_SCORING = {
     # XOR / 120'. atgs_tail_devig: power de-vig of the ATGS overround (see ATGS_SCORERS_PER_GOAL) —
     # introduced for the SF only; earlier rounds keep the flat margin so their cached-odds replays
     # stay byte-identical to what was shipped.
+    # et_mixture: exact 120' extra-time mixture instead of the uniform lambda bump — matters for
+    # coin-flip ties (see knockout.et_mixture_grid); also SF-onward for replay identity.
     "Semifinal": dict(exact=225, toto=150, mult={"GK": 160, "DEF": 160, "MID": 80, "ATT": 40},
                       slots=4, form_games=6, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
-                      lead_shrink=LEAD_PROTECTION_MULT_SHRINK, atgs_tail_devig=True),
+                      lead_shrink=LEAD_PROTECTION_MULT_SHRINK, atgs_tail_devig=True,
+                      et_mixture=True),
 }
 # Realized-form blend (group-stage retrospective: club-g90 alone under-rated in-form scorers like
 # Messi and over-rated goal-shy creators like Wirtz). Effective non-pen g90 shrinks the tournament
