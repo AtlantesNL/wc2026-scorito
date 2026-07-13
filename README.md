@@ -106,9 +106,12 @@ Design: [`docs/superpowers/specs/2026-06-08-validation-harness-design.md`](docs/
 
 ## Status
 
-Group phase, Round of 32, and Round of 16 complete — **1st place entering the quarterfinals**
-(R16 banked 633 vs 515 expected: 1 exact + 5 totos + Mbappé/Messi; lead +118 on #2, +259 on #3,
-in-app verified). **Quarterfinal engine live** (`--round qf`, scoring confirmed in-app): bracket
-Fra-Mar · Esp-Bel · Nor-Eng · Arg-Sui, provisional slate all-1-0/0-1 + Kane/Mbappé/Messi/Haaland.
-Lock Thu 2026-07-09 22:00 CEST — re-pull odds + transcribe. Runbook (incl. the R16 retro and the
-scoreline/topscorer method reviews): [`docs/knockout-qf-handoff-2026-07-08.md`](docs/knockout-qf-handoff-2026-07-08.md).
+Group phase through the quarterfinals complete — **1st place entering the semifinals** (QF banked
+512 vs 407 expected: 4/4 advancers, 4 totos + Mbappé; you 4631, +156 on #2, +294 on #3 — both
+rivals are NEW names, the board provably shuffled). QF retro closed two method TODOs:
+price-implied totals REFUTED (flips zero picks on both snapshots — line-snap stays), ATGS
+flat-margin inflation CONFIRMED on the doubled sample (mid-band realized ~55-68% under implied →
+per-event renormalisation queued for the SF). **SF engine NOT yet extended** (`--round sf` +
+Semifinal scoring + ATGS fixes = lock-day step). Bracket: Fra-Esp (Tue Jul-14 Dallas) ·
+Eng-Arg (Wed Jul-15 Atlanta). Lock Tue 2026-07-14 21:00 CEST. Runbook (incl. the QF retro):
+[`docs/knockout-sf-handoff-2026-07-13.md`](docs/knockout-sf-handoff-2026-07-13.md).
