@@ -307,6 +307,79 @@ def test_cli_qf_applies_forced_topscorer(tmp_path):
         assert name in picks
 
 
+# --- forced scoreline: the digit-mirror call, codified (SF lock day 2026-07-14) ---
+def test_forced_scoreline_overrides_digits_and_keeps_grid_ev(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    base = _qf_bundle(kf)
+    free = ko.run_knockout(out_dir=str(tmp_path / "free"), **base)
+    p = free["match_picks"][0]
+    m = p["tie"]
+    fh, fa = p["home"] + 1, p["away"] + 1          # same winner, different digits (e.g. 1-0 -> 2-1)
+    forced = ko.run_knockout(out_dir=str(tmp_path / "forced"),
+                             forced_scorelines={(m.team1, m.team2): (fh, fa)}, **base)
+    fp = forced["match_picks"][0]
+    assert (fp["home"], fp["away"]) == (fh, fa) and fp["forced"]
+    assert fp["adv"] == p["adv"]                   # digits mirrored, side untouched
+    assert fp["ev"] <= p["ev"]                     # honest EV of the forced digits, not the argmax
+    # other ties untouched
+    for q_free, q_forced in zip(free["match_picks"][1:], forced["match_picks"][1:]):
+        assert (q_free["home"], q_free["away"]) == (q_forced["home"], q_forced["away"])
+        assert not q_forced["forced"]
+    report = (tmp_path / "forced" / "report.md").read_text()
+    assert f"{m.team1} {fh}-{fa} {m.team2}** ⚑" in report
+    assert f'"{m.team1} vs {m.team2}",{fh}-{fa}' in (tmp_path / "forced" / "picks.csv").read_text()
+
+
+def test_forced_scoreline_draw_raises(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    base = _qf_bundle(kf)
+    m = base["ties"][0]
+    with pytest.raises(ValueError, match="draw"):
+        ko.run_knockout(out_dir=str(tmp_path),
+                        forced_scorelines={(m.team1, m.team2): (1, 1)}, **base)
+
+
+def test_forced_scoreline_flipping_advancer_raises(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    base = _qf_bundle(kf)
+    free = ko.run_knockout(out_dir=str(tmp_path / "free"), **base)
+    p = free["match_picks"][0]
+    m = p["tie"]
+    bad = (p["away"], p["home"] + 1) if p["home"] > p["away"] else (p["away"] + 1, p["home"])
+    with pytest.raises(ValueError, match="advancer"):
+        ko.run_knockout(out_dir=str(tmp_path / "bad"),
+                        forced_scorelines={(m.team1, m.team2): bad}, **base)
+
+
+def test_forced_scoreline_unknown_tie_raises(tmp_path):
+    from scorito.data import knockout_fixtures as kf
+    with pytest.raises(ValueError, match="France.*Brazil"):
+        ko.run_knockout(out_dir=str(tmp_path),
+                        forced_scorelines={("France", "Brazil"): (2, 1)}, **_qf_bundle(kf))
+
+
+def test_sf_forced_scoreline_wellformed_and_wired():
+    # Lock-day digit mirror 2026-07-14: both rivals' (visible) QF slates ran 2-1-family digits in
+    # all four ties, and Fra-Esp 1-0 vs 2-1 is the round's flagged coin-toss — mirror it. Eng-Arg
+    # stays free (1-0 robust by ~2.2 EV). Rationale dated in knockout_fixtures.py.
+    from scorito.data.knockout_fixtures import SF_SCORELINE_FORCED, SF_TIES
+    assert SF_SCORELINE_FORCED == {("France", "Spain"): (2, 1)}
+    tie_keys = {(m.team1, m.team2) for m in SF_TIES}
+    for key, (h, a) in SF_SCORELINE_FORCED.items():
+        assert key in tie_keys and h != a
+
+
+def test_cli_sf_applies_forced_scoreline(tmp_path):
+    import os
+    odds, atgs = "data/cache/odds_sf_raw.json", "data/cache/atgs_sf_raw.json"
+    if not (os.path.exists(odds) and os.path.exists(atgs)):
+        pytest.skip("SF odds cache not present (gitignored; live-pull artifact)")
+    ko.main(["--round", "sf", "--odds-file", odds, "--atgs-file", atgs, "--out", str(tmp_path)])
+    picks = (tmp_path / "picks.csv").read_text()
+    assert '"France vs Spain",2-1,France' in picks
+    assert '"England vs Argentina",1-0,England' in picks  # NOT forced — stays the free argmax
+
+
 # --- Semifinal round (scoring confirmed in-app, user screenshot 2026-07-13) ---
 def test_sf_round_scoring_confirmed_in_app():
     sc = config.KO_ROUND_SCORING["Semifinal"]
@@ -353,7 +426,13 @@ def test_standings_updated_post_qf():
 
 
 def test_run_knockout_sf_end_to_end_via_cli(tmp_path):
-    ko.main(["--round", "sf", "--out", str(tmp_path)])
+    # Needs the cached market odds: Elo-only rates Spain over France, and the sf bundle's forced
+    # Fra-Esp digits (side France) then correctly raise the flipped-advancer tripwire.
+    import os
+    odds = "data/cache/odds_sf_raw.json"
+    if not os.path.exists(odds):
+        pytest.skip("SF odds cache not present (gitignored; live-pull artifact)")
+    ko.main(["--round", "sf", "--odds-file", odds, "--out", str(tmp_path)])
     report = (tmp_path / "report.md").read_text()
     assert "Semifinal" in report
     assert "225" in report and "150" in report        # SF scoring header

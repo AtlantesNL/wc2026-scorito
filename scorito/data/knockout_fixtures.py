@@ -204,7 +204,21 @@ SF_START_OVERRIDES = {
 # The board shuffled (mod-4 proof) so nothing is known about the new #2/#3 — this is the play that
 # is least wrong across all their plausible slates. Their QF slates (visible post-deadline) can
 # still be glanced at while transcribing: only BOTH-rivals-on-Oyarzabal would argue a flip.
+# 2026-07-14 lock day, user's in-app QF reads: NEITHER rival held Oyarzabal — force CONFIRMED.
+# #3 plays pure fame-chalk (Haaland/Kane/Mbappé/Messi; Haaland eliminated → Bellingham is their
+# natural SF slot-4); #2 takes differentials (Hakimi ×128 DEF flier) — the chaser profile (2).
 SF_TOPSCORER_FORCED = ("Jude Bellingham",)
+
+# Scoreline digit-mirror, LOCKED 2026-07-14 (lock day): Fra-Esp 1-0 → 2-1. The 07-13 digit review
+# left Fra-Esp a genuine coin-toss (exact mixture: 1-0 by ~1 EV at neutral tempo; price-implied
+# tempo flipped it to 2-1 by 0.3 — inside noise either way) with the codified tiebreak "rival
+# digits are the only signal; free to mirror". The signal arrived with the user's in-app QF reads:
+# BOTH rivals played 2-1-family digits in ALL FOUR QF ties (3-1 · 2-1 · 1-2 · 2-1 — identical
+# digit slates, zero clean sheets, incl. 1-2 on the Nor-Eng coin-flip). Mirroring closes the
+# likeliest exact-cell differential (rival 2-1 lands = −75/rival vs our 1-0) at sub-noise EV cost.
+# Eng-Arg deliberately NOT forced: the under-leaning tempo makes 1-0 robust by ~2.2 EV (digit
+# review), that insurance costs real EV, and the +156/+294 lead absorbs a single exact-cell hit.
+SF_SCORELINE_FORCED = {("France", "Spain"): (2, 1)}
 
 SF_TIE_NOTES = {
     ("France", "Spain"): "Euro-24 semi rematch; Tchouaméni 50-50 (Koné default), Mbappé ankle 'fine' — Oyarzabal false-9 + pen #1",
@@ -215,14 +229,18 @@ SF_TIE_NOTES = {
 # 4631 = 4119 + 512 reconciles exactly (4 totos 480 + Mbappé 32). PROVENANCE (now proven, not just
 # policy): any QF delta must be 60s+32t ≡ 0 mod 4, but 4475−4001=474 ≡ 2 and 4337−3860=477 is odd —
 # both impossible, so today's #2/#3 are NOT last round's #2/#3. The board shuffled beneath us and
-# NO prior-round slate reads attach to these names. Read both SF slates in-app before the slot-4
-# call (leaderboard rank ≠ same person across rounds — user flag 2026-07-09, vindicated 2026-07-13).
+# NO prior-round slate reads attach to these names (SF slates stay invisible pre-deadline).
+# 2026-07-14: the user read both rivals' QF slates in-app (completed round = visible). Both
+# VALIDATE arithmetically against the QF scoring (exact 180/toto 120, ATT ×32):
+#   #2 neemaar jr: Fra-Mar 3-1 · Esp-Bel 2-1 · Nor-Eng 1-2 · Arg-Sui 2-1 + Dembélé/Kane/Mbappé/
+#      Hakimi(DEF) = 2 exacts + 2 totos + 32 + 32 = 664 → pre-QF 3811 < 4001 ✓ (climbed, as proven)
+#   #3 thomneleman: same four scorelines + Haaland/Kane/Mbappé/Messi = 600 + 32 = 632 → 3705 < 3860 ✓
 STANDINGS = {
     "you": 4631,
-    "as_of": "QF complete (user-reported 2026-07-13)",
+    "as_of": "QF complete (user-reported 2026-07-13); rival QF slates read in-app 2026-07-14",
     "rivals": [
-        {"name": "#2 neemaar jr", "points": 4475, "diff_topscorer": "UNKNOWN (SF slates invisible pre-deadline); QF slate readable post-round — glance while transcribing"},
-        {"name": "#3 thomneleman", "points": 4337, "diff_topscorer": "UNKNOWN — same; Bellingham ⚑ forced to cap any slot-4 differential"},
+        {"name": "#2 neemaar jr", "points": 4475, "diff_topscorer": "QF read: Dembélé/Kane/Mbappé/Hakimi(×128 flier) — differential-seeking chaser; digits all 2-1-family → Fra-Esp 2-1 ⚑ mirrored"},
+        {"name": "#3 thomneleman", "points": 4337, "diff_topscorer": "QF read: Haaland/Kane/Mbappé/Messi — pure fame-chalk; Haaland out → Bellingham ⚑ their natural slot-4, force confirmed"},
     ],
 }
 

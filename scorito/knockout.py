@@ -191,7 +191,7 @@ def lead_dashboard(standings, scoring):
 
 
 def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_file=None,
-                 forced_topscorers=(),
+                 forced_topscorers=(), forced_scorelines=None,
                  results_file="data/cache/worldcup2026_results.json", out_dir=None,
                  round_name="Round of 32", *, alive_teams=None, injured_out=None,
                  start_overrides=None, tie_notes=None, standings=None):
@@ -215,6 +215,13 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
     atgs_map = _load_atgs(odds_key, atgs_file, atgs, cache_tag)
 
     # Per-tie: market (or Elo) expected goals -> ET-adjusted 120' grid -> EV-max scoreline + advancer.
+    # ``forced_scorelines`` ({(team1, team2): (h, a)}) mirrors a rival's DIGITS on a near-tie cell
+    # (never the side): the advancer stays the grid's, and forcing digits that would flip it raises.
+    forced_scorelines = dict(forced_scorelines or {})
+    unknown_ties = set(forced_scorelines) - {(m.team1, m.team2) for m in ties}
+    if unknown_ties:
+        raise ValueError(f"forced scoreline tie(s) not in this round: {sorted(unknown_ties)} — "
+                         "check team order/spelling in the round's SCORELINE_FORCED dict")
     match_picks, match_lams_et, team_lam = [], {}, defaultdict(list)
     priced = 0
     for m in ties:
@@ -227,8 +234,21 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
         grid = et_mixture_grid(l1, l2) if scoring.get("et_mixture") else build_grid(e1, e2)
         h, a, ev = best_scoreline(grid, pts_exact=scoring["exact"], pts_toto=scoring["toto"])
         adv = m.team1 if grid.p_home >= grid.p_away else m.team2
+        digits = forced_scorelines.get((m.team1, m.team2))
+        if digits:
+            fh, fa = digits
+            if fh == fa:
+                raise ValueError(f"forced scoreline {fh}-{fa} for {m.team1}-{m.team2} is a draw — "
+                                 "the digit mirror never forces draws; pick a winner")
+            if (m.team1 if fh > fa else m.team2) != adv:
+                raise ValueError(f"forced scoreline {fh}-{fa} for {m.team1}-{m.team2} flips the "
+                                 f"advancer (grid says {adv}) — the mirror moves digits, never "
+                                 "sides; re-decide the pick if the market side changed")
+            h, a = fh, fa
+            ev = score_ev(grid, fh, fa, pts_exact=scoring["exact"], pts_toto=scoring["toto"])
         match_picks.append(dict(tie=m, home=h, away=a, ev=ev, p_home=grid.p_home,
-                                p_draw=grid.p_draw, p_away=grid.p_away, adv=adv))
+                                p_draw=grid.p_draw, p_away=grid.p_away, adv=adv,
+                                forced=bool(digits)))
         match_lams_et[(m.team1, m.team2)] = (e1, e2)
         team_lam[m.team1].append(e1)
         team_lam[m.team2].append(e2)
@@ -340,7 +360,8 @@ def _write_ko_report(r, out_dir):
         winp = round(100 * max(p["p_home"], p["p_away"]))
         note = tie_notes.get((m.team1, m.team2))
         tie_txt = f"{m.team1} vs {m.team2}" + (f"<br>_{note}_" if note else "")
-        L.append(f"| {i} | {tie_txt} | **{m.team1} {p['home']}-{p['away']} {m.team2}** "
+        flag = " ⚑" if p.get("forced") else ""
+        L.append(f"| {i} | {tie_txt} | **{m.team1} {p['home']}-{p['away']} {m.team2}**{flag} "
                  f"| {p['adv']} | {winp}% | {p['ev']:.1f} |")
     n_top = len(r["top4"])
     tilted = sc.get("lead_shrink", 1.0) < 1.0
@@ -357,7 +378,7 @@ def _write_ko_report(r, out_dir):
     for c in r["top4"]:
         L.append(_ts_row(c, mp, forced=r.get("forced", frozenset())))
     L.append("\n_📈 = anytime-goalscorer market · 📊 = blended · ✍️ = model g90 (form-blended) + opponent + penalty._\n")
-    if r.get("forced"):
+    if r.get("forced") or any(p.get("forced") for p in mp):
         L.append("_⚑ = forced pick (rival-mirroring decision), held regardless of rank — dated "
                  "rationale in `knockout_fixtures.py`._\n")
     L.append(f"\n### Alternative: match-diversified {n_top} (same EV approach, ≤1 per tie — slightly lower variance)\n")
@@ -412,7 +433,8 @@ def main(argv=None):
         "sf": dict(ties=kf.SF_TIES, round_name="Semifinal", alive_teams=kf.SF_ALIVE_TEAMS,
                    injured_out=kf.SF_INJURED_OUT, start_overrides=kf.SF_START_OVERRIDES,
                    tie_notes=kf.SF_TIE_NOTES, standings=kf.STANDINGS,
-                   forced_topscorers=kf.SF_TOPSCORER_FORCED),
+                   forced_topscorers=kf.SF_TOPSCORER_FORCED,
+                   forced_scorelines=kf.SF_SCORELINE_FORCED),
     }
     r = run_knockout(odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
                      atgs_file=args.atgs_file, results_file=args.results_file, out_dir=args.out,

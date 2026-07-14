@@ -229,6 +229,36 @@ While transcribing (all optional, none blocking):
 - Optional cents-refresh: `.venv/bin/python -m scorito.knockout --round sf --odds-key <key> --atgs`
   (~6 credits; two same-day pulls moved nothing).
 
+## LOCK DAY 2026-07-14 — rival QF reads landed; Fra-Esp digit mirror executed
+
+Fresh pull ~07:55 UTC (yesterday's raws snapshotted `*_0713pm.json`): cents-only drift, zero rank
+changes. Fra-Esp tightened (Fra 2.33→2.42, win% 51→49) and the O/U 2.5 went dead-even 1.92/1.92 —
+the price-implied case for 2-1 weakened. Bellingham ATGS shortened 4.0→3.8. 168 tests green.
+
+**User read both rivals' QF slates in-app (completed round = visible). Both validate exactly:**
+- **#2 neemaar jr**: Fra-Mar 3-1 · Esp-Bel 2-1 (exact) · Nor-Eng 1-2 (exact) · Arg-Sui 2-1
+  + Dembélé/Kane/Mbappé/**Hakimi (×128 DEF flier)** = 600 + 64 = **664** → pre-QF 3811 < 4001 ✓
+  the mod-4 shuffle proof's "climbed from below", confirmed. Profile: differential-seeking chaser.
+- **#3 thomneleman**: same four scorelines + Haaland/Kane/Mbappé/Messi = 600 + 32 = **632** →
+  pre-QF 3705 < 3860 ✓. Profile: pure fame-chalk — with Haaland eliminated, their natural SF
+  slot-4 IS Bellingham.
+
+**Decisions (both codified rules fired as written):**
+1. **Slot-4 Bellingham force CONFIRMED** — the only flip-back pattern (both rivals on Oyarzabal)
+   did not occur; both rival profiles independently point at Bellingham as their likely SF slot-4.
+2. **Fra-Esp 1-0 → 2-1 ⚑ mirrored** (`SF_SCORELINE_FORCED`, new `forced_scorelines=` mechanism
+   with draw + flipped-advancer guards, +6 tests): both rivals ran 2-1-family digits in ALL FOUR
+   QF ties (identical digit slates, zero clean sheets, incl. 1-2 on the Nor-Eng coin-flip) — the
+   pre-agreed tiebreak signal for the round's one genuine digit coin-toss. Cost −1.2 EV (82.1 vs
+   83.3), inside the ±1-EV noise band the digit review defined; closes a 75-pt exact-cell swing
+   per rival at ~10% probability. **Eng-Arg stays 1-0 (NOT forced)** — under-leaning tempo makes
+   1-0 robust by ~2.2 EV; that insurance costs real EV and the +156/+294 lead absorbs a single
+   exact-cell hit (worst case both rivals exact there: −75 each, lead holds).
+
+**FINAL SLATE (transcribe from out/ko_sf): Fra 2-1 Esp ⚑ · Eng 1-0 Arg + Mbappé / Messi / Kane /
+Bellingham ⚑. Model EV 205.** Elo-only note: without market odds Elo ranks Spain over France, so
+the forced digits deliberately raise (side tripwire) — SF replays need `--odds-file`.
+
 ## Open items beyond the SF
 - 90'-settlement gap (−7-8% on market λs) and supersub appearance credit — documented, unpriced,
   still ranking-safe; revisit only if a Final-round pick is a genuine near-tie.
