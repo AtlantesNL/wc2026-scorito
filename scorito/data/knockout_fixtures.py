@@ -283,14 +283,16 @@ FINAL_START_OVERRIDES = {
     "Anthony Gordon": 0.18,     # BENCHED (sub)
 }
 
-# Slot-4 = Yamal, LOCKED 2026-07-18 22:xx CEST at the confirmed-XI recheck. Kane (our morning slot-2)
-# AND Bellingham (field's likely slot-4) were BOTH benched by Tuchel (7 changes; Toney leads the line).
-# So: (1) Oyarzabal-over-Bellingham paid off — their slot-4 rides the bench, ours starts the final;
-# (2) benched Kane replaced. Among nailed starters (all ~7-8 de-biased EV), take Yamal: the biggest
-# fame name still starting → the likeliest mirror if the fame-chalk field also pivots off Kane; on the
-# favoured side (Spain) in a full-strength final. Engine's pure-EV pick was Toney 7.9 (ENG CF) — passed
-# for the mirror + favoured-side reasons (user call). Forced because Yamal (7.0) sits just below Toney.
-FINAL_TOPSCORER_FORCED = ("Lamine Yamal",)
+# Slot-4 = CHERKI, LOCKED 2026-07-18 (final lock recheck). Evolution this evening: confirmed XIs
+# benched Kane (our morning slot-2) AND Bellingham (field's likely slot-4) — Tuchel/Deschamps 7 changes
+# each. Oyarzabal-over-Bellingham paid off (their slot-4 benched, ours starts the final). Benched Kane
+# first swapped to Yamal (fame-mirror), then to CHERKI once the pool confirmed him a MIDFIELDER (×96):
+# a full Fable-model re-analysis put Cherki at EV 15.9 (starter #10 behind Mbappé in a France rout) vs
+# Yamal 9.0 — a +6.9 upgrade the fame field can't punish (its likely 4th picks Kane/Bellingham are
+# benched cameos). Kept the ×192 lottery defenders (Théo 14.4, Porro 9.7) OUT — chaser plays; we lead
+# +151 and only need to mirror the two names that can hurt us (Mbappé, Messi) + Oyarzabal's pen floor.
+# Final topscorers: Mbappé / Cherki / Messi / Oyarzabal. (Entered in-app by the user.)
+FINAL_TOPSCORER_FORCED = ("Rayan Cherki",)
 FINAL_SCORELINE_FORCED = {}
 
 FINAL_TIE_NOTES = {
