@@ -266,17 +266,31 @@ FINAL_START_OVERRIDES = {
     "Lautaro Martinez": 0.45,   # scored the SF winner off the bench — start vs Álvarez an open call
     "Julian Alvarez": 0.85,
     "Enzo Fernandez": 0.90,     # MID, scored the SF equaliser (×96)
-    # France (third place) — Mbappé locked, rest rotated
-    "Kylian Mbappe": 0.95,      # will start — Golden Boot chase, "no chance of respite" (SI)
-    "Ousmane Dembele": 0.55,    # coin-flip: in some projected XIs, out of others
-    # England (third place) — Kane in, Bellingham a toss-up
-    "Harry Kane": 0.90,         # projected to start in every preview (Boot chase)
-    "Jude Bellingham": 0.55,    # GENUINE game-time call — confirm at the ~22:00 CEST XI drop
-    "Anthony Gordon": 0.70,     # scored the SF goal
+    # France (third place) — CONFIRMED XI 2026-07-18 (Deschamps 7 changes): Maignan; T.Hernández,
+    # Lacroix, Konaté, Gusto; Rabiot, Zaïre-Emery, Doué; Cherki, Olise, Mbappé. Dembélé BENCHED.
+    "Kylian Mbappe": 0.98,      # starts — the lone star up top; France heavy favourite vs a rotated England
+    "Michael Olise": 0.92,
+    "Desire Doue": 0.90,
+    "Ousmane Dembele": 0.18,    # BENCHED (sub only)
+    # England (third place) — CONFIRMED XI 2026-07-18 (Tuchel 7 changes): D.Henderson; Quansah, Konsa,
+    # Guéhi, Spence; Rice, Eze; Saka, Rogers, Rashford; Toney. KANE + BELLINGHAM BOTH BENCHED.
+    "Ivan Toney": 0.90,         # leads the line for England now
+    "Bukayo Saka": 0.90,
+    "Marcus Rashford": 0.88,
+    "Eberechi Eze": 0.90,       # MID (×96) — England's chief playmaker in this XI
+    "Harry Kane": 0.18,         # BENCHED (sub) — was our slot-2 pick; ATGS feed still shows a stale starter price
+    "Jude Bellingham": 0.18,    # BENCHED (sub) — the field's likely slot-4, now dead weight
+    "Anthony Gordon": 0.18,     # BENCHED (sub)
 }
 
-# No forced picks yet — decide after the engine output + the graded post-SF rival reads (see STANDINGS).
-FINAL_TOPSCORER_FORCED = ()
+# Slot-4 = Yamal, LOCKED 2026-07-18 22:xx CEST at the confirmed-XI recheck. Kane (our morning slot-2)
+# AND Bellingham (field's likely slot-4) were BOTH benched by Tuchel (7 changes; Toney leads the line).
+# So: (1) Oyarzabal-over-Bellingham paid off — their slot-4 rides the bench, ours starts the final;
+# (2) benched Kane replaced. Among nailed starters (all ~7-8 de-biased EV), take Yamal: the biggest
+# fame name still starting → the likeliest mirror if the fame-chalk field also pivots off Kane; on the
+# favoured side (Spain) in a full-strength final. Engine's pure-EV pick was Toney 7.9 (ENG CF) — passed
+# for the mirror + favoured-side reasons (user call). Forced because Yamal (7.0) sits just below Toney.
+FINAL_TOPSCORER_FORCED = ("Lamine Yamal",)
 FINAL_SCORELINE_FORCED = {}
 
 FINAL_TIE_NOTES = {
