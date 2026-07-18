@@ -225,22 +225,92 @@ SF_TIE_NOTES = {
     ("England", "Argentina"): "Quansah suspended (Konsa RB); Rice trending fit after bug; ARG diamond unchanged, Lautaro super-sub",
 }
 
-# Pool standings entering the SF — reported by the user 2026-07-13 (QF complete). Our
-# 4631 = 4119 + 512 reconciles exactly (4 totos 480 + Mbappé 32). PROVENANCE (now proven, not just
-# policy): any QF delta must be 60s+32t ≡ 0 mod 4, but 4475−4001=474 ≡ 2 and 4337−3860=477 is odd —
-# both impossible, so today's #2/#3 are NOT last round's #2/#3. The board shuffled beneath us and
-# NO prior-round slate reads attach to these names (SF slates stay invisible pre-deadline).
-# 2026-07-14: the user read both rivals' QF slates in-app (completed round = visible). Both
-# VALIDATE arithmetically against the QF scoring (exact 180/toto 120, ATT ×32):
-#   #2 neemaar jr: Fra-Mar 3-1 · Esp-Bel 2-1 · Nor-Eng 1-2 · Arg-Sui 2-1 + Dembélé/Kane/Mbappé/
-#      Hakimi(DEF) = 2 exacts + 2 totos + 32 + 32 = 664 → pre-QF 3811 < 4001 ✓ (climbed, as proven)
-#   #3 thomneleman: same four scorelines + Haaland/Kane/Mbappé/Messi = 600 + 32 = 632 → 3705 < 3860 ✓
+# ------------------------------------------------------------------------------------------------
+# FINAL ROUND — the Final + the third-place match. CONFIRMED 2026-07-18 after both SF results
+# (Spain 2-0 France [Oyarzabal 22' pen, Pedro Porro 58'] · Argentina 2-1 England [Gordon 55';
+# Enzo Fernández 85', Lautaro 90+2' — Messi assist], each ≥2 independent sources: ESPN/FIFA/
+# Al Jazeera/Yahoo/NPR; both settled in 90'). Scoring confirmed in-app (user paste 2026-07-18):
+# exact 270 / toto 180, ATT 48 / MID 96 / DEF·GK 192 — 6x group, ONE round entry (KO_ROUND_SCORING
+# ["Final"]) covers BOTH ties, 4 topscorer slots / XOR / result after 120'. The whole round locks at
+# the EARLIEST kickoff = the third-place match, Sat 2026-07-18 (Miami) — so both picks are due today.
+# ------------------------------------------------------------------------------------------------
+FINAL_TIES = [
+    Match("Spain", "Argentina", "Final", date="2026-07-19"),      # MetLife, East Rutherford NJ — the Final
+    Match("France", "England", "3rd place", date="2026-07-18"),   # Hard Rock, Miami — third-place match (locks the round)
+]
+
+FINAL_ALIVE_TEAMS = frozenset(t for m in FINAL_TIES for t in (m.team1, m.team2))
+
+# Unavailable for the FINAL round — news sweep 2026-07-18 (≥2 sources/claim; ESPN/Yahoo/SI/Al Jazeera):
+# - William Saliba (FRA): back injury, subbed ~29' in the SF "in tears" — OUT of the third-place match.
+# - Jordan Henderson (ENG): arm/wrist surgery (celebration fall) — OUT (not a candidate).
+# - Reece James (ENG): SF muscle injury — out/doubt, Spence to RB (not a candidate).
+# - Jarell Quansah (ENG): 2-game ban SERVED — AVAILABLE, likely starts the bronze match.
+# Both final XIs (Spain, Argentina) are healthy — no injury doubts (Yamal minor SF scare, starts).
+FINAL_INJURED_OUT = frozenset({"Jordan Henderson", "William Saliba"})
+
+# FINAL start probabilities — news sweep 2026-07-18. FINAL (Spain/Argentina) XIs are stable & fit.
+# THIRD-PLACE (France/England) is a heavily-rotated dead rubber, BUT the Golden Boot chase (Mbappé 8,
+# Messi 8; Kane 6, Bellingham 6 — bronze-match goals COUNT) pins the stars in: Mbappé "no chance of
+# respite" (SI), Kane projected to start in every preview. **Bellingham is a genuine game-time call**
+# (started in some projected XIs, benched in others) — the single biggest lineup toss-up; the England
+# XI drops ~22:00 CEST, ~1h before the 23:00 lock, so it RESOLVES before we commit slot-4.
+FINAL_START_OVERRIDES = {
+    # Spain (Final) — stable XI
+    "Mikel Oyarzabal": 0.92,    # false-9 + pen #1; scored the SF opener (pen)
+    "Lamine Yamal": 0.92,
+    "Pedri": 0.15,              # fit but BENCHED since the QF (Fabián Ruiz preferred)
+    "Pedro Porro": 0.90,        # RB, scored the SF second — DEF (×192 if he scores again)
+    # Argentina (Final) — healthy, two selection calls
+    "Lionel Messi": 0.92,       # starts; 0/2 on WC pens = live pen-duty doubt (Álvarez alternate)
+    "Lautaro Martinez": 0.45,   # scored the SF winner off the bench — start vs Álvarez an open call
+    "Julian Alvarez": 0.85,
+    "Enzo Fernandez": 0.90,     # MID, scored the SF equaliser (×96)
+    # France (third place) — Mbappé locked, rest rotated
+    "Kylian Mbappe": 0.95,      # will start — Golden Boot chase, "no chance of respite" (SI)
+    "Ousmane Dembele": 0.55,    # coin-flip: in some projected XIs, out of others
+    # England (third place) — Kane in, Bellingham a toss-up
+    "Harry Kane": 0.90,         # projected to start in every preview (Boot chase)
+    "Jude Bellingham": 0.55,    # GENUINE game-time call — confirm at the ~22:00 CEST XI drop
+    "Anthony Gordon": 0.70,     # scored the SF goal
+}
+
+# No forced picks yet — decide after the engine output + the graded post-SF rival reads (see STANDINGS).
+FINAL_TOPSCORER_FORCED = ()
+FINAL_SCORELINE_FORCED = {}
+
+FINAL_TIE_NOTES = {
+    ("Spain", "Argentina"): "THE FINAL — Spain (beat France 2-0) vs Argentina (beat England 2-1); Yamal/Oyarzabal/Pedri vs Messi/Álvarez/Enzo; settles after 120' then pens",
+    ("France", "England"): "third-place match — France (lost 0-2 Spain) vs England (lost 1-2 Argentina); rotation + dead-rubber intensity risk; Mbappé/Dembélé vs Kane/Bellingham",
+}
+
+# Pool standings entering the FINAL round — reported by the user 2026-07-18 (SF complete; rival SF
+# slates now VISIBLE, completed-round rule). You scored 0 in the SF but HELD the lead: the chalk field
+# largely blanked with you. What ALL of us shared and busted: a France advancer (Fra 2-1 or 1-0, all
+# wrong — Spain won) and the Kane/Mbappé/Bellingham topscorer core (all blanked). Your 4631 is
+# unchanged from pre-SF, confirming the 0-point SF retro exactly.
+# Rival SF slates, graded against SF scoring (exact 225 / toto 150, ATT 40 / MID 80):
+#   #2 iamtope 4480 (+225): Fra 2-1 (0) · Eng-Arg 1-2 EXACT (+225) · Kane/Mbappé/Messi/Bellingham (0)
+#      — the ONE differential that closed ground: they nailed the exact ARGENTINA scoreline.
+#   #3 neemaar jr 4475 (+0): Fra 2-1 (0) · Eng-Arg 1-1 draw pick (0) · Doué/Kane/Mbappé/Bellingham (0).
+#   #4 thomneleman 4377 (+40): Fra 1-0 (0) · Eng-Arg 2-1 (0) · Dembélé/Kane/Mbappé/Bellingham — the
+#      +40 (one ATT goal) does NOT reconcile with the four names given (all blanked): minor
+#      transcription slack, immaterial at −254.
+# Mirror grade: Bellingham force + Fra-Esp 2-1 digit mirror both cost 0 — France lost so that tie was
+# moot, and everyone held Bellingham. Insurance refunded, as at the QF.
+# CORRECTED read (Fable review 2026-07-18, de-vig checked): both SF ties were near-coin-flips and we
+# picked the SLIGHT FAVOURITES — de-vig 90' Eng 36.3/dr 32.1/Arg 31.6 (Eng favoured), Fra 38.5/dr 31.0/
+# Esp 30.5 (Fra favoured) — and both lost (ordinary variance, not an underdog blunder). iamtope gained
+# by hitting an UNDERDOG exact (+225), a low-probability hit, NOT a favoured-vs-underdog edge. So there
+# is no directional "favoured advancer" lesson. For the Final, back Spain because it is a CLEAR
+# favourite (120' grid Spain 54 / draw 13.5 / Arg 33; ~61% incl. pens) — not a coin-flip like the SFs.
 STANDINGS = {
     "you": 4631,
-    "as_of": "QF complete (user-reported 2026-07-13); rival QF slates read in-app 2026-07-14",
+    "as_of": "SF complete (user-reported 2026-07-18); rival SF slates read in-app",
     "rivals": [
-        {"name": "#2 neemaar jr", "points": 4475, "diff_topscorer": "QF read: Dembélé/Kane/Mbappé/Hakimi(×128 flier) — differential-seeking chaser; digits all 2-1-family → Fra-Esp 2-1 ⚑ mirrored"},
-        {"name": "#3 thomneleman", "points": 4337, "diff_topscorer": "QF read: Haaland/Kane/Mbappé/Messi — pure fame-chalk; Haaland out → Bellingham ⚑ their natural slot-4, force confirmed"},
+        {"name": "#2 iamtope", "points": 4480, "diff_topscorer": "SF +225 (Eng-Arg 1-2 exact) — the only mover; pure fame-chalk topscorers. LIVE THREAT at −151, one exact-vs-your-miss from level."},
+        {"name": "#3 neemaar jr", "points": 4475, "diff_topscorer": "SF blank; fame-chalk + Doué flier. −156."},
+        {"name": "#4 thomneleman", "points": 4377, "diff_topscorer": "SF ~blank; fame-chalk (Dembélé/Kane/Mbappé/Bellingham). −254."},
     ],
 }
 

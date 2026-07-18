@@ -419,10 +419,12 @@ def test_all_sf_teams_have_a_topscorer_candidate():
     assert set(SF_ALIVE_TEAMS) <= teams_with
 
 
-def test_standings_updated_post_qf():
+def test_standings_updated_post_sf():
+    # Post-SF (user-reported in-app 2026-07-18): you held the lead through a 0-point round because the
+    # chalk field blanked with you. iamtope banked the only differential (Eng-Arg 1-2 exact, +225).
     from scorito.data.knockout_fixtures import STANDINGS
     assert STANDINGS["you"] == 4631
-    assert [r["points"] for r in STANDINGS["rivals"]] == [4475, 4337]
+    assert [r["points"] for r in STANDINGS["rivals"]] == [4480, 4475, 4377]
 
 
 def test_run_knockout_sf_end_to_end_via_cli(tmp_path):
@@ -448,6 +450,71 @@ def test_atgs_tail_devig_flag_only_from_semifinal_on():
     assert config.KO_ROUND_SCORING["Semifinal"].get("atgs_tail_devig") is True
     for rn in ("Round of 32", "Round of 16", "Quarterfinal"):
         assert not config.KO_ROUND_SCORING[rn].get("atgs_tail_devig")
+
+
+# --- Final round (the Final + the third-place match; scoring per user in-app 2026-07-18: 6x group,
+#     same ratios, still 4 topscorer slots / XOR / result after 120'). One round entry covers BOTH
+#     ties. `Resultaat correct` 270 / `Toto correct` 180 / wrong 0; per-goal A 48 / M 96 / V,K 192.
+def test_final_round_scoring_confirmed_in_app():
+    sc = config.KO_ROUND_SCORING["Final"]
+    assert sc["exact"] == 270 and sc["toto"] == 180
+    assert sc["mult"] == {"GK": 192, "DEF": 192, "MID": 96, "ATT": 48}
+    assert sc["slots"] == 4 and sc["form_games"] == 7
+    assert sc["brace_credit"] == config.KO_BRACE_CREDIT
+    # round-invariant ratios (pick shape unchanged): exact:toto 3:2, DEF/GK:MID:ATT 4:2:1, 6x group
+    assert sc["exact"] * 2 == sc["toto"] * 3
+    assert sc["mult"]["DEF"] == 4 * sc["mult"]["ATT"] == 2 * sc["mult"]["MID"]
+    assert sc["exact"] == 6 * config.PTS_EXACT
+    assert sc["mult"]["ATT"] == 6 * config.TOPSCORER_MULT["ATT"]
+    # SF-onward method flags carry into the Final (both ties settle after 120'; same ATGS overround).
+    assert sc.get("atgs_tail_devig") is True and sc.get("et_mixture") is True
+    # lead_shrink is the posture knob (protect vs chase) — a valid weight; value set once standings land.
+    assert 0.0 <= sc["lead_shrink"] <= 1.0
+
+
+def test_round_tag_final():
+    assert ko._round_tag("Final") == "final"
+
+
+def test_final_fixtures_wellformed():
+    from scorito.data.knockout_fixtures import FINAL_ALIVE_TEAMS, FINAL_TIES
+    assert len(FINAL_TIES) == 2                       # the Final + the third-place match
+    teams = {t for m in FINAL_TIES for t in (m.team1, m.team2)}
+    assert teams == {"Spain", "Argentina", "France", "England"}
+    assert teams == set(FINAL_ALIVE_TEAMS)
+    assert sorted(m.date for m in FINAL_TIES) == ["2026-07-18", "2026-07-19"]
+    # Final = the two SF winners; bronze match = the two SF losers.
+    pairs = {frozenset((m.team1, m.team2)) for m in FINAL_TIES}
+    assert frozenset(("Spain", "Argentina")) in pairs
+    assert frozenset(("France", "England")) in pairs
+
+
+def test_all_final_teams_have_a_topscorer_candidate():
+    from scorito.data.knockout_fixtures import FINAL_ALIVE_TEAMS
+    from scorito.data.topscorer_candidates import CANDIDATES
+    teams_with = {c["team"] for c in CANDIDATES}
+    assert set(FINAL_ALIVE_TEAMS) <= teams_with
+
+
+def test_run_knockout_out_dir_defaults_to_round_name_tag(monkeypatch):
+    # Regression: the default out dir derives from the round NAME ("Final" -> "final"), matching
+    # where files are actually written — NOT from the CLI --round arg ("f"). main() prints this.
+    from scorito.data import knockout_fixtures as kf
+    monkeypatch.setattr(ko, "_write_ko_report", lambda r, out_dir: None)  # don't touch ./out
+    r = ko.run_knockout(ties=kf.FINAL_TIES, round_name="Final", alive_teams=kf.FINAL_ALIVE_TEAMS,
+                        injured_out=kf.FINAL_INJURED_OUT, start_overrides=kf.FINAL_START_OVERRIDES,
+                        tie_notes=kf.FINAL_TIE_NOTES, standings=kf.STANDINGS)
+    assert r["out_dir"] == "out/ko_final"
+
+
+def test_run_knockout_final_end_to_end_via_cli(tmp_path):
+    # Elo-only is fine here: no forced scorelines in the Final bundle, so no side tripwire.
+    ko.main(["--round", "f", "--out", str(tmp_path)])
+    report = (tmp_path / "report.md").read_text()
+    assert "Final" in report
+    assert "270" in report and "180" in report        # Final scoring header
+    picks = (tmp_path / "picks.csv").read_text()
+    assert picks.count("match,") == 2                 # 2 ties: final + third place
 
 
 def test_atgs_tail_devig_shrinks_longshots_more_and_hits_target():

@@ -116,6 +116,16 @@ KO_ROUND_SCORING = {
                       slots=4, form_games=6, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
                       lead_shrink=LEAD_PROTECTION_MULT_SHRINK, atgs_tail_devig=True,
                       et_mixture=True),
+    # Confirmed in-app 2026-07-18 (Spelregels, user paste): 6x group, same ratios, 4 slots / XOR /
+    # result after 120'. ONE round entry covers BOTH ties (the Final AND the third-place match) —
+    # 2 scorelines + 4 topscorers drawn from all four teams (goals in either match count, excl. the
+    # shootout). form_games=7 (group 3 + R32/R16/QF/SF). Method flags carry from the SF. lead_shrink
+    # is the posture knob: 0.5 = protect a lead (default, matches SF); flip to 1.0 (pure EV / chase)
+    # if the SF blank dropped us off the lead — DECIDE once post-SF standings are read in-app.
+    "Final": dict(exact=270, toto=180, mult={"GK": 192, "DEF": 192, "MID": 96, "ATT": 48},
+                  slots=4, form_games=7, pen_bonus=KO_PEN_BONUS, brace_credit=KO_BRACE_CREDIT,
+                  lead_shrink=LEAD_PROTECTION_MULT_SHRINK, atgs_tail_devig=True,
+                  et_mixture=True),
 }
 # Realized-form blend (group-stage retrospective: club-g90 alone under-rated in-form scorers like
 # Messi and over-rated goal-shy creators like Wirtz). Effective non-pen g90 shrinks the tournament

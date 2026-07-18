@@ -184,9 +184,9 @@ def lead_dashboard(standings, scoring):
         L.append(f"| {r['name']} | {r['points']} | **+{gap}** | ~{exacts:.1f} "
                  f"(×{exact_swing} each) | {r.get('diff_topscorer', '—')} |")
     L.append(f"\n_Swing units this round — exact vs toto **+{exact_swing}**, ATT goal **+{m['ATT']}**, "
-             f"MID goal **+{m['MID']}**, DEF/GK goal **+{m['DEF']}**. Both rivals play pure chalk and "
-             "mirror our slate, so realised variance is low: mirror the chalk, hand them no topscorer "
-             "differential, take no contrarian picks._\n")
+             f"MID goal **+{m['MID']}**, DEF/GK goal **+{m['DEF']}**. The chasers play pure fame-chalk, "
+             "so mirroring the chalk keeps realised variance low: hand out no topscorer differential, "
+             "take no contrarian picks._\n")
     return "\n".join(L)
 
 
@@ -308,7 +308,7 @@ def run_knockout(ties=R32_TIES, odds_key=None, odds_file=None, atgs=False, atgs_
 
     generated_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     result = dict(round_name=round_name, match_picks=match_picks, top4=top4,
-                  forced=frozenset(forced_topscorers),
+                  forced=frozenset(forced_topscorers), out_dir=out_dir,
                   diversified=diversified, ranked=ranked, odds_coverage=(priced, len(ties)),
                   used_odds=bool(odds_map), used_atgs=bool(atgs_map), generated_at=generated_at,
                   scoring=scoring, tie_notes=tie_notes, standings=standings)
@@ -410,8 +410,8 @@ def main(argv=None):
 
     from scorito.data import knockout_fixtures as kf
     p = argparse.ArgumentParser(description="Scorito WC2026 knockout pick optimizer (max_ev)")
-    p.add_argument("--round", choices=["r32", "r16", "qf", "sf"], default="r32",
-                   help="which knockout round (selects bracket + scoring)")
+    p.add_argument("--round", choices=["r32", "r16", "qf", "sf", "f"], default="r32",
+                   help="which knockout round (selects bracket + scoring); f = Final + third place")
     p.add_argument("--odds-key", default=None, help="The Odds API key (live h2h+totals for the ties)")
     p.add_argument("--odds-file", default=None, help="replay a saved odds JSON instead of fetching")
     p.add_argument("--atgs", action="store_true", help="also pull anytime-goalscorer odds (needs --odds-key)")
@@ -435,11 +435,16 @@ def main(argv=None):
                    tie_notes=kf.SF_TIE_NOTES, standings=kf.STANDINGS,
                    forced_topscorers=kf.SF_TOPSCORER_FORCED,
                    forced_scorelines=kf.SF_SCORELINE_FORCED),
+        "f": dict(ties=kf.FINAL_TIES, round_name="Final", alive_teams=kf.FINAL_ALIVE_TEAMS,
+                  injured_out=kf.FINAL_INJURED_OUT, start_overrides=kf.FINAL_START_OVERRIDES,
+                  tie_notes=kf.FINAL_TIE_NOTES, standings=kf.STANDINGS,
+                  forced_topscorers=kf.FINAL_TOPSCORER_FORCED,
+                  forced_scorelines=kf.FINAL_SCORELINE_FORCED),
     }
     r = run_knockout(odds_key=args.odds_key, odds_file=args.odds_file, atgs=args.atgs,
                      atgs_file=args.atgs_file, results_file=args.results_file, out_dir=args.out,
                      **bundles[args.round])
-    out_dir = args.out or f"out/ko_{args.round}"
+    out_dir = r["out_dir"]  # actual write path (derives from round NAME tag, e.g. "final" for -r f)
     print(f"Wrote {out_dir}/report.md and {out_dir}/picks.csv")
     print(f"Goal model: {'market odds + Elo' if r['used_odds'] else 'Elo only'} "
           f"({r['odds_coverage'][0]}/{r['odds_coverage'][1]} priced)")
